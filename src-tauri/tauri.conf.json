@@ -52,7 +52,7 @@
     },
     "windows": [
       {
-        "title": "vscch4",
+        "title": "VS Code Config Helper 4",
         "width": 800,
         "height": 600,
         "resizable": true,

@@ -13,5 +13,11 @@ lerna-debug.log*
 # Builds
 /dist/
 
+# IDE
+/.vscode/
+!/.vscode/extensions.json
+!/.vscode/tasks.json
+!/.vscode/launch.json
+
 # OS
 .DS_Store
