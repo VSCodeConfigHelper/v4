@@ -15,8 +15,9 @@
 // You should have received a copy of the GNU General Public License
 // along with vscch4.  If not, see <http://www.gnu.org/licenses/>.
 
-pub mod handlers;
+pub struct Compiler {
+  version: String,
+  path: String,
+}
 
-pub mod vscode;
-pub mod compiler;
-pub mod compiler_setup;
+

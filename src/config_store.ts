@@ -15,8 +15,12 @@
 // You should have received a copy of the GNU General Public License
 // along with vscch4.  If not, see <http://www.gnu.org/licenses/>.
 
-pub mod handlers;
+import { writable } from 'svelte/store';
 
-pub mod vscode;
-pub mod compiler;
-pub mod compiler_setup;
+export type Compiler = {};
+export type Options = {};
+
+export const vscode = writable<string | null>(null);
+export const compiler = writable<Compiler | null>(null);
+export const workspace = writable<string | null>(null);
+export const options = writable<Options | null>(null);

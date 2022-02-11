@@ -15,8 +15,28 @@
 // You should have received a copy of the GNU General Public License
 // along with vscch4.  If not, see <http://www.gnu.org/licenses/>.
 
-pub mod handlers;
+pub use super::compiler::Compiler;
 
-pub mod vscode;
-pub mod compiler;
-pub mod compiler_setup;
+pub struct CompilerSetup {
+  pub name: &'static str,
+  pub description: &'static str,
+  pub scan: fn() -> Vec<Compiler>,
+  pub validate: fn(&str) -> Option<Compiler>
+}
+
+pub mod gcc_mingw;
+pub mod llvm_mingw;
+pub mod msvc;
+
+#[cfg(target_os = "windows")]
+pub static ENABLED_SETUPS: &'static [&'static CompilerSetup] = &[
+  &gcc_mingw::SETUP,
+  &llvm_mingw::SETUP,
+  &msvc::SETUP
+];
+
+#[cfg(target_os = "macos")]
+pub static ENABLED_SETUPS: &'static [&'static CompilerSetup] = &[];
+
+#[cfg(target_os = "linux")]
+pub static ENABLED_SETUPS: &'static [&'static CompilerSetup] = &[];

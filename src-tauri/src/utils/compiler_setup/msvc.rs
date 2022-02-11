@@ -15,8 +15,20 @@
 // You should have received a copy of the GNU General Public License
 // along with vscch4.  If not, see <http://www.gnu.org/licenses/>.
 
-pub mod handlers;
+use super::Compiler;
+use super::CompilerSetup;
 
-pub mod vscode;
-pub mod compiler;
-pub mod compiler_setup;
+fn scan() -> Vec<Compiler> {
+  vec![]
+}
+
+fn validate(path: &str) -> Option<Compiler> {
+  None
+}
+
+pub static SETUP: CompilerSetup = CompilerSetup {
+  name: "msvc",
+  description: "Microsoft Visual C++",
+  scan,
+  validate,
+};
