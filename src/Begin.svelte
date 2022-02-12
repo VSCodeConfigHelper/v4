@@ -17,7 +17,7 @@
  along with vscch4.  If not, see <http://www.gnu.org/licenses/>.
 -->
 
-<h3 class="text-3xl font-bold pb-3">
+<h3 class="text-3xl font-bold mb-3">
   欢迎使用 VS&nbsp;Code&nbsp;Config&nbsp;Helper！
 </h3>
 <div>

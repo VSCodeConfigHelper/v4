@@ -15,23 +15,29 @@
 // You should have received a copy of the GNU General Public License
 // along with vscch4.  If not, see <http://www.gnu.org/licenses/>.
 
+
+pub mod verparse;
+
+pub mod mingw;
+pub mod msvc;
+
 pub use super::compiler::Compiler;
 
 pub struct CompilerSetup {
+  pub id: &'static str,
   pub name: &'static str,
   pub description: &'static str,
-  pub scan: fn() -> Vec<Compiler>,
-  pub validate: fn(&str) -> Option<Compiler>
-}
+  pub how_to_install: &'static str,
 
-pub mod gcc_mingw;
-pub mod llvm_mingw;
-pub mod msvc;
+  pub scan: fn() -> Vec<Compiler>,
+  pub verify: Option<fn(&str) -> Result<Compiler, &'static str>>,
+  pub install: Option<fn() -> bool>,
+  pub verparser: verparse::Parser
+}
 
 #[cfg(target_os = "windows")]
 pub static ENABLED_SETUPS: &'static [&'static CompilerSetup] = &[
-  &gcc_mingw::SETUP,
-  &llvm_mingw::SETUP,
+  &mingw::GCC_SETUP,
   &msvc::SETUP
 ];
 

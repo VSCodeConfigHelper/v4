@@ -23,17 +23,9 @@
   import { open } from "@tauri-apps/api/dialog";
 
   import { vscode } from "./config_store";
+  import type { VerifyResult } from "./global";
 
   let path: string = "";
-
-  type VerifyResult =
-    | {
-        type: "Ok";
-      }
-    | {
-        type: "Err";
-        message: string;
-      };
 
   let verifyResult: VerifyResult = { type: "Ok" };
   let scanResult = false;
@@ -56,16 +48,6 @@
     verify();
   }
 
-  async function verify() {
-    state = "working";
-    const result = await invoke<VerifyResult>("vscode_verify", {
-      path: path,
-    });
-    console.log(result);
-    verifyResult = result;
-    state = "verified";
-  }
-
   async function scan() {
     state = "working";
     const result = await invoke<string | null>("vscode_scan");
@@ -78,21 +60,29 @@
     state = "scanned";
   }
 
+  async function verify() {
+    state = "working";
+    const result = await invoke<VerifyResult>("vscode_verify", {
+      path: path,
+    });
+    verifyResult = result;
+    state = "verified";
+  }
   onMount(() => {
     scan();
   });
 </script>
 
-<div class="form-control">
-  <h3 class="text-3xl font-bold pb-3">确认 VS Code</h3>
-  <div class="pb-3">
-    首先，请确认您的 VS Code 安装情况。
+<div class="form-control space-y-3">
+  <div class="flex flex-row justify-between items-center">
+    <h3 class="text-3xl font-bold">确认 VS Code</h3>
     <button class="btn btn-xs btn-link font-normal" on:click={scan}>
       重新检测
     </button>
   </div>
+  <div>首先，请确认您的 VS Code 安装情况。</div>
   <div
-    class="alert flex-row justify-start items-center p-2 mb-3"
+    class="alert flex-row justify-start items-center p-2"
     class:alert-success={state !== "working" && $vscode !== null}
     class:alert-error={state !== "working" && $vscode === null}
     class:alert-info={state === "working"}
@@ -106,18 +96,20 @@
         width={20}
       />
     {/if}
-    <span class="!mt-0 ml-2">
+    <span class="!mt-0 ml-2 inline">
       {#if state === "scanned"}
         {#if scanResult}
-          工具检测到您安装的 VS Code 路径如下。如没有任何问题，请点击下一步。
+          检测到您安装的 VS Code 路径如下。如没有任何问题，请点击下一步。
         {:else}
           <span>
-            工具没有检测到已安装的 VS Code，请您前往
+            没有检测到已安装的 VS Code，请您前往
             <a
               href="https://code.visualstudio.com"
               target="_blank"
-              class="text-primary">此处</a
+              class="text-primary"
             >
+              此处
+            </a>
             下载安装。如果您安装了，请在下方提供其安装路径。
           </span>
         {/if}
@@ -136,8 +128,7 @@
     <input
       type="text"
       placeholder="VS Code 安装路径"
-      id="vscodePath"
-      class="w-full input input-bordered"
+      class="flex-grow input input-bordered"
       bind:value={path}
       on:input={verify}
     />

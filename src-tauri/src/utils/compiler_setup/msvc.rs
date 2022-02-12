@@ -15,6 +15,9 @@
 // You should have received a copy of the GNU General Public License
 // along with vscch4.  If not, see <http://www.gnu.org/licenses/>.
 
+#![cfg(target_os = "windows")]
+
+use super::verparse;
 use super::Compiler;
 use super::CompilerSetup;
 
@@ -22,13 +25,18 @@ fn scan() -> Vec<Compiler> {
   vec![]
 }
 
-fn validate(path: &str) -> Option<Compiler> {
-  None
+fn install() -> bool {
+  open::that("https://aka.ms/vs/17/release/vs_BuildTools.exe").is_ok()
 }
 
 pub static SETUP: CompilerSetup = CompilerSetup {
-  name: "msvc",
+  id: "msvc",
+  name: "VC++ 生成工具",
   description: "Microsoft Visual C++",
-  scan,
-  validate,
+  how_to_install: r"下载。运行安装器，按照提示完成安装。",
+
+  scan: scan,
+  verify: None,
+  install: Some(install),
+  verparser: verparse::gcc
 };

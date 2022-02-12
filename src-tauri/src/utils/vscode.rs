@@ -15,32 +15,16 @@
 // You should have received a copy of the GNU General Public License
 // along with vscch4.  If not, see <http://www.gnu.org/licenses/>.
 
-use std::io;
+use super::reg;
 use std::path::Path;
 
 #[cfg(target_os = "windows")]
-use winreg::RegKey;
-
-#[cfg(target_os = "windows")]
 pub fn scan() -> Option<String> {
-  let cmd = (|| -> io::Result<String> {
-    let hkcr = RegKey::predef(winreg::enums::HKEY_CLASSES_ROOT);
-    let key = hkcr.open_subkey("vscode\\shell\\open\\command")?;
-    let val: String = key.get_value("")?;
-    Ok(val)
-  })();
-  if cmd.is_err() {
-    return None;
-  }
-  let cmd = cmd.unwrap();
+  let cmd = reg::get(reg::HKEY_CLASSES_ROOT, "vscode\\shell\\open\\command", "")?;
   // The value should be like:
   // "C:\Program Files\Microsoft VS Code\Code.exe" --open-url -- "%1"
   // and we just use the string inside the first quotation marks
-  let parts = cmd.split("\"").nth(1);
-  if parts.is_none() {
-    return None;
-  }
-  let parts = parts.unwrap();
+  let parts = cmd.split("\"").nth(1)?;
   match verify(parts) {
     Ok(_) => Some(parts.to_string()),
     Err(_) => None,
@@ -51,21 +35,16 @@ pub fn scan() -> Option<String> {
 pub fn verify(path: &str) -> Result<(), &'static str> {
   let path = Path::new(path);
   if !path.exists() {
-    return Err("File not exist");
+    return Err("路径不存在");
   }
   let vscode_folder = if path.is_dir() {
-    Some(path)
+    path
   } else {
-    path.parent()
+    path.parent().unwrap()
   };
-  if let Some(vscode_folder) = vscode_folder {
-    let script_path = vscode_folder.join("bin").join("code.cmd");
-    if script_path.exists() {
-      return Ok(());
-    } else {
-      return Err("Could not find code.cmd");
-    }
+  if vscode_folder.join("bin").join("code.cmd").exists() {
+    Ok(())
   } else {
-    return Err("Should not be root");
+    Err("找不到 code.cmd")
   }
 }

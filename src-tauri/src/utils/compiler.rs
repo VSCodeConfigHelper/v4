@@ -15,9 +15,27 @@
 // You should have received a copy of the GNU General Public License
 // along with vscch4.  If not, see <http://www.gnu.org/licenses/>.
 
+use serde::Serialize;
+
+#[derive(Serialize)]
 pub struct Compiler {
-  version: String,
+  kind: &'static str,
   path: String,
+  version: String,
+  package_string: String,
+  version_text: String
 }
+use super::compiler_setup::CompilerSetup;
 
-
+impl Compiler {
+  pub fn new(setup: &CompilerSetup, path: &str, version_text: &str) -> Compiler {
+    let (version, package_string) = (setup.verparser)(version_text);
+    Compiler {
+      kind: setup.id,
+      path: path.to_string(),
+      version: version.to_string(),
+      package_string: package_string.to_string(),
+      version_text: version_text.to_string()
+    }
+  }
+}

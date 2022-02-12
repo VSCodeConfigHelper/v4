@@ -17,7 +17,12 @@
 
 import { writable } from 'svelte/store';
 
-export type Compiler = {};
+export type Compiler = {
+  path: string;
+  version: string;
+  package_string: string;
+  version_text: string;
+};
 export type Options = {};
 
 export const vscode = writable<string | null>(null);
