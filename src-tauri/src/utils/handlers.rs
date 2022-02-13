@@ -20,11 +20,13 @@ use serde::Serialize;
 use super::compiler::Compiler;
 use super::compiler_setup::ENABLED_SETUPS;
 use super::vscode;
+use super::workspace;
 
 #[derive(Serialize)]
 #[serde(tag = "type")]
 pub enum VerifyResult<T = ()> {
   Ok { value: T },
+  Warn { message: &'static str },
   Err { message: &'static str },
 }
 
@@ -95,4 +97,15 @@ pub fn compiler_install(setup_no: usize) -> bool {
   } else {
     false
   }
+}
+
+#[tauri::command]
+pub fn workspace_verify(path: String) -> VerifyResult {
+  if let Err(msg) = workspace::path_available(&path) {
+    return VerifyResult::Err { message: msg };
+  }
+  if workspace::exists(&path) {
+    return VerifyResult::Warn { message: "此工作文件夹下已有配置。若继续则原有配置会被覆盖。" }
+  }
+  VerifyResult::Ok{ value: () }
 }

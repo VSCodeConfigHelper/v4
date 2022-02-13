@@ -11,6 +11,6 @@ export type VerifyResult<T = undefined> =
       value: T;
     })
   | {
-    type: "Err";
+    type: "Warn" | "Err";
     message: string;
   };

@@ -59,6 +59,22 @@
     setTimeout(() => hiddenFocus.focus(), 100);
   }
 
+  async function toggleNew() {
+    const card = document.getElementById("card");
+    card?.classList.add("flip-1");
+    await new Promise((resolve) => setTimeout(resolve, 300));
+    card?.style.setProperty("transform", "rotateY(-90deg)");
+    card?.classList.remove("flip-1");
+
+    useNew = !useNew;
+
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    card?.classList.add("flip-2");
+    await new Promise((resolve) => setTimeout(resolve, 300));
+    card?.style.setProperty("transform", null);
+    card?.classList.remove("flip-2");
+  }
+
   async function browse() {
     const result = await open({
       multiple: false,
@@ -158,10 +174,7 @@
         </table>
       </div>
       <div>
-        <button
-          class="btn btn-sm btn-link font-normal"
-          on:click={() => ((useNew = true), (verifyResult = null))}
-        >
+        <button class="btn btn-sm btn-link font-normal" on:click={toggleNew}>
           或者，使用新的编译器...
         </button>
       </div>
@@ -172,7 +185,7 @@
             未检测到已安装的 {setup.name}。
           {/if}
           {#if setup.can_install}
-            您可以点击右侧按钮{/if}{@html setup.how_to_install}
+            您可以<strong>点击右侧按钮</strong>{/if}{@html setup.how_to_install}
         </div>
         {#if setup.can_install}
           <button
@@ -220,17 +233,17 @@
             </span>
           </div>
         {/if}
+      {/if}
+      {#if compilers.length > 0}
+        <div>
+          <button class="btn btn-sm btn-link font-normal" on:click={toggleNew}>
+            或者，使用已有的编译器...
+          </button>
+        </div>
       {:else}
         <div>
           <button class="btn btn-sm btn-link font-normal" on:click={scan}>
             重新检测
-          </button>
-        </div>
-      {/if}
-      {#if compilers.length > 0}
-        <div>
-          <button class="btn btn-sm btn-link font-normal" on:click={scan}>
-            或者，使用已有的编译器...
           </button>
         </div>
       {/if}
@@ -239,3 +252,25 @@
     <div class="pb-3">目前暂不支持此操作系统的配置。</div>
   {/if}
 </div>
+
+<style>
+  :global(.flip-1) {
+    animation: 300ms flip-animation;
+    animation-timing-function: ease-in;
+    --start-angle: 0deg;
+  }
+  :global(.flip-2) {
+    animation: 300ms flip-animation;
+    animation-timing-function: ease-out;
+    --start-angle: -90deg;
+  }
+
+  @keyframes flip-animation {
+    from {
+      transform: rotateY(var(--start-angle));
+    }
+    to {
+      transform: rotateY(calc(var(--start-angle) + 90deg));
+    }
+  }
+</style>

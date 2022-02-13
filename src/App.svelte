@@ -19,18 +19,20 @@
 <script lang="ts">
   import type { Unsubscriber, Writable } from "svelte/store";
   import { fly } from "svelte/transition";
-    import { create_in_transition, create_out_transition } from "svelte/internal";
+  import { create_in_transition, create_out_transition } from "svelte/internal";
   import { onDestroy, onMount } from "svelte";
   import Icon from "@iconify/svelte";
 
   import Begin from "./Begin.svelte";
   import Vscode from "./Vscode.svelte";
   import Compiler from "./Compiler.svelte";
+  import Workspace from "./Workspace.svelte";
+  import Options from "./Options.svelte";
   import { vscode, compiler, workspace, options } from "./config_store";
 
   type Step = {
     label: string;
-    component: any;
+    readonly component: any;
     resultWritable?: Writable<any>;
   };
   const steps: Step[] = [
@@ -50,12 +52,12 @@
     },
     {
       label: "工作文件夹",
-      component: null,
+      component: Workspace,
       resultWritable: workspace,
     },
     {
       label: "配置选项",
-      component: null,
+      component: Options,
       resultWritable: options,
     },
     {
@@ -69,22 +71,14 @@
   const subscribers: Unsubscriber[] = [];
 
   let card: HTMLElement;
-  let transition = 50;
   async function go(d: number) {
-    const tc = ["transition", "duration-150"];
-    card.classList.add(...tc);
-    card.style.transform = `translateX(${- d * 50}px)`;
-    card.style.opacity = "0";
-    await new Promise((resolve) => setTimeout(resolve, 200));
-    card.classList.remove(...tc);
-    card.style.transform = `translateX(${d * 50}px)`;
-    await new Promise((resolve) => setTimeout(resolve, 10));
+    card.style.setProperty("--direction", `${50 * d}px`);
+    card.classList.add("slide");
+    await new Promise((resolve) => setTimeout(resolve, 160));
     step += d;
-    card.classList.add(...tc);
-    card.style.transform = `translateX(0px)`;
-    card.style.opacity = "1";
-    await new Promise((resolve) => setTimeout(resolve, 200));
-    card.classList.remove(...tc);
+    await new Promise((resolve) => setTimeout(resolve, 160));
+    card.classList.remove("slide");
+    card.style.setProperty("--direction", null);
   }
 
   async function changeBackground() {
@@ -124,10 +118,9 @@
 </div>
 <main class="flex flex-row justify-center items-center w-full h-full pb-20">
   <div
+    id="card"
     bind:this={card}
     class="card glass shadow-lg hover:shadow-lg w-9/12 max-w-3xl"
-    in:fly={{ x: transition, duration: 300 }}
-    out:fly={{ x: -transition, duration: 300 }}
   >
     <div class="card-body">
       {#each steps as s, i (i)}
@@ -157,12 +150,43 @@
 <footer class="fixed glass bottom-0 w-full">
   <ul class="w-full steps h-20 items-center">
     {#each steps as s, i}
-      <li class="step" class:step-primary={step >= i}>{s.label}</li>
+      <li
+        class="step before:transition after:transition"
+        class:step-primary={step >= i}
+      >
+        {s.label}
+      </li>
     {/each}
   </ul>
 </footer>
 
 <style>
+  main {
+    perspective: 1000px;
+  }
+
+  :global(.slide) {
+    animation: 320ms ease-in-out slide-animation;
+  }
+
+  @keyframes slide-animation {
+    from {
+      transform: translateX(0);
+      opacity: 1;
+    }
+    49% {
+      transform: translateX(calc(var(--direction) * -1));
+      opacity: 0;
+    }
+    51% {
+      transform: translateX(var(--direction));
+      opacity: 0;
+    }
+    to {
+      transform: translateX(0);
+      opacity: 1;
+    }
+  }
 
   /* bg img with opacity */
   main:before {
