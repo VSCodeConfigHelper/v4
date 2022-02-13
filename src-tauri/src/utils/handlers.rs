@@ -18,7 +18,7 @@
 use serde::Serialize;
 
 use super::compiler::Compiler;
-use super::compiler_setup::ENABLED_SETUPS;
+use super::compiler::ENABLED_SETUPS;
 use super::vscode;
 use super::workspace;
 
@@ -105,7 +105,9 @@ pub fn workspace_verify(path: String) -> VerifyResult {
     return VerifyResult::Err { message: msg };
   }
   if workspace::exists(&path) {
-    return VerifyResult::Warn { message: "此工作文件夹下已有配置。若继续则原有配置会被覆盖。" }
+    return VerifyResult::Warn {
+      message: "此工作文件夹下已有配置。若继续则原有配置会被覆盖。",
+    };
   }
-  VerifyResult::Ok{ value: () }
+  VerifyResult::Ok { value: () }
 }

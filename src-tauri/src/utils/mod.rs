@@ -19,8 +19,9 @@ pub mod handlers;
 
 #[cfg(target_os = "windows")]
 pub mod reg;
+#[cfg(target_os = "windows")]
+pub mod winapi;
 
 pub mod vscode;
 pub mod compiler;
-pub mod compiler_setup;
 pub mod workspace;

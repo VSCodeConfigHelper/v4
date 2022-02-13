@@ -15,8 +15,9 @@
 // You should have received a copy of the GNU General Public License
 // along with vscch4.  If not, see <http://www.gnu.org/licenses/>.
 
-use super::reg;
 use std::path::Path;
+
+use super::reg;
 
 #[cfg(target_os = "windows")]
 pub fn scan() -> Option<String> {

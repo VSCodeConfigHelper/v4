@@ -17,9 +17,8 @@
 
 #![cfg(target_os = "windows")]
 
-use regex::Regex;
 use std::collections::HashSet;
-use std::path::{Path, PathBuf};
+use std::path::Path;
 use std::process::Command;
 
 use super::super::reg;
@@ -63,10 +62,7 @@ fn test_compiler(path: &str, name: &'static str) -> Option<Compiler> {
 }
 
 fn scan() -> Vec<Compiler> {
-  get_paths()
-    .iter()
-    .filter_map(|p| verify(p).ok())
-    .collect()
+  get_paths().iter().filter_map(|p| verify(p).ok()).collect()
 }
 
 fn verify(path: &str) -> Result<Compiler, &'static str> {

@@ -92,7 +92,9 @@
 
   async function scan() {
     compilers = await invoke("compiler_scan", { setupNo });
-    useNew = compilers.length === 0;
+    if (useNew && compilers.length === 0) {
+      toggleNew();
+    }
   }
 
   async function verify() {
