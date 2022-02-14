@@ -18,13 +18,15 @@
 #![cfg(target_os = "windows")]
 
 use std::collections::HashSet;
+use std::os::windows::process::CommandExt;
 use std::path::Path;
 use std::process::Command;
 
-use super::super::reg;
 use super::verparse;
 use super::Compiler;
 use super::CompilerSetup;
+use crate::utils::winreg;
+use crate::utils::winapi::CREATE_NO_WINDOW;
 
 /// 给定 `{path}`, 按需构造 `{path}\\bin`。
 /// 检查其存在且是目录后返回。
@@ -34,7 +36,7 @@ fn check_bin(path: &str) -> Option<String> {
     path = path.join("bin");
   }
   if path.is_dir() {
-    path.into_os_string().into_string().ok()
+    path.to_str().map(String::from)
   } else {
     None
   }
@@ -42,8 +44,8 @@ fn check_bin(path: &str) -> Option<String> {
 
 /// Get user & machine `Path` environment variables.
 fn get_paths() -> HashSet<String> {
-  let user_path = reg::get_user_env("Path").unwrap_or_default();
-  let machine_path = reg::get_machine_env("Path").unwrap_or_default();
+  let user_path = winreg::get_user_env("Path").unwrap_or_default();
+  let machine_path = winreg::get_machine_env("Path").unwrap_or_default();
   let all_path = user_path + ";" + &machine_path;
 
   // FIXME: deal with paths contain quotes
@@ -55,7 +57,11 @@ fn test_compiler(path: &str, name: &'static str) -> Option<Compiler> {
   if !compiler.exists() {
     return None;
   }
-  let output = Command::new(compiler).arg("--version").output().ok()?;
+  let output = Command::new(compiler)
+    .creation_flags(CREATE_NO_WINDOW)
+    .arg("--version")
+    .output()
+    .ok()?;
   let output = String::from_utf8(output.stdout).ok()?;
   let version_text = output.lines().nth(0)?;
   Some(Compiler::new(&GCC_SETUP, path, version_text))
@@ -84,8 +90,10 @@ fn install() -> bool {
   open::that("https://gytx.lanzoui.com/iy906s48llc").is_ok()
 }
 
+pub static GCC_ID: &'static str = "gcc-mingw";
+
 pub static GCC_SETUP: CompilerSetup = CompilerSetup {
-  id: "gcc-mingw",
+  id: GCC_ID,
   name: "MinGW",
   description: "GCC for Windows",
   how_to_install: r"下载 MinGW。下载并解压后，您将得到一个 <code>mingw64</code> 文件夹。建议您将它妥善保存在合适的位置（如 <code>C:\mingw64</code>），并在下方输入其路径。",

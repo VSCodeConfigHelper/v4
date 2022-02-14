@@ -28,9 +28,9 @@
     id: string;
     name: string;
     description: string;
-    how_to_install: string;
-    can_verify: boolean;
-    can_install: boolean;
+    howToInstall: string;
+    canVerify: boolean;
+    canInstall: boolean;
   };
 
   let setups: CompilerSetup[] = [];
@@ -87,11 +87,15 @@
   }
 
   async function install() {
-    await invoke("compiler_install", { setupNo });
+    await invoke("compiler_install", {
+      setup: setups[setupNo].id
+    });
   }
 
   async function scan() {
-    compilers = await invoke("compiler_scan", { setupNo });
+    compilers = await invoke("compiler_scan", {
+      setup: setups[setupNo].id
+    });
     if (useNew && compilers.length === 0) {
       toggleNew();
     }
@@ -99,7 +103,7 @@
 
   async function verify() {
     verifyResult = await invoke<VerifyResult<Compiler>>("compiler_verify", {
-      setupNo,
+      setup: setups[setupNo].id,
       path: newPath,
     });
   }
@@ -169,7 +173,7 @@
                 </th>
                 <td>{c.path}</td>
                 <td>{c.version}</td>
-                <td>{c.package_string}</td>
+                <td>{c.packageString}</td>
               </tr>
             {/each}
           </tbody>
@@ -186,10 +190,10 @@
           {#if compilers.length === 0}
             未检测到已安装的 {setup.name}。
           {/if}
-          {#if setup.can_install}
-            您可以<strong>点击右侧按钮</strong>{/if}{@html setup.how_to_install}
+          {#if setup.canInstall}
+            您可以<strong>点击右侧按钮</strong>{/if}{@html setup.howToInstall}
         </div>
-        {#if setup.can_install}
+        {#if setup.canInstall}
           <button
             class="btn btn-info btn-lg btn-circle shadow-lg"
             on:click={install}
@@ -198,7 +202,7 @@
           </button>
         {/if}
       </div>
-      {#if setup.can_verify}
+      {#if setup.canVerify}
         <div class="flex space-x-2">
           <input
             type="text"
@@ -228,7 +232,7 @@
                 检测到 {setup.name}，版本
                 <code>{verifyResult.value.version}</code>
                 ，打包信息
-                <code>{verifyResult.value.package_string}</code>
+                <code>{verifyResult.value.packageString}</code>
               {:else}
                 该路径下没有 {setup.name}（{verifyResult.message}）
               {/if}

@@ -19,7 +19,7 @@
 <script lang="ts">
   import Icon from "@iconify/svelte";
   import { readTextFile } from "@tauri-apps/api/fs";
-import { invoke } from "@tauri-apps/api/tauri";
+  import { invoke } from "@tauri-apps/api/tauri";
   import { onMount } from "svelte";
 
   import {
@@ -32,7 +32,7 @@ import { invoke } from "@tauri-apps/api/tauri";
 
   // TITLE
   let tabTitles = ["通用", "语言", "编译", "功能"];
-  let activeTab = 3;
+  let activeTab = 1;
 
   // PAGE 1 语言
   const languages = ["C++", "C"];
@@ -92,19 +92,15 @@ import { invoke } from "@tauri-apps/api/tauri";
     if (pedantic) {
       args.push(["-pedantic", ""]);
     }
-    args.push(
-      ((): [string, string] => {
-        switch (activeWarning) {
-          case "all":
-            return ["-Wall", "/W4"];
-          case "extra":
-            return ["-Wextra", "/Wall"];
-          case "default":
-          default:
-            return ["", ""];
-        }
-      })()
-    );
+    switch (activeWarning) {
+      case "all":
+        args.push(["-Wall", "/W4"]);
+        break;
+      case "extra":
+        args.push(["-Wall", ""]);
+        args.push(["-Wextra", "/Wall"]);
+        break;
+    }
     args.push(
       ((): [string, string] => {
         switch (activeOptLevel) {
@@ -136,7 +132,6 @@ import { invoke } from "@tauri-apps/api/tauri";
     if (acpOutput) {
       args.push(["-fexec-charset=GBK", ""]);
     }
-    console.log($compiler);
     return args
       .map((p) => p[$compiler?.setup === "msvc" ? 1 : 0])
       .filter((s) => s);
@@ -260,7 +255,7 @@ import { invoke } from "@tauri-apps/api/tauri";
       acpOutputEnabled,
       asciiCheckEnabled,
       addToPathEnabled,
-      desktopShortcutEnabled
+      desktopShortcutEnabled,
     } = await invoke("options_scan", { setup }));
     useGnu ||= useGnuEnabled;
     pedantic ||= pedanticEnabled;

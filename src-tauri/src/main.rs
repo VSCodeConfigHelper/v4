@@ -1,12 +1,15 @@
-// #![windows_subsystem = "windows"] // Hide console window
+#![windows_subsystem = "windows"] // Hide console window
 
+mod steps;
+mod tasks;
 mod utils;
-use utils::handlers::*;
+mod handlers;
+use handlers::*;
 
 fn main() {
 
-  #[cfg(target_os = "windows")]
-  utils::winapi::hide_console();
+  // #[cfg(target_os = "windows")]
+  // utils::winapi::hide_console();
 
   tauri::Builder::default()
     .invoke_handler(tauri::generate_handler![

@@ -17,11 +17,9 @@
 
 use serde::Serialize;
 
-use super::compiler::Compiler;
-use super::compiler::ENABLED_SETUPS;
-use super::vscode;
-use super::workspace;
-use super::options::*;
+use crate::steps::{
+  compiler::get_setup, compiler::Compiler, compiler::ENABLED_SETUPS, options::*, vscode, workspace,
+};
 
 #[derive(Serialize)]
 #[serde(tag = "type")]
@@ -45,6 +43,7 @@ pub fn vscode_scan() -> Option<String> {
 }
 
 #[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct CompilerSetupListResult {
   id: &'static str,
   name: &'static str,
@@ -70,15 +69,13 @@ pub fn compiler_setup_list() -> Vec<CompilerSetupListResult> {
 }
 
 #[tauri::command]
-pub fn compiler_scan(setup_no: usize) -> Vec<Compiler> {
-  let setup = ENABLED_SETUPS[setup_no];
-  (setup.scan)()
+pub fn compiler_scan(setup: String) -> Vec<Compiler> {
+  (get_setup(&setup).scan)()
 }
 
 #[tauri::command]
-pub fn compiler_verify(setup_no: usize, path: String) -> VerifyResult<Compiler> {
-  let setup = ENABLED_SETUPS[setup_no];
-  if let Some(verify) = setup.verify {
+pub fn compiler_verify(setup: String, path: String) -> VerifyResult<Compiler> {
+  if let Some(verify) = get_setup(&setup).verify {
     match verify(&path) {
       Ok(compiler) => VerifyResult::Ok { value: compiler },
       Err(e) => VerifyResult::Err { message: e },
@@ -91,9 +88,8 @@ pub fn compiler_verify(setup_no: usize, path: String) -> VerifyResult<Compiler> 
 }
 
 #[tauri::command]
-pub fn compiler_install(setup_no: usize) -> bool {
-  let setup = ENABLED_SETUPS[setup_no];
-  if let Some(install) = setup.install {
+pub fn compiler_install(setup: String) -> bool {
+  if let Some(install) = get_setup(&setup).install {
     install()
   } else {
     false
@@ -114,19 +110,14 @@ pub fn workspace_verify(path: String) -> VerifyResult {
 }
 
 #[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct EnabledOptions {
-  #[serde(rename = "useGnuEnabled")]
   use_gnu_enabled: bool,
-  #[serde(rename = "pedanticEnabled")]
   pedantic_enabled: bool,
-  #[serde(rename = "acpOutputEnabled")]
   acp_output_enabled: bool,
-  #[serde(rename = "asciiCheckEnabled")]
   ascii_check_enabled: bool,
-  #[serde(rename = "addToPathEnabled")]
   add_to_path_enabled: bool,
-  #[serde(rename = "desktopShortcutEnabled")]
-  desktop_shortcut_enabled: bool
+  desktop_shortcut_enabled: bool,
 }
 
 #[tauri::command]
@@ -137,6 +128,6 @@ pub fn options_scan(setup: &str) -> EnabledOptions {
     acp_output_enabled: acp_output_enabled(setup),
     ascii_check_enabled: ascii_check_enabled(setup),
     add_to_path_enabled: add_to_path_enabled(setup),
-    desktop_shortcut_enabled: desktop_shortcut_enabled(setup)
+    desktop_shortcut_enabled: desktop_shortcut_enabled(setup),
   }
 }

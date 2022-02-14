@@ -15,7 +15,7 @@
 // You should have received a copy of the GNU General Public License
 // along with vscch4.  If not, see <http://www.gnu.org/licenses/>.
 
-use super::winapi::get_acp;
+use crate::utils::winapi::get_acp;
 
 pub fn use_gnu_enabled(setup: &str) -> bool {
   ["gcc-mingw", "gcc"].iter().any(|s| s == &setup)
@@ -44,7 +44,7 @@ pub fn add_to_path_enabled(setup: &str) -> bool {
 }
 
 #[cfg(target_os = "windows")]
-pub fn desktop_shortcut_enabled(setup: &str) -> bool {
+pub fn desktop_shortcut_enabled(_setup: &str) -> bool {
   true
 }
 

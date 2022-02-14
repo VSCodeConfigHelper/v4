@@ -32,9 +32,8 @@ pub use winapi::um::knownfolders::*;
 use winapi::um::processenv::ExpandEnvironmentStringsW;
 use winapi::um::shlobj::SHGetKnownFolderPath;
 use winapi::um::shtypes::REFKNOWNFOLDERID;
-use winapi::um::wincon::GetConsoleWindow;
+pub use winapi::um::winbase::CREATE_NO_WINDOW;
 use winapi::um::winnls::GetACP;
-use winapi::um::winuser::{ShowWindow, SW_HIDE};
 
 pub fn expand_environment_strings(src: &str) -> io::Result<String> {
   // Make src null-terminated UTF-16
@@ -98,12 +97,6 @@ pub fn get_known_folder_path(id: REFKNOWNFOLDERID) -> io::Result<String> {
       "Failed to convert wide string to string",
     )
   })
-}
-
-pub fn hide_console() {
-  unsafe {
-    ShowWindow(GetConsoleWindow(), SW_HIDE);
-  }
 }
 
 pub fn get_acp() -> u32 {

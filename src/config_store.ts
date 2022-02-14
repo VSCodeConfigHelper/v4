@@ -21,8 +21,7 @@ export type Compiler = {
   setup: string;
   path: string;
   version: string;
-  package_string: string;
-  version_text: string;
+  packageString: string;
 };
 export type OptionsBase = {
   compatibleMode: boolean;

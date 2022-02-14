@@ -17,20 +17,20 @@
 
 #![cfg(target_os = "windows")]
 
-use std::fs::File;
+use std::os::windows::process::CommandExt;
 use std::path::{Path, PathBuf};
 use std::process::Command;
 use std::str;
 
 use serde::Deserialize;
 use serde_json;
-use winapi::um::knownfolders::FOLDERID_LocalAppData;
 
-use super::super::winapi::get_known_folder_path;
-use super::super::winapi::{FOLDERID_ProgramData, FOLDERID_ProgramFilesX86};
 use super::verparse;
 use super::Compiler;
 use super::CompilerSetup;
+use crate::utils::winapi::get_known_folder_path;
+use crate::utils::winapi::CREATE_NO_WINDOW;
+use crate::utils::winapi::{FOLDERID_LocalAppData, FOLDERID_ProgramData, FOLDERID_ProgramFilesX86};
 
 static POWERSHELL: &str = "C:\\Windows\\system32\\WindowsPowerShell\\v1.0\\powershell.exe";
 static VSWHERE_DOWNLOAD_LINK: &str =
@@ -55,12 +55,17 @@ fn get_vswhere() -> Option<PathBuf> {
     .ok()
     .map(|p| Path::new(&p).join(r"Temp\vswhere.exe"))?;
   if tmp_path.exists() {
-    return Some(tmp_path.to_path_buf());
+    return Some(tmp_path);
   }
   Command::new(POWERSHELL)
-    .args(&[
+    .creation_flags(CREATE_NO_WINDOW)
+    .args([
       "-Command",
-      format!("Invoke-WebRequest -Uri {} -OutFile {}", VSWHERE_DOWNLOAD_LINK, tmp_path.to_str().unwrap()).as_str(),
+      &(format!(
+        "Invoke-WebRequest -Uri {} -OutFile {}",
+        VSWHERE_DOWNLOAD_LINK,
+        tmp_path.to_str().unwrap()
+      ))
     ])
     .output()
     .ok()
@@ -76,16 +81,15 @@ fn scan() -> Vec<Compiler> {
   let vswhere = vswhere.unwrap();
 
   #[derive(Deserialize)]
+  #[serde(rename_all = "camelCase")]
   struct InstallInfo {
-    #[serde(rename = "installationPath")]
     installation_path: String,
-    #[serde(rename = "installationVersion")]
     installation_version: String,
-    #[serde(rename = "displayName")]
     display_name: String,
   }
 
   let list: Option<Vec<InstallInfo>> = Command::new(vswhere)
+    .creation_flags(CREATE_NO_WINDOW)
     .args(&[
       "-products",
       "*",
@@ -113,8 +117,7 @@ fn scan() -> Vec<Compiler> {
       setup: "msvc",
       version: info.installation_version,
       path: info.installation_path,
-      package_string: info.display_name,
-      version_text: "".to_string(),
+      package_string: info.display_name
     })
     .collect()
 }
@@ -123,8 +126,10 @@ fn install() -> bool {
   open::that("https://aka.ms/vs/17/release/vs_BuildTools.exe").is_ok()
 }
 
+pub static ID: &str = "msvc";
+
 pub static SETUP: CompilerSetup = CompilerSetup {
-  id: "msvc",
+  id: ID,
   name: "VC++ 生成工具",
   description: "Microsoft Visual C++",
   how_to_install: r"下载 VC++ 生成工具安装器。运行安装器，按照提示完成安装。",

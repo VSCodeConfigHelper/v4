@@ -17,11 +17,11 @@
 
 use std::path::Path;
 
-use super::reg;
+use crate::utils::winreg;
 
 #[cfg(target_os = "windows")]
 pub fn scan() -> Option<String> {
-  let cmd = reg::get(reg::HKEY_CLASSES_ROOT, "vscode\\shell\\open\\command", "")?;
+  let cmd = winreg::get(winreg::HKEY_CLASSES_ROOT, "vscode\\shell\\open\\command", "")?;
   // The value should be like:
   // "C:\Program Files\Microsoft VS Code\Code.exe" --open-url -- "%1"
   // and we just use the string inside the first quotation marks
