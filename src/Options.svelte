@@ -17,16 +17,22 @@
  along with vscch4.  If not, see <http://www.gnu.org/licenses/>.
 -->
 <script lang="ts">
-  import { fade } from "svelte/transition";
   import Icon from "@iconify/svelte";
+  import { readTextFile } from "@tauri-apps/api/fs";
+import { invoke } from "@tauri-apps/api/tauri";
+  import { onMount } from "svelte";
+
+  import {
+    compiler,
+    options,
+    OptionsProfile,
+    DEFAULT_PROFILE,
+    NEWBIE_PROFILE,
+  } from "./config_store";
 
   // TITLE
-
-  let tabTitles = ["通用", "语言", "编译", "功能", "行为"];
-  let activeTab = 2;
-
-  // PAGE 0 通用
-  let compatibleMode = false;
+  let tabTitles = ["通用", "语言", "编译", "功能"];
+  let activeTab = 3;
 
   // PAGE 1 语言
   const languages = ["C++", "C"];
@@ -44,7 +50,8 @@
   }
   let useGnuEnabled = true;
   let useGnu = false;
-  let pedantic = true;
+  let pedanticEnabled = true;
+  let pedantic = false;
 
   // PAGE 2 编译
   const warnings = [
@@ -72,9 +79,82 @@
     __2_input_element.focus();
     e.stopPropagation();
   }
-  $: generatedArgs = ((): string[] => {
-    return [];
-  })();
+  function generateArgs() {
+    const args: [string, string][] = [["", "/utf-8"]];
+    args.push([
+      activeStandard
+        ? useGnu
+          ? `-std=gnu${activeStandard.toLowerCase().substring(1)}`
+          : `-std=${activeStandard.toLowerCase()}`
+        : "",
+      activeStandard ? `/std:${activeStandard.toLowerCase()}` : "",
+    ]);
+    if (pedantic) {
+      args.push(["-pedantic", ""]);
+    }
+    args.push(
+      ((): [string, string] => {
+        switch (activeWarning) {
+          case "all":
+            return ["-Wall", "/W4"];
+          case "extra":
+            return ["-Wextra", "/Wall"];
+          case "default":
+          default:
+            return ["", ""];
+        }
+      })()
+    );
+    args.push(
+      ((): [string, string] => {
+        switch (activeOptLevel) {
+          case "1":
+            return ["-O1", "/O1"];
+          case "2":
+            return ["-O2", "/O2"];
+          case "3":
+            return ["-O3", "/O2"];
+          case "speed":
+            return ["-Ofast", "/Ox"];
+          case "size":
+            return ["-Oz", "/Os"];
+          case "default":
+          default:
+            return ["", ""];
+        }
+      })()
+    );
+    if (werror) {
+      args.push(["-Werror", "/WX"]);
+    }
+    if (staticStd) {
+      args.push(["-static-libgcc", "/MT"]);
+      if (activeLanguage === "C++") {
+        args.push(["-static-libstdc++", ""]);
+      }
+    }
+    if (acpOutput) {
+      args.push(["-fexec-charset=GBK", ""]);
+    }
+    console.log($compiler);
+    return args
+      .map((p) => p[$compiler?.setup === "msvc" ? 1 : 0])
+      .filter((s) => s);
+  }
+  let generatedArgs: string[];
+  $: {
+    $compiler,
+      activeLanguage,
+      activeStandard,
+      useGnu,
+      pedantic,
+      activeWarning,
+      activeOptLevel,
+      werror,
+      acpOutput,
+      staticStd;
+    generatedArgs = generateArgs();
+  }
   let customArgs: string[] = [];
   let __2_current = "";
   function __2_handle_keypress(e: KeyboardEvent) {
@@ -88,12 +168,110 @@
   }
   function __2_handle_keydown(e: KeyboardEvent) {
     if (e.key === "Backspace") {
-      console.log(__2_current.length);
       if (__2_current.length === 0) {
         customArgs = customArgs.slice(0, -1);
       }
     }
   }
+
+  // PAGE 3 功能
+  let asciiCheckEnabled = true;
+  let asciiCheck = false;
+  let removeExtensions = false;
+  const testOptions = [
+    { name: "禁用", value: "disabled" },
+    { name: "自动", value: "auto" },
+    { name: "启用", value: "enabled" },
+  ];
+  let test = "auto";
+  let addToPathEnabled = true;
+  let addToPath = false;
+  let openVscode = true;
+  let collectData = true;
+  let desktopShortcutEnabled = true;
+  let desktopShortcut = false;
+
+  // PAGE 0 通用
+  let compatibleMode = false;
+  function readProfile(profile: OptionsProfile) {
+    ({
+      compatibleMode,
+      activeLanguage,
+      activeStandard,
+      asciiCheck,
+      removeExtensions,
+      addToPath,
+      openVscode,
+      collectData,
+      desktopShortcut,
+      useGnu,
+      pedantic,
+      activeWarning,
+      activeOptLevel,
+      werror,
+      acpOutput,
+      staticStd,
+      customArgs,
+    } = profile);
+  }
+  function writeProfile(): OptionsProfile {
+    return {
+      compatibleMode,
+      activeLanguage,
+      activeStandard,
+      asciiCheck,
+      removeExtensions,
+      addToPath,
+      openVscode,
+      collectData,
+      desktopShortcut,
+      useGnu,
+      pedantic,
+      activeWarning,
+      activeOptLevel,
+      werror,
+      acpOutput,
+      staticStd,
+      customArgs,
+    };
+  }
+  let lastProfileAvailable = true;
+  async function readLastProfile() {
+    try {
+      const text = await readTextFile("profile.json");
+      const profile: OptionsProfile = JSON.parse(text);
+      readProfile(profile);
+    } catch {
+      readProfile(DEFAULT_PROFILE);
+      lastProfileAvailable = false;
+    }
+  }
+  $: options.update(() => ({
+    ...writeProfile(),
+    args: [...generatedArgs, ...customArgs],
+  }));
+  $: scan($compiler?.setup);
+
+  async function scan(setup?: string) {
+    if (!setup) return;
+    ({
+      useGnuEnabled,
+      pedanticEnabled,
+      acpOutputEnabled,
+      asciiCheckEnabled,
+      addToPathEnabled,
+      desktopShortcutEnabled
+    } = await invoke("options_scan", { setup }));
+    useGnu ||= useGnuEnabled;
+    pedantic ||= pedanticEnabled;
+    acpOutput ||= acpOutputEnabled;
+    asciiCheck ||= asciiCheckEnabled;
+    addToPath ||= addToPathEnabled;
+  }
+
+  onMount(async () => {
+    await readLastProfile();
+  });
 </script>
 
 <div class="form-control space-y-3">
@@ -126,13 +304,22 @@
       <div>
         <div class="text-center font-bold mb-3">导入已有配置</div>
         <div class="flex flex-col space-y-2">
-          <button class="btn btn-sm glass text-black font-normal">
+          <button
+            class="btn btn-sm glass text-black font-normal"
+            on:click={() => readProfile(DEFAULT_PROFILE)}
+          >
             默认配置
           </button>
-          <button class="btn btn-sm glass text-black font-normal">
+          <button
+            class="btn btn-sm glass text-black font-normal"
+            on:click={() => readProfile(NEWBIE_PROFILE)}
+          >
             新手配置
           </button>
-          <button class="btn btn-sm glass text-black font-normal"
+          <button
+            class="btn btn-sm glass text-black font-normal"
+            disabled={!lastProfileAvailable}
+            on:click={readLastProfile}
             >上次配置
           </button>
         </div>
@@ -190,15 +377,15 @@
           <option value={s}>{s}</option>
         {/each}
       </select>
-      <span> 的语言标准。</span>
+      <span> {activeStandard === null ? "的" : ""}语言标准。</span>
     </div>
     <div class="font-bold">更多选项</div>
     <div class="grid grid-cols-2 gap-2">
       <div class="flex flex-row items-center space-x-2">
         <input
           type="checkbox"
-          disabled={!useGnuEnabled}
           class="toggle toggle-sm toggle-primary"
+          disabled={!useGnuEnabled}
           bind:checked={useGnu}
         />
         <div>GNU 方言</div>
@@ -207,6 +394,7 @@
         <input
           type="checkbox"
           class="toggle toggle-sm toggle-primary"
+          disabled={!pedanticEnabled}
           bind:checked={pedantic}
         />
         <div>严格执行标准</div>
@@ -253,23 +441,31 @@
           bind:checked={staticStd}
         />
       </div>
+      <div class="flex flex-row justify-between items-center space-x-2">
+        <div>调整输出编码</div>
+        <input
+          type="checkbox"
+          class="toggle toggle-sm toggle-primary"
+          disabled={!acpOutputEnabled}
+          bind:checked={acpOutput}
+        />
+      </div>
     </div>
     <div class="font-bold">自定义...</div>
     <div
-      class="input input-sm input-bordered cursor-text"
+      class="input input-sm input-bordered cursor-text h-auto"
       on:click={__2_handle_click}
       class:input-focus={__2_input_focused}
     >
-      <span class="space-x-1 cursor-pointer">
-        {#each generatedArgs as a (a)}
-          <span class="badge badge-primary" transition:fade={{ duration: 200 }}>
+      <span class="space-x-1">
+        {#each generatedArgs as a}
+          <span class="badge badge-primary cursor-auto">
             {a}
           </span>
         {/each}
-        {#each customArgs as a, i (a)}
+        {#each customArgs as a, i}
           <span
-            class="badge badge-info"
-            transition:fade={{ duration: 200 }}
+            class="badge badge-info cursor-pointer"
             on:click={() =>
               (customArgs = [
                 ...customArgs.slice(0, i),
@@ -285,14 +481,86 @@
         bind:this={__2_input_element}
         on:focus={() => (__2_input_focused = true)}
         on:blur={() => (__2_input_focused = false)}
-        class="outline-none bg-transparent"
+        class="outline-none bg-transparent w-24"
         bind:value={__2_current}
         on:keypress={__2_handle_keypress}
         on:keydown={__2_handle_keydown}
       />
     </div>
   {:else if activeTab === 3}
-    <div />
+    <div class="grid grid-cols-2 gap-x-6 gap-y-2">
+      <div class="flex flex-row justify-between items-center space-x-2">
+        <div>无法调试时警告</div>
+        <input
+          type="checkbox"
+          class="toggle toggle-sm toggle-primary"
+          disabled={!asciiCheckEnabled}
+          bind:checked={asciiCheck}
+        />
+      </div>
+      <div class="flex flex-row justify-between items-center space-x-2">
+        <div>卸载不推荐的扩展</div>
+        <input
+          type="checkbox"
+          class="toggle toggle-sm toggle-primary"
+          bind:checked={removeExtensions}
+        />
+      </div>
+      <div class="flex flex-row justify-between items-center space-x-2">
+        <div>添加桌面快捷方式</div>
+        <input
+          type="checkbox"
+          class="toggle toggle-sm toggle-primary"
+          disabled={!desktopShortcutEnabled}
+          bind:checked={desktopShortcut}
+        />
+      </div>
+      <div class="flex flex-row justify-between items-center space-x-2">
+        <div>发送使用数据</div>
+        <input
+          type="checkbox"
+          class="toggle toggle-sm toggle-primary"
+          bind:checked={collectData}
+        />
+      </div>
+      <div
+        class="col-span-2 flex flex-row justify-between items-center space-x-2"
+      >
+        <div>生成测试文件</div>
+        <div class="btn-group">
+          {#each testOptions as t}
+            <button
+              class="btn btn-sm btn-outline"
+              on:click={() => (test = t.value)}
+              class:btn-active={t.value === test}
+            >
+              {t.name}
+            </button>
+          {/each}
+        </div>
+      </div>
+      <div
+        class="col-span-2 flex flex-row justify-between items-center space-x-2"
+      >
+        <div>将编译器添加到 PATH</div>
+        <input
+          type="checkbox"
+          class="toggle toggle-sm toggle-primary"
+          disabled={!addToPathEnabled}
+          bind:checked={addToPath}
+        />
+      </div>
+      <div
+        class="col-span-2 flex flex-row justify-between items-center space-x-2"
+      >
+        <div>配置完成后启动 VS Code</div>
+        <input
+          type="checkbox"
+          class="toggle toggle-sm toggle-primary"
+          bind:checked={openVscode}
+        />
+      </div>
+    </div>
   {:else if activeTab === 4}
     <div />
   {/if}

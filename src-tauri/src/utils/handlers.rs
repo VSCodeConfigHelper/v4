@@ -21,6 +21,7 @@ use super::compiler::Compiler;
 use super::compiler::ENABLED_SETUPS;
 use super::vscode;
 use super::workspace;
+use super::options::*;
 
 #[derive(Serialize)]
 #[serde(tag = "type")]
@@ -110,4 +111,32 @@ pub fn workspace_verify(path: String) -> VerifyResult {
     };
   }
   VerifyResult::Ok { value: () }
+}
+
+#[derive(Serialize)]
+pub struct EnabledOptions {
+  #[serde(rename = "useGnuEnabled")]
+  use_gnu_enabled: bool,
+  #[serde(rename = "pedanticEnabled")]
+  pedantic_enabled: bool,
+  #[serde(rename = "acpOutputEnabled")]
+  acp_output_enabled: bool,
+  #[serde(rename = "asciiCheckEnabled")]
+  ascii_check_enabled: bool,
+  #[serde(rename = "addToPathEnabled")]
+  add_to_path_enabled: bool,
+  #[serde(rename = "desktopShortcutEnabled")]
+  desktop_shortcut_enabled: bool
+}
+
+#[tauri::command]
+pub fn options_scan(setup: &str) -> EnabledOptions {
+  EnabledOptions {
+    use_gnu_enabled: use_gnu_enabled(setup),
+    pedantic_enabled: pedantic_enabled(setup),
+    acp_output_enabled: acp_output_enabled(setup),
+    ascii_check_enabled: ascii_check_enabled(setup),
+    add_to_path_enabled: add_to_path_enabled(setup),
+    desktop_shortcut_enabled: desktop_shortcut_enabled(setup)
+  }
 }

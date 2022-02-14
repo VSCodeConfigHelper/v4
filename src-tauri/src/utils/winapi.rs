@@ -15,6 +15,8 @@
 // You should have received a copy of the GNU General Public License
 // along with vscch4.  If not, see <http://www.gnu.org/licenses/>.
 
+#![cfg(target_os = "windows")]
+
 use std::alloc::{alloc, dealloc, Layout};
 use std::ffi::{OsStr, OsString};
 use std::io;
@@ -24,14 +26,16 @@ use std::slice;
 
 use winapi::ctypes::c_void;
 use winapi::shared::ntdef::*;
-use winapi::shared::winerror::*;
+use winapi::shared::winerror::S_OK;
 use winapi::um::combaseapi::CoTaskMemFree;
+pub use winapi::um::knownfolders::*;
 use winapi::um::processenv::ExpandEnvironmentStringsW;
 use winapi::um::shlobj::SHGetKnownFolderPath;
-use winapi::um::shtypes::*;
-pub use winapi::um::knownfolders::*;
+use winapi::um::shtypes::REFKNOWNFOLDERID;
+use winapi::um::wincon::GetConsoleWindow;
+use winapi::um::winnls::GetACP;
+use winapi::um::winuser::{ShowWindow, SW_HIDE};
 
-#[cfg(target_os = "windows")]
 pub fn expand_environment_strings(src: &str) -> io::Result<String> {
   // Make src null-terminated UTF-16
   let mut src: Vec<u16> = OsStr::new(src).encode_wide().collect();
@@ -94,6 +98,16 @@ pub fn get_known_folder_path(id: REFKNOWNFOLDERID) -> io::Result<String> {
       "Failed to convert wide string to string",
     )
   })
+}
+
+pub fn hide_console() {
+  unsafe {
+    ShowWindow(GetConsoleWindow(), SW_HIDE);
+  }
+}
+
+pub fn get_acp() -> u32 {
+  unsafe { GetACP() }
 }
 
 #[cfg(test)]

@@ -22,7 +22,6 @@ use std::path::{Path, PathBuf};
 use std::process::Command;
 use std::str;
 
-use reqwest;
 use serde::Deserialize;
 use serde_json;
 use winapi::um::knownfolders::FOLDERID_LocalAppData;
@@ -33,6 +32,7 @@ use super::verparse;
 use super::Compiler;
 use super::CompilerSetup;
 
+static POWERSHELL: &str = "C:\\Windows\\system32\\WindowsPowerShell\\v1.0\\powershell.exe";
 static VSWHERE_DOWNLOAD_LINK: &str =
   "https://guyutongxue.oss-cn-beijing.aliyuncs.com/vswhere/vswhere.exe";
 
@@ -57,11 +57,14 @@ fn get_vswhere() -> Option<PathBuf> {
   if tmp_path.exists() {
     return Some(tmp_path.to_path_buf());
   }
-  let mut file = File::create(&tmp_path).ok()?;
-  reqwest::blocking::get(VSWHERE_DOWNLOAD_LINK)
+  Command::new(POWERSHELL)
+    .args(&[
+      "-Command",
+      format!("Invoke-WebRequest -Uri {} -OutFile {}", VSWHERE_DOWNLOAD_LINK, tmp_path.to_str().unwrap()).as_str(),
+    ])
+    .output()
     .ok()
-    .and_then(|mut res| res.copy_to(&mut file).ok())
-    .map(|_| tmp_path.to_path_buf())
+    .map(|_| tmp_path)
 }
 
 fn scan() -> Vec<Compiler> {
@@ -83,13 +86,15 @@ fn scan() -> Vec<Compiler> {
   }
 
   let list: Option<Vec<InstallInfo>> = Command::new(vswhere)
-    .arg("-products")
-    .arg("*")
-    .arg("-requires")
-    .arg("Microsoft.VisualStudio.Component.VC.Tools.x86.x64")
-    .arg("-format")
-    .arg("json")
-    .arg("-utf8")
+    .args(&[
+      "-products",
+      "*",
+      "-requires",
+      "Microsoft.VisualStudio.Component.VC.Tools.x86.x64",
+      "-format",
+      "json",
+      "-utf8",
+    ])
     .output()
     .ok()
     .and_then(|o| {
@@ -105,7 +110,7 @@ fn scan() -> Vec<Compiler> {
     .unwrap()
     .into_iter()
     .map(|info| Compiler {
-      kind: "msvc",
+      setup: "msvc",
       version: info.installation_version,
       path: info.installation_path,
       package_string: info.display_name,

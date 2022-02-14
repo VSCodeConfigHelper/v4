@@ -24,7 +24,7 @@ pub mod msvc;
 
 #[derive(Serialize)]
 pub struct Compiler {
-  kind: &'static str,
+  setup: &'static str,
   path: String,
   version: String,
   package_string: String,
@@ -35,7 +35,7 @@ impl Compiler {
   pub fn new(setup: &CompilerSetup, path: &str, version_text: &str) -> Compiler {
     let (version, package_string) = (setup.verparser)(version_text);
     Compiler {
-      kind: setup.id,
+      setup: setup.id,
       path: path.to_string(),
       version: version.to_string(),
       package_string: package_string.to_string(),

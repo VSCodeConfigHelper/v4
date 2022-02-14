@@ -15,14 +15,41 @@
 // You should have received a copy of the GNU General Public License
 // along with vscch4.  If not, see <http://www.gnu.org/licenses/>.
 
-pub mod handlers;
+use super::winapi::get_acp;
+
+pub fn use_gnu_enabled(setup: &str) -> bool {
+  ["gcc-mingw", "gcc"].iter().any(|s| s == &setup)
+}
+
+pub fn pedantic_enabled(setup: &str) -> bool {
+  setup != "msvc"
+}
 
 #[cfg(target_os = "windows")]
-pub mod reg;
-#[cfg(target_os = "windows")]
-pub mod winapi;
+pub fn acp_output_enabled(setup: &str) -> bool {
+  setup == "gcc-mingw" && get_acp() == 936
+}
 
-pub mod vscode;
-pub mod compiler;
-pub mod workspace;
-pub mod options;
+#[cfg(not(target_os = "windows"))]
+pub fn output_acp_enabled(_setup: &str) -> bool {
+  false
+}
+
+pub fn ascii_check_enabled(setup: &str) -> bool {
+  setup == "gcc-mingw"
+}
+
+pub fn add_to_path_enabled(setup: &str) -> bool {
+  ["gcc-mingw", "llvm-mingw"].iter().any(|s| s == &setup)
+}
+
+#[cfg(target_os = "windows")]
+pub fn desktop_shortcut_enabled(setup: &str) -> bool {
+  true
+}
+
+#[cfg(not(target_os = "windows"))]
+pub fn desktop_shortcut_enabled(_setup: &str) -> bool {
+  false
+}
+

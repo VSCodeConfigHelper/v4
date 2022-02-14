@@ -18,9 +18,8 @@
 -->
 <script lang="ts">
   import type { Unsubscriber, Writable } from "svelte/store";
-  import { fly } from "svelte/transition";
-  import { create_in_transition, create_out_transition } from "svelte/internal";
   import { onDestroy, onMount } from "svelte";
+  import { process } from "@tauri-apps/api";
   import Icon from "@iconify/svelte";
 
   import Begin from "./Begin.svelte";
@@ -28,14 +27,15 @@
   import Compiler from "./Compiler.svelte";
   import Workspace from "./Workspace.svelte";
   import Options from "./Options.svelte";
-  import { vscode, compiler, workspace, options } from "./config_store";
+  import { vscode, compiler, workspace, options, done } from "./config_store";
+  import Done from "./Done.svelte";
 
   type Step = {
     label: string;
     readonly component: any;
     resultWritable?: Writable<any>;
   };
-  const steps: Step[] = [
+  const STEPS: Step[] = [
     {
       label: "开始",
       component: Begin,
@@ -62,9 +62,11 @@
     },
     {
       label: "完成",
-      component: null,
+      component: Done,
+      resultWritable: done,
     },
   ];
+  const LEN = STEPS.length;
   let step = 0;
 
   let results: any[] = [];
@@ -72,6 +74,10 @@
 
   let card: HTMLElement;
   async function go(d: number) {
+    if (step + d === LEN) {
+      process.exit(0);
+      return;
+    }
     card.style.setProperty("--direction", `${50 * d}px`);
     card.classList.add("slide");
     await new Promise((resolve) => setTimeout(resolve, 160));
@@ -90,8 +96,8 @@
   }
 
   onMount(() => {
-    for (const i in steps) {
-      const subscribe = steps[i].resultWritable?.subscribe((v) => {
+    for (const i in STEPS) {
+      const subscribe = STEPS[i].resultWritable?.subscribe((v) => {
         results[i] = v;
       });
       if (subscribe) {
@@ -123,7 +129,7 @@
     class="card glass shadow-lg hover:shadow-lg w-9/12 max-w-3xl"
   >
     <div class="card-body">
-      {#each steps as s, i (i)}
+      {#each STEPS as s, i (i)}
         <div class:hidden={i != step}>
           <svelte:component this={s.component} />
         </div>
@@ -131,7 +137,7 @@
       <div class="justify-end card-actions !mt-3">
         <button
           class="btn btn-ghost"
-          class:invisible={step === 0}
+          class:invisible={step === 0 || step === LEN - 1}
           on:click={() => go(-1)}
         >
           上一步
@@ -141,7 +147,11 @@
           disabled={results[step] === null}
           on:click={() => go(1)}
         >
-          下一步
+          {#if step === LEN - 1}
+            完成
+          {:else}
+            下一步
+          {/if}
         </button>
       </div>
     </div>
@@ -149,10 +159,11 @@
 </main>
 <footer class="fixed glass bottom-0 w-full">
   <ul class="w-full steps h-20 items-center">
-    {#each steps as s, i}
+    {#each STEPS as s, i}
       <li
         class="step before:transition after:transition"
         class:step-primary={step >= i}
+        on:click={() => step !== LEN - 1 && step > i && go(i - step)}
       >
         {s.label}
       </li>
