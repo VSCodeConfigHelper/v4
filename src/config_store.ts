@@ -30,9 +30,10 @@ export type OptionsBase = {
   asciiCheck: boolean;
   removeExtensions: boolean;
   addToPath: boolean;
+  test: boolean | null;
   openVscode: boolean;
-  collectData: boolean;
   desktopShortcut: boolean;
+  collectData: boolean;
 };
 
 export type OptionsProfile = OptionsBase & {
@@ -58,8 +59,9 @@ export const DEFAULT_PROFILE: OptionsProfile = {
   removeExtensions: false,
   addToPath: true,
   openVscode: true,
-  collectData: true,
+  test: null,
   desktopShortcut: false,
+  collectData: true,
   useGnu: false,
   pedantic: false,
   activeWarning: "default",
@@ -78,8 +80,9 @@ export const NEWBIE_PROFILE: OptionsProfile = {
   removeExtensions: true,
   addToPath: true,
   openVscode: true,
-  collectData: true,
   desktopShortcut: true,
+  test: null,
+  collectData: true,
   useGnu: false,
   pedantic: true,
   activeWarning: "extra",

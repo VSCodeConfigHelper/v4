@@ -15,7 +15,7 @@
 // You should have received a copy of the GNU General Public License
 // along with vscch4.  If not, see <http://www.gnu.org/licenses/>.
 
-use serde::Serialize;
+use serde::{Serialize, Deserialize};
 
 pub mod verparse;
 
@@ -23,11 +23,12 @@ pub mod mingw;
 pub mod msvc;
 
 #[derive(Serialize)]
+#[derive(Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Compiler {
-  setup: &'static str,
-  path: String,
-  version: String,
+  pub setup: String,
+  pub path: String,
+  pub version: String,
   package_string: String,
 }
 
@@ -35,7 +36,7 @@ impl Compiler {
   pub fn new(setup: &CompilerSetup, path: &str, version_text: &str) -> Compiler {
     let (version, package_string) = (setup.verparser)(version_text);
     Compiler {
-      setup: setup.id,
+      setup: setup.id.to_string(),
       path: path.to_string(),
       version: version.to_string(),
       package_string: package_string.to_string(),

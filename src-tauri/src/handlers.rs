@@ -20,6 +20,7 @@ use serde::Serialize;
 use crate::steps::{
   compiler::get_setup, compiler::Compiler, compiler::ENABLED_SETUPS, options::*, vscode, workspace,
 };
+use crate::tasks::{find_tasks, TaskArgs};
 
 #[derive(Serialize)]
 #[serde(tag = "type")]
@@ -130,4 +131,15 @@ pub fn options_scan(setup: &str) -> EnabledOptions {
     add_to_path_enabled: add_to_path_enabled(setup),
     desktop_shortcut_enabled: desktop_shortcut_enabled(setup),
   }
+}
+
+#[tauri::command]
+pub fn task_init(vscode: String, compiler: Compiler, workspace: String, options: Options) -> usize {
+  let tasks = find_tasks(&TaskArgs {
+    vscode,
+    compiler,
+    workspace,
+    options,
+  });
+  tasks.len()
 }

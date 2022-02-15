@@ -114,7 +114,7 @@ fn scan() -> Vec<Compiler> {
     .unwrap()
     .into_iter()
     .map(|info| Compiler {
-      setup: "msvc",
+      setup: "msvc".to_string(),
       version: info.installation_version,
       path: info.installation_path,
       package_string: info.display_name

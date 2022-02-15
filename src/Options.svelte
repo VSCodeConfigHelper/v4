@@ -174,11 +174,11 @@
   let asciiCheck = false;
   let removeExtensions = false;
   const testOptions = [
-    { name: "禁用", value: "disabled" },
-    { name: "自动", value: "auto" },
-    { name: "启用", value: "enabled" },
+    { name: "禁用", value: false },
+    { name: "自动", value: null },
+    { name: "启用", value: true },
   ];
-  let test = "auto";
+  let test: boolean | null = null;
   let addToPathEnabled = true;
   let addToPath = false;
   let openVscode = true;
@@ -197,8 +197,9 @@
       removeExtensions,
       addToPath,
       openVscode,
-      collectData,
       desktopShortcut,
+      test,
+      collectData,
       useGnu,
       pedantic,
       activeWarning,
@@ -218,8 +219,9 @@
       removeExtensions,
       addToPath,
       openVscode,
-      collectData,
       desktopShortcut,
+      test,
+      collectData,
       useGnu,
       pedantic,
       activeWarning,
@@ -334,9 +336,9 @@
               <div class="card-body">
                 <h2 class="card-title">什么是兼容模式</h2>
                 <p>
-                  本工具可以生成更美观、易用的配置，但这与网上的大多数教程并不兼容。
+                  本工具可以生成更美观、易用的外部弹窗配置，但这与网上的大多数教程并不兼容。
                   <br />
-                  以兼容模式运行时，工具将使用更常见的配置方法。
+                  以兼容模式运行时，工具将使用更常见的内置终端配置。
                 </p>
               </div>
             </div>

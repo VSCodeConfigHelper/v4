@@ -130,9 +130,11 @@
   >
     <div class="card-body">
       {#each STEPS as s, i (i)}
-        <div class:hidden={i != step}>
-          <svelte:component this={s.component} />
-        </div>
+        {#if i <= step}
+          <div class:hidden={i != step}>
+            <svelte:component this={s.component} />
+          </div>
+        {/if}
       {/each}
       <div class="justify-end card-actions !mt-3">
         <button

@@ -42,6 +42,7 @@ checksum = "94a45b455c14666b85fc40a019e8ab9eb75e3a124e05494f5397122bc9eb06e0"
 name = "app"
 version = "4.0.0"
 dependencies = [
+ "once_cell",
  "open",
  "regex",
  "serde",
@@ -3165,9 +3166,9 @@ dependencies = [
 
 [[package]]
 name = "tauri-build"
-version = "1.0.0-rc.1"
+version = "1.0.0-rc.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a35ca6c70dce0dbe3441ab9e6d4ebae9a2315cfe8823662ac86cf517b22831e8"
+checksum = "b4dab79d01b8e429cb5bd98d9da90cbc1bedbd87d536d16adcf269c584bf6ae0"
 dependencies = [
  "anyhow",
  "cargo_toml",

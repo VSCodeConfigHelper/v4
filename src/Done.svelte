@@ -17,8 +17,22 @@
  along with vscch4.  If not, see <http://www.gnu.org/licenses/>.
 -->
 <script lang="ts">
+  import { invoke } from "@tauri-apps/api/tauri";
+  import { onMount } from "svelte";
+
+  import { vscode, compiler, workspace, options } from "./config_store";
 
   let working = true;
+
+  onMount(async () => {
+    const taskNum = await invoke("task_init", {
+      vscode: $vscode,
+      compiler: $compiler,
+      workspace: $workspace,
+      options: $options,
+    });
+    console.log(taskNum);
+  });
 </script>
 
 <div class="form-control space-y-3">

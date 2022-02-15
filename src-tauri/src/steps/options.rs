@@ -15,10 +15,30 @@
 // You should have received a copy of the GNU General Public License
 // along with vscch4.  If not, see <http://www.gnu.org/licenses/>.
 
+use serde::Deserialize;
+
 use crate::utils::winapi::get_acp;
 
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct Options {
+  pub compatible_mode: bool,
+  #[serde(rename = "activeLanguage")]
+  pub language: String,
+  #[serde(rename = "activeStandard")]
+  pub standard: Option<String>,
+  pub args: Vec<String>,
+  pub ascii_check: bool,
+  pub remove_extensions: bool,
+  pub add_to_path: bool,
+  pub open_vscode: bool,
+  pub test: Option<bool>,
+  pub desktop_shortcut: bool,
+  pub collect_data: bool,
+}
+
 pub fn use_gnu_enabled(setup: &str) -> bool {
-  ["gcc-mingw", "gcc"].iter().any(|s| s == &setup)
+  ["gcc-mingw", "gcc"].contains(&setup)
 }
 
 pub fn pedantic_enabled(setup: &str) -> bool {
@@ -40,7 +60,7 @@ pub fn ascii_check_enabled(setup: &str) -> bool {
 }
 
 pub fn add_to_path_enabled(setup: &str) -> bool {
-  ["gcc-mingw", "llvm-mingw"].iter().any(|s| s == &setup)
+  ["gcc-mingw", "llvm-mingw"].contains(&setup)
 }
 
 #[cfg(target_os = "windows")]
