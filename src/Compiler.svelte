@@ -41,7 +41,7 @@
   let compilers: Compiler[] = [];
   let compilerNo = 0;
 
-  let useNew = false;
+  let useNew = true;
   let newPath = "";
   let verifyResult: VerifyResult<Compiler> | null = null;
 
@@ -88,13 +88,13 @@
 
   async function install() {
     await invoke("compiler_install", {
-      setup: setups[setupNo].id
+      setup: setups[setupNo].id,
     });
   }
 
   async function scan() {
     compilers = await invoke("compiler_scan", {
-      setup: setups[setupNo].id
+      setup: setups[setupNo].id,
     });
     if (useNew && compilers.length === 0) {
       toggleNew();
@@ -111,6 +111,7 @@
   onMount(async () => {
     setups = await invoke("compiler_setup_list");
     await scan();
+    if (compilers.length > 0) useNew = false;
   });
 </script>
 

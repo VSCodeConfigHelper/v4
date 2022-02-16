@@ -18,20 +18,44 @@
 -->
 <script lang="ts">
   import { invoke } from "@tauri-apps/api/tauri";
+  import { listen } from "@tauri-apps/api/event";
   import { onMount } from "svelte";
 
-  import { vscode, compiler, workspace, options } from "./config_store";
+  import { vscode, compiler, workspace, options, done } from "./config_store";
+
+  type TaskResult = {
+    type: "Ok",
+    name: string;
+  } | {
+    type: "Error";
+    name: string;
+    message: string;
+  };
 
   let working = true;
+  let success = false;
+
+  $: done.update(() => !working);
+
+  listen("task_finish", (r) => {
+    const p = r.payload as TaskResult;
+    if (p.type === "Ok") {
+
+    } else {
+      alert(p.message);
+      working = false;
+    }
+  });
 
   onMount(async () => {
-    const taskNum = await invoke("task_init", {
-      vscode: $vscode,
-      compiler: $compiler,
-      workspace: $workspace,
-      options: $options,
+    const taskNum= await invoke("task_init", {
+      args: {
+        vscode: $vscode,
+        compiler: $compiler,
+        workspace: $workspace,
+        options: $options,
+      }
     });
-    console.log(taskNum);
   });
 </script>
 
@@ -43,7 +67,11 @@
         <span>正在配置</span>
       </div>
     {:else}
+    {#if success}
       配置完成！
+    {:else}
+      配置失败。
+    {/if}
     {/if}
   </h3>
 </div>

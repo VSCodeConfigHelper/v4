@@ -15,6 +15,7 @@
 // You should have received a copy of the GNU General Public License
 // along with vscch4.  If not, see <http://www.gnu.org/licenses/>.
 
+use serde::Deserialize;
 use std::path::Path;
 
 use crate::steps::{compiler::Compiler, options::Options};
@@ -22,6 +23,7 @@ use crate::steps::{compiler::Compiler, options::Options};
 mod extension;
 mod test;
 
+#[derive(Deserialize)]
 pub struct TaskArgs {
   pub vscode: String,
   pub compiler: Compiler,
@@ -29,35 +31,18 @@ pub struct TaskArgs {
   pub options: Options,
 }
 
-type Task = fn(args: &TaskArgs) -> Result<(), &'static str>;
+struct Task {
+  name: &'static str,
+  action: fn(&TaskArgs) -> Result<(), &'static str>,
+  validator: fn(&TaskArgs) -> bool,
+}
 
 fn llvm_setup(setup: &str) -> bool {
   ["llvm-mingw", "llvm", "apple"].contains(&setup)
 }
 
-pub fn find_tasks(args: &TaskArgs) -> Vec<Task> {
-  let mut tasks: Vec<Task> = vec![];
-  if args.options.remove_extensions {
-    tasks.push(extension::remove_unrecommended);
-  }
-  tasks.push(extension::install_c_cpp);
-  if llvm_setup(&args.compiler.setup) {
-    tasks.push(extension::install_code_lldb);
-  }
-  if !args.options.compatible_mode {
-    // save console pauser
-    // add f6 keybinding
-  }
-  if args.options.ascii_check {
-    // add ascii check
-  }
-  if args.options.add_to_path {
-    // add to path
-  }
-  // tasks.json
-  // launch.json
-  // c_cpp_properties.json
-  let mut test = args.options.test;
+fn should_test(args: &TaskArgs) -> bool {
+  let test = args.options.test;
   if test.is_none() {
     let hello_word_filename = if args.options.language == "C" {
       "helloworld.c"
@@ -65,16 +50,89 @@ pub fn find_tasks(args: &TaskArgs) -> Vec<Task> {
       "helloworld.cpp"
     };
     let hello_world_path = Path::new(&args.workspace).join(hello_word_filename);
-    test = Some(!hello_world_path.exists())
+    !hello_world_path.exists()
+  } else {
+    test.unwrap()
   }
-  if test.unwrap() {
-    tasks.push(test::generate)
+}
+
+macro_rules! generate_task {
+  ($( ($t:path, $vp:pat => $vb:expr) ),* ) => {
+    vec![
+      $( Task {
+        name: stringify!($t),
+        action: $t,
+        validator: (|$vp: &TaskArgs| $vb)
+      } ),*
+    ]
+  };
+}
+
+// TODO LIST:
+mod run {
+  use super::TaskArgs;
+  pub fn create_pauser(args: &TaskArgs) -> Result<(), &'static str> {
+    Err("")
   }
-  if args.options.desktop_shortcut {
-    // generate shortcut
+  pub fn create_keybinding(args: &TaskArgs) -> Result<(), &'static str> {
+    Err("")
   }
-  if args.options.open_vscode {
-    // open vscode
+}
+mod debug {
+  use super::TaskArgs;
+  pub fn create_checker(args: &TaskArgs) -> Result<(), &'static str> {
+    Err("")
   }
-  tasks
+}
+mod compiler {
+  use super::TaskArgs;
+  pub fn add_to_path(args: &TaskArgs) -> Result<(), &'static str> {
+    Err("")
+  }
+}
+mod dotvscode {
+  use super::TaskArgs;
+  pub fn tasks_json(args: &TaskArgs) -> Result<(), &'static str> {
+    Err("")
+  }
+  pub fn launch_json(args: &TaskArgs) -> Result<(), &'static str> {
+    Err("")
+  }
+  pub fn c_cpp_properties_json(args: &TaskArgs) -> Result<(), &'static str> {
+    Err("")
+  }
+}
+mod shortcut {
+  use super::TaskArgs;
+  pub fn create(args: &TaskArgs) -> Result<(), &'static str> {
+    Err("")
+  }
+}
+mod vscode {
+  use super::TaskArgs;
+  pub fn open(args: &TaskArgs) -> Result<(), &'static str> {
+    Err("")
+  }
+}
+
+pub fn list(args: &TaskArgs) -> Vec<(&'static str, fn(&TaskArgs) -> Result<(), &'static str>)> {
+  generate_task![
+    (extension::remove_unrecommended, a => a.options.remove_extensions),
+    (extension::install_c_cpp, _ => true),
+    (extension::install_code_lldb, a => llvm_setup(&a.compiler.setup)),
+    (run::create_pauser, a => !a.options.compatible_mode),
+    (run::create_keybinding, a => !a.options.compatible_mode),
+    (debug::create_checker, a => a.options.ascii_check),
+    (compiler::add_to_path, a => a.options.add_to_path),
+    (dotvscode::tasks_json, _ => true),
+    (dotvscode::launch_json, _ => true),
+    (dotvscode::c_cpp_properties_json, _ => true),
+    (test::generate, a => should_test(&a)),
+    (shortcut::create, a => a.options.desktop_shortcut),
+    (vscode::open, a => a.options.open_vscode)
+  ]
+  .iter()
+  .filter(|t| (t.validator)(&args))
+  .map(|t| (t.name, t.action))
+  .collect()
 }

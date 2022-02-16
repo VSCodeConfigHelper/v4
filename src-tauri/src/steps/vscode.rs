@@ -15,8 +15,7 @@
 // You should have received a copy of the GNU General Public License
 // along with vscch4.  If not, see <http://www.gnu.org/licenses/>.
 
-use std::path::Path;
-
+use std::path::{Path,PathBuf};
 use crate::utils::winreg;
 
 #[cfg(target_os = "windows")]
@@ -33,17 +32,22 @@ pub fn scan() -> Option<String> {
 }
 
 #[cfg(target_os = "windows")]
+pub fn adjust_path(path: &Path) -> PathBuf {
+  let folder = path.parent().unwrap();
+  folder.join("bin").join("code.cmd")
+}
+
+#[cfg(not(target_os = "windows"))]
+pub fn adjust_path(path: &Path) -> PathBuf {
+  path.to_path_buf()
+}
+
 pub fn verify(path: &str) -> Result<(), &'static str> {
   let path = Path::new(path);
-  if !path.exists() {
+  if !path.is_file() {
     return Err("路径不存在");
   }
-  let vscode_folder = if path.is_dir() {
-    path
-  } else {
-    path.parent().unwrap()
-  };
-  if vscode_folder.join("bin").join("code.cmd").exists() {
+  if adjust_path(path).exists() {
     Ok(())
   } else {
     Err("找不到 code.cmd")

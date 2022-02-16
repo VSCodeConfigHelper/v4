@@ -16,32 +16,69 @@
 // along with vscch4.  If not, see <http://www.gnu.org/licenses/>.
 
 use once_cell::sync::OnceCell;
+use std::os::windows::process::CommandExt;
+use std::path::{Path, PathBuf};
+use std::process::Command;
 use std::sync::Mutex;
+
+use crate::steps::vscode::adjust_path;
+#[cfg(target_os = "windows")]
+use crate::utils::winapi::CREATE_NO_WINDOW;
 
 use super::TaskArgs;
 
 struct ExtensionManager {
-  path: String,
-  installed: Vec<String>
+  path: PathBuf,
+  installed: Vec<String>,
 }
 
 impl ExtensionManager {
   pub fn get(args: &TaskArgs) -> &Mutex<Self> {
     static INSTANCE: OnceCell<Mutex<ExtensionManager>> = OnceCell::new();
     INSTANCE.get_or_init(|| {
-      Mutex::new(ExtensionManager {
-        path: args.vscode.clone(),
-        installed: vec![]
-      })
+      let path = adjust_path(Path::new(&args.vscode));
+      let mut instance = ExtensionManager {
+        path: path,
+        installed: vec![],
+      };
+      let _ = instance.update();
+      Mutex::new(instance)
     })
   }
 
+  fn run(&self, args: &[&str]) -> Result<String, &'static str> {
+    let mut command = Command::new(&self.path);
+    #[cfg(target_os = "windows")]
+    command.creation_flags(CREATE_NO_WINDOW);
+    
+    let stdout = command
+      .args(args)
+      .output()
+      .map_err(|_| "Failed to run vscode extension manager")?
+      .stdout;
+    String::from_utf8(stdout).map_err(|_| "Decode error")
+  }
+
+  fn update(&mut self) -> Result<(), &'static str> {
+    let output = self.run(&["--list-extensions"])?;
+    self.installed = output.lines().map(|line| line.to_string()).collect();
+    Ok(())
+  }
+
   fn install(&self, id: &str) -> Result<(), &'static str> {
-    Err("not implemented")
+    if self.installed.contains(&id.to_string()) {
+      return Ok(());
+    }
+    self.run(&["--install-extension", id])?;
+    Ok(())
   }
 
   fn uninstall(&self, id: &str) -> Result<(), &'static str> {
-    Err("not implemented")
+    if !self.installed.contains(&id.to_string()) {
+      return Ok(());
+    }
+    self.run(&["--uninstall-extension", id])?;
+    Ok(())
   }
 }
 

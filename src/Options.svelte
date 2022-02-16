@@ -247,7 +247,6 @@
     ...writeProfile(),
     args: [...generatedArgs, ...customArgs],
   }));
-  $: scan($compiler?.setup);
 
   async function scan(setup?: string) {
     if (!setup) return;
@@ -267,6 +266,7 @@
   }
 
   onMount(async () => {
+    await scan();
     await readLastProfile();
   });
 </script>

@@ -51,7 +51,7 @@ pub fn acp_output_enabled(setup: &str) -> bool {
 }
 
 #[cfg(not(target_os = "windows"))]
-pub fn output_acp_enabled(_setup: &str) -> bool {
+pub fn acp_output_enabled(_setup: &str) -> bool {
   false
 }
 

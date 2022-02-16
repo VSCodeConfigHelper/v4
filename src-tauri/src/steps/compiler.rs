@@ -58,13 +58,13 @@ pub struct CompilerSetup {
 }
 
 #[cfg(target_os = "windows")]
-pub static ENABLED_SETUPS: &'static [&CompilerSetup] = &[&mingw::GCC_SETUP, &msvc::SETUP];
+pub static ENABLED_SETUPS: &[&CompilerSetup] = &[&mingw::GCC_SETUP, &msvc::SETUP];
 
 #[cfg(target_os = "macos")]
-pub static ENABLED_SETUPS: &'static [&CompilerSetup] = &[];
+pub static ENABLED_SETUPS: &[&CompilerSetup] = &[];
 
 #[cfg(target_os = "linux")]
-pub static ENABLED_SETUPS: &'static [&CompilerSetup] = &[];
+pub static ENABLED_SETUPS: &[&CompilerSetup] = &[];
 
 pub fn get_setup(id: &str) -> &CompilerSetup {
   ENABLED_SETUPS.iter().find(|s| s.id == id).unwrap()

@@ -20,7 +20,7 @@ use serde::Serialize;
 use crate::steps::{
   compiler::get_setup, compiler::Compiler, compiler::ENABLED_SETUPS, options::*, vscode, workspace,
 };
-use crate::tasks::{find_tasks, TaskArgs};
+use crate::{tasks, tasks::TaskArgs};
 
 #[derive(Serialize)]
 #[serde(tag = "type")]
@@ -133,13 +133,37 @@ pub fn options_scan(setup: &str) -> EnabledOptions {
   }
 }
 
+#[derive(Serialize, Clone)]
+#[serde(tag = "type")]
+enum TaskFinishResult {
+  Ok {
+    name: &'static str,
+  },
+  Err {
+    name: &'static str,
+    message: &'static str,
+  },
+}
+
 #[tauri::command]
-pub fn task_init(vscode: String, compiler: Compiler, workspace: String, options: Options) -> usize {
-  let tasks = find_tasks(&TaskArgs {
-    vscode,
-    compiler,
-    workspace,
-    options,
+pub fn task_init(args: TaskArgs, window: tauri::Window) -> usize {
+  let t = tasks::list(&args);
+  let len = t.len();
+  std::thread::spawn(move || {
+    for (name, action) in t {
+      let res = action(&args);
+      let payload = match res {
+        Ok(_) => TaskFinishResult::Ok { name },
+        Err(e) => TaskFinishResult::Err {
+          name,
+          message: e,
+        },
+      };
+      window.emit("task_finish", payload).unwrap();
+      if res.is_err() {
+        break;
+      }
+    }
   });
-  tasks.len()
+  len
 }
