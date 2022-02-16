@@ -110,7 +110,7 @@ pub fn generate(args: &TaskArgs) -> Result<(), &'static str> {
       cmt!("按下 {}{}{}{}B 编译", CTRL_CMD, SEP, SHIFT, SEP),
       helloworld,
       cmt!("此文件编译运行将输出 \"Hello, world!\"。"),
-      cmt!("按下 {} 后，你将在弹出的终端窗口中看到这一行字", run_key),
+      cmt!("按下 {} 后，你将在弹出的终端窗口中看到这一行字。", run_key),
       cmt!(
         "{}",
         if args.compiler.setup == "gcc-mingw" {

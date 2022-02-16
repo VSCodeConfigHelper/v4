@@ -29,11 +29,13 @@ use winapi::shared::ntdef::*;
 use winapi::shared::winerror::S_OK;
 use winapi::um::combaseapi::CoTaskMemFree;
 pub use winapi::um::knownfolders::*;
+use winapi::um::objbase::CoInitialize;
 use winapi::um::processenv::ExpandEnvironmentStringsW;
 use winapi::um::shlobj::SHGetKnownFolderPath;
 use winapi::um::shtypes::REFKNOWNFOLDERID;
 pub use winapi::um::winbase::CREATE_NO_WINDOW;
 use winapi::um::winnls::GetACP;
+use winapi::um::shobjidl_core::IShellLinkW;
 
 pub fn expand_environment_strings(src: &str) -> io::Result<String> {
   // Make src null-terminated UTF-16
@@ -101,6 +103,17 @@ pub fn get_known_folder_path(id: REFKNOWNFOLDERID) -> io::Result<String> {
 
 pub fn get_acp() -> u32 {
   unsafe { GetACP() }
+}
+
+pub fn create_lnk(lnk: &str, target: &str, desc: &str, args: &str) -> bool {
+  unsafe {
+    let result = CoInitialize(ptr::null_mut());
+    if result <= 0 { return false; }
+    let shell_link: *mut IShellLinkW = ptr::null_mut();
+    // FUCK YOU, winapi missing defs. use windows-rs instead.
+    //let result = CoCreateInstance(&CLSID_ShellLink, ptr::null_mut(), CLSCTX_INPROC_SERVER, IID_ISHellLink, shell_link);
+  }
+  false
 }
 
 #[cfg(test)]

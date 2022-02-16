@@ -20,7 +20,9 @@ use std::path::Path;
 
 use crate::steps::{compiler::Compiler, options::Options};
 
+mod dotvscode;
 mod extension;
+mod run;
 mod test;
 
 #[derive(Deserialize)]
@@ -56,50 +58,41 @@ fn should_test(args: &TaskArgs) -> bool {
   }
 }
 
-macro_rules! generate_task {
-  ($( ($t:path, $vp:pat => $vb:expr) ),* ) => {
-    vec![
-      $( Task {
-        name: stringify!($t),
-        action: $t,
-        validator: (|$vp: &TaskArgs| $vb)
-      } ),*
-    ]
-  };
+mod debug {
+  pub use super::run::create_checker;
 }
 
 // TODO LIST:
-mod run {
-  use super::TaskArgs;
-  pub fn create_pauser(args: &TaskArgs) -> Result<(), &'static str> {
-    Err("")
-  }
-  pub fn create_keybinding(args: &TaskArgs) -> Result<(), &'static str> {
-    Err("")
-  }
-}
-mod debug {
-  use super::TaskArgs;
-  pub fn create_checker(args: &TaskArgs) -> Result<(), &'static str> {
-    Err("")
-  }
-}
 mod compiler {
   use super::TaskArgs;
+  use crate::utils::winreg;
+
   pub fn add_to_path(args: &TaskArgs) -> Result<(), &'static str> {
-    Err("")
-  }
-}
-mod dotvscode {
-  use super::TaskArgs;
-  pub fn tasks_json(args: &TaskArgs) -> Result<(), &'static str> {
-    Err("")
-  }
-  pub fn launch_json(args: &TaskArgs) -> Result<(), &'static str> {
-    Err("")
-  }
-  pub fn c_cpp_properties_json(args: &TaskArgs) -> Result<(), &'static str> {
-    Err("")
+    if winreg::get_machine_env("Path")
+      .unwrap_or_default()
+      .split(';')
+      .collect::<Vec<&str>>()
+      .contains(&args.compiler.path.as_str())
+    {
+      return Ok(());
+    }
+
+    let path = std::iter::once(args.compiler.path.clone())
+      .chain(
+        winreg::get_user_env("Path")
+          .unwrap_or_default()
+          .split(';')
+          .filter(|s| s != &args.compiler.path)
+          .map(str::to_string),
+      )
+      .collect::<Vec<String>>()
+      .join(";");
+
+    if winreg::set_user_env("Path", &path) {
+      Ok(())
+    } else {
+      Err("Failed to set user Path env")
+    }
   }
 }
 mod shortcut {
@@ -113,6 +106,18 @@ mod vscode {
   pub fn open(args: &TaskArgs) -> Result<(), &'static str> {
     Err("")
   }
+}
+
+macro_rules! generate_task {
+  ($( ($t:path, $vp:pat => $vb:expr) ),* ) => {
+    vec![
+      $( Task {
+        name: stringify!($t),
+        action: $t,
+        validator: (|$vp: &TaskArgs| $vb)
+      } ),*
+    ]
+  };
 }
 
 pub fn list(args: &TaskArgs) -> Vec<(&'static str, fn(&TaskArgs) -> Result<(), &'static str>)> {
