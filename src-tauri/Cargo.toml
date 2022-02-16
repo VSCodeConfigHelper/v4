@@ -23,7 +23,17 @@ serde_json = "1.0"
 serde = { version = "1.0", features = ["derive"] }
 tauri = { version = "1.0.0-rc.2", features = ["api-all"] }
 winreg = "0.10.1"
-winapi = { version = "0.3.9", features = ["winnls", "shobjidl_core"] }
+
+[dependencies.windows]
+version = "0.32.0"
+features = [
+  "Win32_System_Environment",
+  "Win32_Foundation",
+  "Win32_UI_Shell",
+  "Win32_Globalization",
+  "Win32_System_Com",
+  "Win32_System_Threading",
+]
 
 [features]
 default = ["custom-protocol"]

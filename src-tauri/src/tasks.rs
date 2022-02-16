@@ -39,53 +39,35 @@ struct Task {
   validator: fn(&TaskArgs) -> bool,
 }
 
-fn llvm_setup(setup: &str) -> bool {
-  ["llvm-mingw", "llvm", "apple"].contains(&setup)
-}
-
-fn should_test(args: &TaskArgs) -> bool {
-  let test = args.options.test;
-  if test.is_none() {
-    let hello_word_filename = if args.options.language == "C" {
-      "helloworld.c"
-    } else {
-      "helloworld.cpp"
-    };
-    let hello_world_path = Path::new(&args.workspace).join(hello_word_filename);
-    !hello_world_path.exists()
-  } else {
-    test.unwrap()
-  }
-}
-
 mod debug {
   pub use super::run::create_checker;
 }
 
-// TODO LIST:
 mod compiler {
   use super::TaskArgs;
   use crate::utils::winreg;
+  use crate::steps::compiler::mingw::check_bin;
 
   pub fn add_to_path(args: &TaskArgs) -> Result<(), &'static str> {
+    let compiler_path = check_bin(&args.compiler.path).unwrap();
+    let compiler_path = compiler_path.as_str();
     if winreg::get_machine_env("Path")
       .unwrap_or_default()
       .split(';')
       .collect::<Vec<&str>>()
-      .contains(&args.compiler.path.as_str())
+      .contains(&compiler_path)
     {
       return Ok(());
     }
 
-    let path = std::iter::once(args.compiler.path.clone())
+    let path = std::iter::once(compiler_path)
       .chain(
         winreg::get_user_env("Path")
           .unwrap_or_default()
           .split(';')
-          .filter(|s| s != &args.compiler.path)
-          .map(str::to_string),
+          .filter(|s| s != &compiler_path)
       )
-      .collect::<Vec<String>>()
+      .collect::<Vec<&str>>()
       .join(";");
 
     if winreg::set_user_env("Path", &path) {
@@ -97,14 +79,42 @@ mod compiler {
 }
 mod shortcut {
   use super::TaskArgs;
+  #[cfg(target_os = "windows")]
+  use crate::utils::winapi::create_lnk;
+
+  #[cfg(target_os = "windows")]
   pub fn create(args: &TaskArgs) -> Result<(), &'static str> {
-    Err("")
+    let path = dirs::desktop_dir().unwrap().join("Visual Studio Code.lnk");
+    create_lnk(
+      path.to_str().unwrap(),
+      &args.vscode,
+      &format!("Open VS Code at {}", args.workspace),
+      &format!("\"{}\"", args.workspace),
+    )
+    .map_err(|_| "Failed to create shortcut")
+  }
+
+  #[cfg(not(target_os = "windows"))]
+  pub fn create(_args: &TaskArgs) -> Result<(), &'static str> {
+    Err("Not supported on this platform")
   }
 }
+
 mod vscode {
+  use super::test::filepath;
   use super::TaskArgs;
   pub fn open(args: &TaskArgs) -> Result<(), &'static str> {
-    Err("")
+    let mut vscode_args = vec![args.workspace.as_str()];
+    let test_filepath = filepath(args);
+    if args.options.test != Some(false) {
+      vscode_args.push("--goto");
+      vscode_args.push(test_filepath.to_str().unwrap());
+    }
+    std::process::Command::new(&args.vscode)
+      .args(vscode_args)
+      .spawn()
+      .map_err(|_| "Failed to open vscode")?;
+    Ok(())
   }
 }
 
@@ -140,4 +150,24 @@ pub fn list(args: &TaskArgs) -> Vec<(&'static str, fn(&TaskArgs) -> Result<(), &
   .filter(|t| (t.validator)(&args))
   .map(|t| (t.name, t.action))
   .collect()
+}
+
+
+fn llvm_setup(setup: &str) -> bool {
+  ["llvm-mingw", "llvm", "apple"].contains(&setup)
+}
+
+fn should_test(args: &TaskArgs) -> bool {
+  let test = args.options.test;
+  if test.is_none() {
+    let hello_word_filename = if args.options.language == "C" {
+      "helloworld.c"
+    } else {
+      "helloworld.cpp"
+    };
+    let hello_world_path = Path::new(&args.workspace).join(hello_word_filename);
+    !hello_world_path.exists()
+  } else {
+    test.unwrap()
+  }
 }

@@ -30,7 +30,7 @@ use super::Compiler;
 use super::CompilerSetup;
 use crate::utils::winapi::get_known_folder_path;
 use crate::utils::winapi::CREATE_NO_WINDOW;
-use crate::utils::winapi::{FOLDERID_LocalAppData, FOLDERID_ProgramData, FOLDERID_ProgramFilesX86};
+use windows::Win32::UI::Shell::{FOLDERID_LocalAppData, FOLDERID_ProgramData, FOLDERID_ProgramFilesX86};
 
 static POWERSHELL: &str = "C:\\Windows\\system32\\WindowsPowerShell\\v1.0\\powershell.exe";
 static VSWHERE_DOWNLOAD_LINK: &str =

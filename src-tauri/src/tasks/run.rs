@@ -19,7 +19,7 @@ use std::fs;
 use std::path::{Path, PathBuf};
 
 use super::TaskArgs;
-use crate::utils::winapi::{get_known_folder_path, FOLDERID_RoamingAppData};
+
 
 #[cfg(target_os = "windows")]
 mod scripts {
@@ -45,7 +45,7 @@ mod scripts {
   pub static PAUSE_CONSOLE_SCRIPT_NAME: &str = "pause-console.sh";
   pub static PAUSE_CONSOLE_SCRIPT: &str = include_str!("../scripts/pause-console.sh");
 }
-use scripts::*;
+pub use scripts::*;
 
 pub fn script_path() -> Option<PathBuf> {
   dirs::data_dir().map(|p| p.join("vscch"))

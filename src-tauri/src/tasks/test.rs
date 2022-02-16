@@ -17,7 +17,7 @@
 
 use super::TaskArgs;
 use std::fs;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
 fn c_comment(s: &str) -> String {
   format!("/* {} */", s)
@@ -65,6 +65,22 @@ mod key {
 
 use key::*;
 
+pub fn filepath(args: &TaskArgs) -> PathBuf {
+  let ext = if args.options.language == "C" { "c" } else { "cpp" };
+  let mut i = 0;
+  loop {
+    let path = Path::new(&args.workspace).join(if i == 0 {
+      format!("helloworld.{}", ext)
+    } else {
+      format!("helloworld({}).{}", i, ext)
+    });
+    if !path.exists() {
+      return path;
+    }
+    i += 1;
+  }
+}
+
 pub fn generate(args: &TaskArgs) -> Result<(), &'static str> {
   let c = args.options.language == "C";
   let ext = if c { "c" } else { "cpp" };
@@ -75,18 +91,7 @@ pub fn generate(args: &TaskArgs) -> Result<(), &'static str> {
   }
   let helloworld = if c { &C_HELLOWORLD } else { &CPP_HELLOWORLD };
 
-  let mut i = 0;
-  let path = loop {
-    let path = Path::new(&args.workspace).join(if i == 0 {
-      format!("helloworld.{}", ext)
-    } else {
-      format!("helloworld({}).{}", i, ext)
-    });
-    if !path.exists() {
-      break path;
-    }
-    i += 1;
-  };
+  let path = filepath(args);
 
   let run_key = if args.options.compatible_mode {
     format!("{}{}F5", CTRL, SEP)

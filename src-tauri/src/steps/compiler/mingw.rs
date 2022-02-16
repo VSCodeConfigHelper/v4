@@ -30,7 +30,7 @@ use crate::utils::winapi::CREATE_NO_WINDOW;
 
 /// 给定 `{path}`, 按需构造 `{path}\\bin`。
 /// 检查其存在且是目录后返回。
-fn check_bin(path: &str) -> Option<String> {
+pub fn check_bin(path: &str) -> Option<String> {
   let mut path = Path::new(path).to_path_buf();
   if !path.ends_with("bin") {
     path = path.join("bin");

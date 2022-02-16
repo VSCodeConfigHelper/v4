@@ -18,32 +18,26 @@
 #![cfg(target_os = "windows")]
 
 use std::alloc::{alloc, dealloc, Layout};
-use std::ffi::{OsStr, OsString};
+use std::ffi::{OsStr, OsString, c_void};
 use std::io;
 use std::os::windows::prelude::*;
 use std::ptr;
 use std::slice;
 
-use winapi::ctypes::c_void;
-use winapi::shared::ntdef::*;
-use winapi::shared::winerror::S_OK;
-use winapi::um::combaseapi::CoTaskMemFree;
-pub use winapi::um::knownfolders::*;
-use winapi::um::objbase::CoInitialize;
-use winapi::um::processenv::ExpandEnvironmentStringsW;
-use winapi::um::shlobj::SHGetKnownFolderPath;
-use winapi::um::shtypes::REFKNOWNFOLDERID;
-pub use winapi::um::winbase::CREATE_NO_WINDOW;
-use winapi::um::winnls::GetACP;
-use winapi::um::shobjidl_core::IShellLinkW;
+use windows::Win32::Globalization::GetACP;
+use windows::Win32::System::Com::{CoTaskMemFree, CoInitialize, CLSCTX_INPROC_SERVER, CoCreateInstance, IPersistFile, CoUninitialize};
+use windows::Win32::UI::Shell::{SHGetKnownFolderPath, IShellLinkW, ShellLink};
+use windows::core::{GUID, Interface,Result};
+use windows::Win32::Foundation::PWSTR;
+use windows::Win32::System::Environment::ExpandEnvironmentStringsW;
+
+pub static CREATE_NO_WINDOW: u32 = windows::Win32::System::Threading::CREATE_NO_WINDOW.0;
 
 pub fn expand_environment_strings(src: &str) -> io::Result<String> {
-  // Make src null-terminated UTF-16
-  let mut src: Vec<u16> = OsStr::new(src).encode_wide().collect();
-  src.push(0);
+  let src = OsStr::new(src);
 
   // Get buffer size
-  let size = unsafe { ExpandEnvironmentStringsW(src.as_ptr(), ptr::null_mut(), 0) };
+  let size = unsafe { ExpandEnvironmentStringsW(src, PWSTR(ptr::null_mut()), 0) };
   let layout = Layout::array::<u16>(size as usize).map_err(|_| {
     io::Error::new(
       io::ErrorKind::Other,
@@ -54,7 +48,7 @@ pub fn expand_environment_strings(src: &str) -> io::Result<String> {
 
   unsafe {
     let buf = alloc(layout) as *mut u16;
-    let len = match ExpandEnvironmentStringsW(src.as_ptr(), buf, size) {
+    let len = match ExpandEnvironmentStringsW(src, PWSTR(buf), size) {
       0 => return Err(io::Error::last_os_error()),
       x => x,
     };
@@ -66,30 +60,18 @@ pub fn expand_environment_strings(src: &str) -> io::Result<String> {
   Ok(result)
 }
 
-pub fn get_known_folder_path(id: REFKNOWNFOLDERID) -> io::Result<String> {
-  struct KnownFolderPath(PWSTR);
-  impl Drop for KnownFolderPath {
-    fn drop(&mut self) {
-      unsafe {
-        CoTaskMemFree(self.0 as *mut c_void);
-      }
+pub fn get_known_folder_path(id: *const GUID) -> io::Result<String> {
+  let slice;
+  unsafe {
+    let PWSTR(path) = SHGetKnownFolderPath(id, 0, None)?;
+    let mut char_ptr = path;
+    let mut len = 0;
+    while char_ptr.read() != 0 {
+      char_ptr = char_ptr.offset(1);
+      len += 1;
     }
-  }
-
-  let slice = unsafe {
-    let mut path = KnownFolderPath(ptr::null_mut());
-    match SHGetKnownFolderPath(id, 0, ptr::null_mut(), &mut path.0) {
-      S_OK => {
-        let mut wide_string = path.0;
-        let mut len = 0;
-        while wide_string.read() != 0 {
-          wide_string = wide_string.offset(1);
-          len += 1;
-        }
-        slice::from_raw_parts(path.0, len)
-      }
-      _ => return Err(io::Error::last_os_error()),
-    }
+    slice = slice::from_raw_parts(path, len);
+    CoTaskMemFree(path as * const c_void);
   };
 
   let os_string = OsString::from_wide(slice);
@@ -105,20 +87,29 @@ pub fn get_acp() -> u32 {
   unsafe { GetACP() }
 }
 
-pub fn create_lnk(lnk: &str, target: &str, desc: &str, args: &str) -> bool {
+pub fn create_lnk(lnk: &str, target: &str, desc: &str, args: &str) -> io::Result<()> {
+  let lnk = OsStr::new(lnk);
+  let target = OsStr::new(target);
+  let desc = OsStr::new(desc);
+  let args = OsStr::new(args);
   unsafe {
-    let result = CoInitialize(ptr::null_mut());
-    if result <= 0 { return false; }
-    let shell_link: *mut IShellLinkW = ptr::null_mut();
-    // FUCK YOU, winapi missing defs. use windows-rs instead.
-    //let result = CoCreateInstance(&CLSID_ShellLink, ptr::null_mut(), CLSCTX_INPROC_SERVER, IID_ISHellLink, shell_link);
+    CoInitialize(ptr::null())?;
+    let shell_link: IShellLinkW = CoCreateInstance(&ShellLink, None, CLSCTX_INPROC_SERVER)?;
+    shell_link.SetPath(target)?;
+    shell_link.SetDescription(desc)?;
+    shell_link.SetArguments(args)?;
+    let persist_file: IPersistFile = Interface::cast(&shell_link)?;
+    persist_file.Save(lnk, true)?;
+    CoUninitialize();
   }
-  false
+  Ok(())
 }
 
 #[cfg(test)]
 mod tests {
-  use super::*;
+  use windows::Win32::UI::Shell::FOLDERID_ProgramFilesX86;
+
+use super::*;
 
   #[test]
   fn test_expand_environment_strings() {
