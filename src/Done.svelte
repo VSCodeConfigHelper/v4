@@ -39,6 +39,7 @@
 
   listen("task_finish", (r) => {
     const p = r.payload as TaskResult;
+    console.log(p);
     if (p.type === "Ok") {
 
     } else {
@@ -48,7 +49,7 @@
   });
 
   onMount(async () => {
-    const taskNum= await invoke("task_init", {
+    const taskNum = await invoke("task_init", {
       args: {
         vscode: $vscode,
         compiler: $compiler,
@@ -56,6 +57,7 @@
         options: $options,
       }
     });
+    console.log(taskNum);
   });
 </script>
 
