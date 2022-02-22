@@ -14,7 +14,6 @@ pnpm i
 pnpm tauri dev
 
 # 编译
-pnpm tauri icon public/favicon.png
 pnpm tauri build
 ```
 

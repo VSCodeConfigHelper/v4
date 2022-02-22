@@ -3,5 +3,5 @@
 /target/
 WixTools
 
-# Ignore icons. Execute `tauri icon public/favicon.png` on project root to generate
-/icons/
+# Should ignore icons, but tauricon is not published now.
+# /icons/
