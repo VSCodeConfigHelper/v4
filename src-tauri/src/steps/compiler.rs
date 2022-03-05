@@ -15,15 +15,16 @@
 // You should have received a copy of the GNU General Public License
 // along with vscch4.  If not, see <http://www.gnu.org/licenses/>.
 
-use serde::{Serialize, Deserialize};
+use ctor::ctor;
+use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 
 pub mod verparse;
 
 pub mod mingw;
 pub mod msvc;
 
-#[derive(Serialize)]
-#[derive(Deserialize)]
+#[derive(Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Compiler {
   pub setup: String,
@@ -58,14 +59,23 @@ pub struct CompilerSetup {
 }
 
 #[cfg(target_os = "windows")]
-pub static ENABLED_SETUPS: &[&CompilerSetup] = &[&mingw::GCC_SETUP, &msvc::SETUP];
+#[rustfmt::skip]
+#[ctor]
+pub static ENABLED_SETUPS: HashMap<&'static str, &'static CompilerSetup> = HashMap::from([
+  (mingw::GCC_ID, &mingw::GCC_SETUP),
+  (msvc::ID, &msvc::SETUP)
+]);
 
 #[cfg(target_os = "macos")]
-pub static ENABLED_SETUPS: &[&CompilerSetup] = &[];
+#[rustfmt::skip]
+#[ctor]
+pub static ENABLED_SETUPS: HashMap<&'static str, &'static CompilerSetup> = HashMap::from([]);
 
 #[cfg(target_os = "linux")]
-pub static ENABLED_SETUPS: &[&CompilerSetup] = &[];
+#[rustfmt::skip]
+#[ctor]
+pub static ENABLED_SETUPS: HashMap<&'static str, &'static CompilerSetup> = HashMap::from([]);
 
 pub fn get_setup(id: &str) -> &CompilerSetup {
-  ENABLED_SETUPS.iter().find(|s| s.id == id).unwrap()
+  ENABLED_SETUPS[id]
 }

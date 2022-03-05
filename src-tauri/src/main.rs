@@ -21,7 +21,10 @@ mod handlers;
 mod steps;
 mod tasks;
 mod utils;
+
 use handlers::*;
+
+type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 
 fn main() {
   tauri::Builder::default()

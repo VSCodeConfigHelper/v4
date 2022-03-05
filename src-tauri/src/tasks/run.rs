@@ -18,8 +18,9 @@
 use std::fs;
 use std::path::{Path, PathBuf};
 
-use super::TaskArgs;
+use crate::Result;
 
+use super::TaskArgs;
 
 #[cfg(target_os = "windows")]
 mod scripts {
@@ -51,25 +52,28 @@ pub fn script_path() -> Option<PathBuf> {
   dirs::data_dir().map(|p| p.join("vscch"))
 }
 
-fn save_script(filename: &str, content: &str) -> Result<(), &'static str> {
+fn save_script(filename: &str, content: &str) -> Result<()> {
   let path = script_path().ok_or("failed to get script path")?;
   fs::create_dir_all(&path).map_err(|_| "failed to create script path")?;
   fs::write(&path.join(filename), content).map_err(|_| "failed to write script")?;
   Ok(())
 }
 
-pub fn create_pauser(_: &TaskArgs) -> Result<(), &'static str> {
+pub fn create_pauser(_: &TaskArgs) -> Result<()> {
   #[cfg(target_os = "macos")]
-  save_script(PAUSE_CONSOLE_LAUNCHER_SCRIPT_NAME, PAUSE_CONSOLE_LAUNCHER_SCRIPT)?;
+  save_script(
+    PAUSE_CONSOLE_LAUNCHER_SCRIPT_NAME,
+    PAUSE_CONSOLE_LAUNCHER_SCRIPT,
+  )?;
 
   save_script(PAUSE_CONSOLE_SCRIPT_NAME, PAUSE_CONSOLE_SCRIPT)
 }
 
 #[cfg(target_os = "windows")]
-pub fn create_checker(_: &TaskArgs) -> Result<(), &'static str> {
+pub fn create_checker(_: &TaskArgs) -> Result<()> {
   save_script(CHECK_ASCII_SCRIPT_NAME, CHECK_ASCII_SCRIPT)
 }
 
-pub fn create_keybinding(args: &TaskArgs) -> Result<(), &'static str> {
-  Err("")
+pub fn create_keybinding(args: &TaskArgs) -> Result<()> {
+  Err("not implemented".into())
 }

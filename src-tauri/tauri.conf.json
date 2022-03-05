@@ -1,6 +1,6 @@
 {
   "package": {
-    "productName": "vscch4"
+    "productName": "vscch"
   },
   "build": {
     "distDir": "../dist",

@@ -137,5 +137,6 @@ pub static SETUP: CompilerSetup = CompilerSetup {
   scan: scan,
   verify: None,
   install: Some(install),
+
   verparser: verparse::gcc,
 };

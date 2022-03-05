@@ -16,9 +16,9 @@
 // along with vscch4.  If not, see <http://www.gnu.org/licenses/>.
 
 use serde::Deserialize;
-use std::path::Path;
+use std::{path::Path, sync::Arc};
 
-use crate::steps::{compiler::Compiler, options::Options};
+use crate::{steps::{compiler::Compiler, options::Options}, Result};
 
 mod dotvscode;
 mod extension;
@@ -26,16 +26,34 @@ mod run;
 mod test;
 
 #[derive(Deserialize)]
-pub struct TaskArgs {
+pub struct TaskInitArgs {
   pub vscode: String,
   pub compiler: Compiler,
   pub workspace: String,
   pub options: Options,
 }
 
+pub struct TaskArgs {
+  pub vscode: String,
+  pub compiler: Compiler,
+  pub workspace: String,
+  pub compatible_mode: bool,
+  pub is_c: bool,
+  pub file_ext: &'static str,
+  pub standard: Option<String>,
+  pub args: Vec<String>,
+  pub ascii_check: bool,
+  pub remove_extensions: bool,
+  pub add_to_path: bool,
+  pub open_vscode: bool,
+  pub test_file: Option<String>,
+  pub desktop_shortcut: bool,
+  pub collect_data: bool,
+}
+
 struct Task {
   name: &'static str,
-  action: fn(&TaskArgs) -> Result<(), &'static str>,
+  action: fn(&TaskArgs) -> Result<()>,
   validator: fn(&TaskArgs) -> bool,
 }
 
@@ -45,10 +63,11 @@ mod debug {
 
 mod compiler {
   use super::TaskArgs;
-  use crate::utils::winreg;
+  use crate::Result;
   use crate::steps::compiler::mingw::check_bin;
+  use crate::utils::winreg;
 
-  pub fn add_to_path(args: &TaskArgs) -> Result<(), &'static str> {
+  pub fn add_to_path(args: &TaskArgs) -> Result<()> {
     let compiler_path = check_bin(&args.compiler.path).unwrap();
     let compiler_path = compiler_path.as_str();
     if winreg::get_machine_env("Path")
@@ -65,7 +84,7 @@ mod compiler {
         winreg::get_user_env("Path")
           .unwrap_or_default()
           .split(';')
-          .filter(|s| s != &compiler_path)
+          .filter(|s| s != &compiler_path),
       )
       .collect::<Vec<&str>>()
       .join(";");
@@ -73,42 +92,44 @@ mod compiler {
     if winreg::set_user_env("Path", &path) {
       Ok(())
     } else {
-      Err("Failed to set user Path env")
+      Err("Failed to set user Path env".into())
     }
   }
 }
 mod shortcut {
+  use crate::Result;
   use super::TaskArgs;
+
   #[cfg(target_os = "windows")]
   use crate::utils::winapi::create_lnk;
 
   #[cfg(target_os = "windows")]
-  pub fn create(args: &TaskArgs) -> Result<(), &'static str> {
+  pub fn create(args: &TaskArgs) -> Result<()> {
     let path = dirs::desktop_dir().unwrap().join("Visual Studio Code.lnk");
     create_lnk(
       path.to_str().unwrap(),
       &args.vscode,
       &format!("Open VS Code at {}", args.workspace),
       &format!("\"{}\"", args.workspace),
-    )
-    .map_err(|_| "Failed to create shortcut")
+    )?;
+    Ok(())
   }
 
   #[cfg(not(target_os = "windows"))]
-  pub fn create(_args: &TaskArgs) -> Result<(), &'static str> {
+  pub fn create(_args: &TaskArgs) -> Result<()> {
     Err("Not supported on this platform")
   }
 }
 
 mod vscode {
-  use super::test::filepath;
+  use crate::Result;
   use super::TaskArgs;
-  pub fn open(args: &TaskArgs) -> Result<(), &'static str> {
+
+  pub fn open(args: &TaskArgs) -> Result<()> {
     let mut vscode_args = vec![args.workspace.as_str()];
-    let test_filepath = filepath(args);
-    if args.options.test != Some(false) {
+    if let Some(test_file) = &args.test_file {
       vscode_args.push("--goto");
-      vscode_args.push(test_filepath.to_str().unwrap());
+      vscode_args.push(test_file.as_str());
     }
     std::process::Command::new(&args.vscode)
       .args(vscode_args)
@@ -130,44 +151,82 @@ macro_rules! generate_task {
   };
 }
 
-pub fn list(args: &TaskArgs) -> Vec<(&'static str, fn(&TaskArgs) -> Result<(), &'static str>)> {
+pub fn list(
+  args: TaskInitArgs,
+) -> Vec<(
+  &'static str,
+  Box<dyn Fn() -> Result<()> + Send>,
+)> {
+  let is_c = args.options.language == "C";
+  let file_ext = if is_c { "c" } else { "cpp" };
+  let test_file = {
+    let mut path = Path::new(&args.workspace).join(format!("helloworld.{}", file_ext));
+    if match args.options.test {
+      Some(test) => test,
+      None => !path.exists(),
+    } {
+      let mut i = 1;
+      while path.exists() {
+        path = Path::new(&args.workspace).join(format!("helloworld({}).{}", i, file_ext));
+        i += 1;
+      }
+      Some(path.to_str().unwrap().to_string())
+    } else {
+      None
+    }
+  };
+
+  let args = Arc::from(TaskArgs {
+    vscode: args.vscode,
+    compiler: args.compiler,
+    workspace: args.workspace,
+    compatible_mode: args.options.compatible_mode,
+    is_c: is_c,
+    file_ext: file_ext,
+    standard: args.options.standard,
+    args: args.options.args,
+    ascii_check: args.options.ascii_check,
+    remove_extensions: args.options.remove_extensions,
+    add_to_path: args.options.add_to_path,
+    open_vscode: args.options.open_vscode,
+    test_file: test_file,
+    desktop_shortcut: args.options.desktop_shortcut,
+    collect_data: args.options.collect_data,
+  });
+
+  let mapper = |task: Task| -> (
+    &'static str,
+    Box<dyn Fn() -> Result<()> + Send>,
+  ) { 
+    let args = Arc::clone(&args);
+    (task.name, Box::new(move || (task.action)(args.as_ref()))) 
+  };
+
   generate_task![
-    (extension::remove_unrecommended, a => a.options.remove_extensions),
+    (extension::remove_unrecommended, a => a.remove_extensions),
     (extension::install_c_cpp, _ => true),
     (extension::install_code_lldb, a => llvm_setup(&a.compiler.setup)),
-    (run::create_pauser, a => !a.options.compatible_mode),
-    (run::create_keybinding, a => !a.options.compatible_mode),
-    (debug::create_checker, a => a.options.ascii_check),
-    (compiler::add_to_path, a => a.options.add_to_path),
+    (run::create_pauser, a => !a.compatible_mode),
+    (run::create_keybinding, a => !a.compatible_mode),
+    (debug::create_checker, a => a.ascii_check),
+    (compiler::add_to_path, a => a.add_to_path),
     (dotvscode::tasks_json, _ => true),
     (dotvscode::launch_json, _ => true),
     (dotvscode::c_cpp_properties_json, _ => true),
-    (test::generate, a => should_test(&a)),
-    (shortcut::create, a => a.options.desktop_shortcut),
-    (vscode::open, a => a.options.open_vscode)
+    (test::generate, a => a.test_file.is_some()),
+    (shortcut::create, a => a.desktop_shortcut),
+    (vscode::open, a => a.open_vscode)
   ]
-  .iter()
+  .into_iter()
   .filter(|t| (t.validator)(&args))
-  .map(|t| (t.name, t.action))
+  .map(mapper)
   .collect()
 }
-
 
 fn llvm_setup(setup: &str) -> bool {
   ["llvm-mingw", "llvm", "apple"].contains(&setup)
 }
 
-fn should_test(args: &TaskArgs) -> bool {
-  let test = args.options.test;
-  if test.is_none() {
-    let hello_word_filename = if args.options.language == "C" {
-      "helloworld.c"
-    } else {
-      "helloworld.cpp"
-    };
-    let hello_world_path = Path::new(&args.workspace).join(hello_word_filename);
-    !hello_world_path.exists()
-  } else {
-    test.unwrap()
-  }
+fn mingw_setup(setup: &str) -> bool {
+  ["gcc-mingw", "llvm-mingw"].contains(&setup)
 }

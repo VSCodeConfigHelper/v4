@@ -16,18 +16,19 @@
 // along with vscch4.  If not, see <http://www.gnu.org/licenses/>.
 
 use std::fs;
-use std::path::{Path, PathBuf};
+use std::path::{Path};
 
 use serde_json::json;
 
 use super::run::*;
 use super::TaskArgs;
+use crate::Result;
 use crate::{
   steps::compiler::{mingw::check_bin, Compiler},
   tasks::run::script_path,
 };
 
-fn compiler_executable(compiler: &Compiler, c: bool) -> Result<String, &'static str> {
+fn compiler_executable(compiler: &Compiler, c: bool) -> Result<String> {
   fn join(path: &str, name: &str) -> String {
     Path::new(path).join(name).to_str().unwrap().to_string()
   }
@@ -52,7 +53,7 @@ fn compiler_executable(compiler: &Compiler, c: bool) -> Result<String, &'static 
       let version_txt = Path::new(&compiler.path)
         .join("VC\\Auxiliary\\Build\\Microsoft.VCToolsVersion.default.txt");
       if !version_txt.exists() {
-        return Err("无法找到 MSVC 版本文件");
+        return Err("无法找到 MSVC 版本文件".into());
       }
       let version = fs::read(version_txt).map_err(|_| "无法读取 MSVC 版本文件")?;
       let version = String::from_utf8(version).unwrap();
@@ -62,9 +63,9 @@ fn compiler_executable(compiler: &Compiler, c: bool) -> Result<String, &'static 
         .join("bin\\HostX64\\x64\\cl.exe")
         .to_str()
         .map(str::to_string)
-        .ok_or("Path -> String failed")
+        .ok_or("Path -> String failed".into())
     }
-    _ => Err("Unknown compiler setup"),
+    _ => Err("Unknown compiler setup".into()),
   }
 }
 
@@ -81,12 +82,12 @@ mod os_spec {
 }
 use os_spec::*;
 
-fn single_file_build_task(args: &TaskArgs) -> Result<serde_json::Value, &'static str> {
+fn single_file_build_task(args: &TaskArgs) -> Result<serde_json::Value> {
   Ok(json!({
     "type": "process",
     "label": "single file build",
-    "command": compiler_executable(&args.compiler, args.options.language == "C")?,
-    "args": args.options.args.iter().chain(&mut vec![
+    "command": compiler_executable(&args.compiler, args.is_c)?,
+    "args": args.args.iter().chain(&mut vec![
       "-g".to_string(),
       "${file}".to_string(),
       format!("${{fileDirname}}{}${{fileBasenameNoExtension}}.{}", EXT, PATH_SLASH)
@@ -107,7 +108,7 @@ fn single_file_build_task(args: &TaskArgs) -> Result<serde_json::Value, &'static
   }))
 }
 
-fn pause_task() -> Result<serde_json::Value, &'static str> {
+fn pause_task() -> Result<serde_json::Value> {
   let script_path = script_path().unwrap();
   struct Process<'a> {
     command: &'a str,
@@ -161,7 +162,7 @@ fn pause_task() -> Result<serde_json::Value, &'static str> {
   }))
 }
 
-fn ascii_check_task(args: &TaskArgs) -> Result<serde_json::Value, &'static str> {
+fn ascii_check_task(args: &TaskArgs) -> Result<serde_json::Value> {
   Ok(json!({
     "type": "process",
     "label": "ascii check",
@@ -187,12 +188,12 @@ fn ascii_check_task(args: &TaskArgs) -> Result<serde_json::Value, &'static str> 
   }))
 }
 
-pub fn tasks_json(args: &TaskArgs) -> Result<(), &'static str> {
+pub fn tasks_json(args: &TaskArgs) -> Result<()> {
   let mut task_list = vec![single_file_build_task(args)?];
-  if !args.options.compatible_mode {
+  if !args.compatible_mode {
     task_list.push(pause_task()?);
   }
-  if args.options.ascii_check {
+  if args.ascii_check {
     task_list.push(ascii_check_task(args)?);
   }
   let mut options = json!({});
@@ -209,7 +210,7 @@ pub fn tasks_json(args: &TaskArgs) -> Result<(), &'static str> {
       .as_object_mut()
       .unwrap(),
     );
-    if ["llvm-mingw", "gcc-mingw"].contains(&args.compiler.setup.as_str()) {
+    if super::mingw_setup(&args.compiler.setup.as_str()) {
       let path = check_bin(&args.compiler.path).unwrap();
       options.as_object_mut().unwrap().append(
         json!({
@@ -232,13 +233,14 @@ pub fn tasks_json(args: &TaskArgs) -> Result<(), &'static str> {
   let path = Path::new(&args.workspace)
     .join(".vscode")
     .join("tasks.json");
-  fs::write(path, json.to_string()).map_err(|_| "Failed to write tasks.json")
+  fs::write(path, json.to_string())?;
+  Ok(())
 }
 
-pub fn launch_json(args: &TaskArgs) -> Result<(), &'static str> {
-  Err("")
+pub fn launch_json(args: &TaskArgs) -> Result<()> {
+  Err("not implemented".into())
 }
 
-pub fn c_cpp_properties_json(args: &TaskArgs) -> Result<(), &'static str> {
-  Err("")
+pub fn c_cpp_properties_json(args: &TaskArgs) -> Result<()> {
+  Err("not implemented".into())
 }

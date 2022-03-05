@@ -20,7 +20,8 @@ use serde::Serialize;
 use crate::steps::{
   compiler::get_setup, compiler::Compiler, compiler::ENABLED_SETUPS, options::*, vscode, workspace,
 };
-use crate::{tasks, tasks::TaskArgs};
+use crate::tasks::TaskInitArgs;
+use crate::tasks;
 
 #[derive(Serialize)]
 #[serde(tag = "type")]
@@ -58,7 +59,7 @@ pub struct CompilerSetupListResult {
 pub fn compiler_setup_list() -> Vec<CompilerSetupListResult> {
   ENABLED_SETUPS
     .iter()
-    .map(|s| CompilerSetupListResult {
+    .map(|(_, s)| CompilerSetupListResult {
       id: s.id,
       name: s.name,
       description: s.description,
@@ -141,22 +142,22 @@ enum TaskFinishResult {
   },
   Err {
     name: &'static str,
-    message: &'static str,
+    message: String,
   },
 }
 
 #[tauri::command]
-pub fn task_init(args: TaskArgs, window: tauri::Window) -> usize {
-  let t = tasks::list(&args);
+pub fn task_init(args: TaskInitArgs, window: tauri::Window) -> usize {
+  let t = tasks::list(args);
   let len = t.len();
   std::thread::spawn(move || {
     for (name, action) in t {
-      let res = action(&args);
-      let payload = match res {
+      let res = action();
+      let payload = match &res {
         Ok(_) => TaskFinishResult::Ok { name },
         Err(e) => TaskFinishResult::Err {
           name,
-          message: e,
+          message: e.to_string(),
         },
       };
       window.emit("task_finish", payload).unwrap();

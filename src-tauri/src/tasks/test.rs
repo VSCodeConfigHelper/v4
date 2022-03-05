@@ -15,9 +15,10 @@
 // You should have received a copy of the GNU General Public License
 // along with vscch4.  If not, see <http://www.gnu.org/licenses/>.
 
+use crate::Result;
+
 use super::TaskArgs;
 use std::fs;
-use std::path::{Path, PathBuf};
 
 fn c_comment(s: &str) -> String {
   format!("/* {} */", s)
@@ -65,49 +66,29 @@ mod key {
 
 use key::*;
 
-pub fn filepath(args: &TaskArgs) -> PathBuf {
-  let ext = if args.options.language == "C" { "c" } else { "cpp" };
-  let mut i = 0;
-  loop {
-    let path = Path::new(&args.workspace).join(if i == 0 {
-      format!("helloworld.{}", ext)
-    } else {
-      format!("helloworld({}).{}", i, ext)
-    });
-    if !path.exists() {
-      return path;
-    }
-    i += 1;
-  }
-}
-
-pub fn generate(args: &TaskArgs) -> Result<(), &'static str> {
-  let c = args.options.language == "C";
-  let ext = if c { "c" } else { "cpp" };
+pub fn generate(args: &TaskArgs) -> Result<()> {
   macro_rules! cmt {
     ( $( $x:expr ),* ) => {
-      &(if c { c_comment } else { cpp_comment })(&format!($( $x ),*))
+      &(if args.is_c { c_comment } else { cpp_comment })(&format!($( $x ),*))
     };
   }
-  let helloworld = if c { &C_HELLOWORLD } else { &CPP_HELLOWORLD };
+  let helloworld = if args.is_c { &C_HELLOWORLD } else { &CPP_HELLOWORLD };
 
-  let path = filepath(args);
-
-  let run_key = if args.options.compatible_mode {
+  let run_key = if args.compatible_mode {
     format!("{}{}F5", CTRL, SEP)
   } else {
     "F6".to_string()
   };
 
   fs::write(
-    path,
+    args.test_file.as_ref().unwrap(),
     &[
       cmt!("VS Code C/C++ 测试代码 \"Hello World\""),
       cmt!("由 VSCodeConfigHelper v{} 生成", env!("CARGO_PKG_VERSION")),
       "",
       cmt!(
         "您可以在当前文件夹（工作文件夹）下新建 .{} 源文件编写代码。",
-        ext
+        args.file_ext
       ),
       "",
       cmt!("按下 {} 编译运行", run_key),
@@ -127,6 +108,6 @@ pub fn generate(args: &TaskArgs) -> Result<(), &'static str> {
       cmt!("若遇到问题，请联系开发者 guyutongxue@163.com。"),
     ]
     .join("\n"),
-  )
-  .map_err(|_| "Failed to write file")
+  )?;
+  Ok(())
 }

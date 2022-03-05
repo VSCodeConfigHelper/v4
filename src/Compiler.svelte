@@ -34,6 +34,7 @@
   };
 
   let setups: CompilerSetup[] = [];
+  let loading = true;
   let setupNo = 0;
   $: setup = setups[setupNo];
   let hiddenFocus: HTMLElement;
@@ -93,6 +94,10 @@
   }
 
   async function scan() {
+    if (setups.length === 0) {
+      alert("不支持此操作系统。");
+      return;
+    }
     compilers = await invoke("compiler_scan", {
       setup: setups[setupNo].id,
     });
@@ -112,6 +117,7 @@
     setups = await invoke("compiler_setup_list");
     await scan();
     if (compilers.length > 0) useNew = false;
+    loading = false;
   });
 </script>
 
@@ -143,7 +149,7 @@
       </ul>
     </div>
   </div>
-  {#if setups.length > 0}
+  {#if !loading}
     {#if !useNew}
       <div>
         检测到下列 {setup.name}，请选择其中一个来编译您的代码。
@@ -256,7 +262,10 @@
       {/if}
     {/if}
   {:else}
-    <div class="pb-3">目前暂不支持此操作系统的配置。</div>
+    <div class="pb-3">
+      <span class="btn btn-ghost btn-circle loading" />
+      检测编译器中……
+    </div>
   {/if}
 </div>
 

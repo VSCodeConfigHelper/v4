@@ -21,6 +21,7 @@ use std::path::{Path, PathBuf};
 use std::process::Command;
 use std::sync::Mutex;
 
+use crate::Result;
 use crate::steps::vscode::adjust_path;
 #[cfg(target_os = "windows")]
 use crate::utils::winapi::CREATE_NO_WINDOW;
@@ -46,26 +47,26 @@ impl ExtensionManager {
     })
   }
 
-  fn run(&self, args: &[&str]) -> Result<String, &'static str> {
+  fn run(&self, args: &[&str]) -> Result<String> {
     let mut command = Command::new(&self.path);
     #[cfg(target_os = "windows")]
     command.creation_flags(CREATE_NO_WINDOW);
     
     let stdout = command
       .args(args)
-      .output()
-      .map_err(|_| "Failed to run vscode extension manager")?
+      .output()?
       .stdout;
-    String::from_utf8(stdout).map_err(|_| "Decode error")
+    let stdout = String::from_utf8(stdout)?;
+    Ok(stdout)
   }
 
-  fn update(&mut self) -> Result<(), &'static str> {
+  fn update(&mut self) -> Result<()> {
     let output = self.run(&["--list-extensions"])?;
     self.installed = output.lines().map(|line| line.to_string()).collect();
     Ok(())
   }
 
-  fn install(&self, id: &str) -> Result<(), &'static str> {
+  fn install(&self, id: &str) -> Result<()> {
     if self.installed.contains(&id.to_string()) {
       return Ok(());
     }
@@ -73,7 +74,7 @@ impl ExtensionManager {
     Ok(())
   }
 
-  fn uninstall(&self, id: &str) -> Result<(), &'static str> {
+  fn uninstall(&self, id: &str) -> Result<()> {
     if !self.installed.contains(&id.to_string()) {
       return Ok(());
     }
@@ -85,17 +86,17 @@ impl ExtensionManager {
 static C_CPP_ID: &str = "ms-vscode.cpptools";
 static CODE_LLDB_ID: &str = "vadimcn.vscode-lldb";
 
-pub fn install_c_cpp(args: &TaskArgs) -> Result<(), &'static str> {
+pub fn install_c_cpp(args: &TaskArgs) -> Result<()> {
   let m = ExtensionManager::get(args).lock().unwrap();
   m.install(C_CPP_ID)
 }
 
-pub fn install_code_lldb(args: &TaskArgs) -> Result<(), &'static str> {
+pub fn install_code_lldb(args: &TaskArgs) -> Result<()> {
   let m = ExtensionManager::get(args).lock().unwrap();
   m.install(CODE_LLDB_ID)
 }
 
-pub fn remove_unrecommended(args: &TaskArgs) -> Result<(), &'static str> {
+pub fn remove_unrecommended(args: &TaskArgs) -> Result<()> {
   let m = ExtensionManager::get(args).lock().unwrap();
   [
     "formulahendry.code-runner",
