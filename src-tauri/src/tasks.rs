@@ -18,7 +18,10 @@
 use serde::Deserialize;
 use std::{path::Path, sync::Arc};
 
-use crate::{steps::{compiler::Compiler, options::Options}, Result};
+use crate::steps::compiler::{CompilerSetup, get_setup};
+use crate::steps::{compiler::Compiler, options::Options};
+use crate::utils::ToString;
+use crate::Result;
 
 mod dotvscode;
 mod extension;
@@ -35,7 +38,8 @@ pub struct TaskInitArgs {
 
 pub struct TaskArgs {
   pub vscode: String,
-  pub compiler: Compiler,
+  pub compiler_setup: &'static CompilerSetup,
+  pub compiler_path: String,
   pub workspace: String,
   pub compatible_mode: bool,
   pub is_c: bool,
@@ -63,12 +67,12 @@ mod debug {
 
 mod compiler {
   use super::TaskArgs;
-  use crate::Result;
   use crate::steps::compiler::mingw::check_bin;
   use crate::utils::winreg;
+  use crate::Result;
 
   pub fn add_to_path(args: &TaskArgs) -> Result<()> {
-    let compiler_path = check_bin(&args.compiler.path).unwrap();
+    let compiler_path = check_bin(&args.compiler_path).unwrap();
     let compiler_path = compiler_path.as_str();
     if winreg::get_machine_env("Path")
       .unwrap_or_default()
@@ -97,8 +101,8 @@ mod compiler {
   }
 }
 mod shortcut {
-  use crate::Result;
   use super::TaskArgs;
+  use crate::Result;
 
   #[cfg(target_os = "windows")]
   use crate::utils::winapi::create_lnk;
@@ -122,8 +126,8 @@ mod shortcut {
 }
 
 mod vscode {
-  use crate::Result;
   use super::TaskArgs;
+  use crate::Result;
 
   pub fn open(args: &TaskArgs) -> Result<()> {
     let mut vscode_args = vec![args.workspace.as_str()];
@@ -151,12 +155,7 @@ macro_rules! generate_task {
   };
 }
 
-pub fn list(
-  args: TaskInitArgs,
-) -> Vec<(
-  &'static str,
-  Box<dyn Fn() -> Result<()> + Send>,
-)> {
+pub fn list(args: TaskInitArgs) -> Vec<(&'static str, Box<dyn Fn() -> Result<()> + Send>)> {
   let is_c = args.options.language == "C";
   let file_ext = if is_c { "c" } else { "cpp" };
   let test_file = {
@@ -170,7 +169,7 @@ pub fn list(
         path = Path::new(&args.workspace).join(format!("helloworld({}).{}", i, file_ext));
         i += 1;
       }
-      Some(path.to_str().unwrap().to_string())
+      Some(path.to_string())
     } else {
       None
     }
@@ -178,7 +177,8 @@ pub fn list(
 
   let args = Arc::from(TaskArgs {
     vscode: args.vscode,
-    compiler: args.compiler,
+    compiler_setup: get_setup(&args.compiler.setup),
+    compiler_path: args.compiler.path,
     workspace: args.workspace,
     compatible_mode: args.options.compatible_mode,
     is_c: is_c,
@@ -194,18 +194,15 @@ pub fn list(
     collect_data: args.options.collect_data,
   });
 
-  let mapper = |task: Task| -> (
-    &'static str,
-    Box<dyn Fn() -> Result<()> + Send>,
-  ) { 
+  let mapper = |task: Task| -> (&'static str, Box<dyn Fn() -> Result<()> + Send>) {
     let args = Arc::clone(&args);
-    (task.name, Box::new(move || (task.action)(args.as_ref()))) 
+    (task.name, Box::new(move || (task.action)(args.as_ref())))
   };
 
   generate_task![
     (extension::remove_unrecommended, a => a.remove_extensions),
     (extension::install_c_cpp, _ => true),
-    (extension::install_code_lldb, a => llvm_setup(&a.compiler.setup)),
+    (extension::install_code_lldb, a => llvm_setup(&a.compiler_setup)),
     (run::create_pauser, a => !a.compatible_mode),
     (run::create_keybinding, a => !a.compatible_mode),
     (debug::create_checker, a => a.ascii_check),
@@ -223,10 +220,10 @@ pub fn list(
   .collect()
 }
 
-fn llvm_setup(setup: &str) -> bool {
-  ["llvm-mingw", "llvm", "apple"].contains(&setup)
+fn llvm_setup(setup: &CompilerSetup) -> bool {
+  ["llvm-mingw", "llvm", "apple"].contains(&setup.id)
 }
 
-fn mingw_setup(setup: &str) -> bool {
-  ["gcc-mingw", "llvm-mingw"].contains(&setup)
+fn mingw_setup(setup: &CompilerSetup) -> bool {
+  ["gcc-mingw", "llvm-mingw"].contains(&setup.id)
 }

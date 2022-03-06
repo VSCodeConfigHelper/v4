@@ -20,7 +20,7 @@
 use std::os::windows::process::CommandExt;
 use std::path::{Path, PathBuf};
 use std::process::Command;
-use std::str;
+use std::{fs, str};
 
 use serde::Deserialize;
 use serde_json;
@@ -30,7 +30,10 @@ use super::Compiler;
 use super::CompilerSetup;
 use crate::utils::winapi::get_known_folder_path;
 use crate::utils::winapi::CREATE_NO_WINDOW;
-use windows::Win32::UI::Shell::{FOLDERID_LocalAppData, FOLDERID_ProgramData, FOLDERID_ProgramFilesX86};
+use crate::utils::ToString;
+use windows::Win32::UI::Shell::{
+  FOLDERID_LocalAppData, FOLDERID_ProgramData, FOLDERID_ProgramFilesX86,
+};
 
 static POWERSHELL: &str = "C:\\Windows\\system32\\WindowsPowerShell\\v1.0\\powershell.exe";
 static VSWHERE_DOWNLOAD_LINK: &str =
@@ -64,8 +67,8 @@ fn get_vswhere() -> Option<PathBuf> {
       &(format!(
         "Invoke-WebRequest -Uri {} -OutFile {}",
         VSWHERE_DOWNLOAD_LINK,
-        tmp_path.to_str().unwrap()
-      ))
+        tmp_path.to_string()
+      )),
     ])
     .output()
     .ok()
@@ -117,13 +120,29 @@ fn scan() -> Vec<Compiler> {
       setup: "msvc".to_string(),
       version: info.installation_version,
       path: info.installation_path,
-      package_string: info.display_name
+      package_string: info.display_name,
     })
     .collect()
 }
 
 fn install() -> bool {
   open::that("https://aka.ms/vs/17/release/vs_BuildTools.exe").is_ok()
+}
+
+fn path_to_cl(path: &str, _: bool) -> crate::Result<String> {
+  let version_txt =
+    Path::new(&path).join("VC\\Auxiliary\\Build\\Microsoft.VCToolsVersion.default.txt");
+  if !version_txt.exists() {
+    return Err("无法找到 MSVC 版本文件".into());
+  }
+  let version = fs::read(version_txt).map_err(|_| "无法读取 MSVC 版本文件")?;
+  let version = String::from_utf8(version).unwrap();
+  let p = Path::new(&path)
+    .join("VC\\Tools\\MSVC")
+    .join(version)
+    .join("bin\\HostX64\\x64\\cl.exe")
+    .to_string();
+  Ok(p)
 }
 
 pub static ID: &str = "msvc";
@@ -139,4 +158,5 @@ pub static SETUP: CompilerSetup = CompilerSetup {
   install: Some(install),
 
   verparser: verparse::gcc,
+  path_to_exe: path_to_cl,
 };

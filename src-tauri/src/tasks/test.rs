@@ -99,7 +99,7 @@ pub fn generate(args: &TaskArgs) -> Result<()> {
       cmt!("按下 {} 后，你将在弹出的终端窗口中看到这一行字。", run_key),
       cmt!(
         "{}",
-        if args.compiler.setup == "gcc-mingw" {
+        if args.compiler_setup.id == "gcc-mingw" {
           "!! 重要提示：请您在编写代码前，确认文件名不含中文或特殊字符。 !!"
         } else {
           ""

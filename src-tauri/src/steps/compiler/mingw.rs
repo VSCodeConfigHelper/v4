@@ -25,8 +25,9 @@ use std::process::Command;
 use super::verparse;
 use super::Compiler;
 use super::CompilerSetup;
-use crate::utils::winreg;
 use crate::utils::winapi::CREATE_NO_WINDOW;
+use crate::utils::winreg;
+use crate::utils::ToString;
 
 /// 给定 `{path}`, 按需构造 `{path}\\bin`。
 /// 检查其存在且是目录后返回。
@@ -36,7 +37,7 @@ pub fn check_bin(path: &str) -> Option<String> {
     path = path.join("bin");
   }
   if path.is_dir() {
-    path.to_str().map(String::from)
+    Some(path.to_string())
   } else {
     None
   }
@@ -90,6 +91,28 @@ fn install() -> bool {
   open::that("https://gytx.lanzoui.com/iy906s48llc").is_ok()
 }
 
+fn join(path: &str, name: &str) -> String {
+  Path::new(path).join(name).to_str().unwrap().to_string()
+}
+
+fn path_to_gcc(path: &str, is_c: bool) -> crate::Result<String> {
+  let path = check_bin(path).unwrap();
+  if is_c {
+    Ok(join(&path, "gcc"))
+  } else {
+    Ok(join(&path, "g++"))
+  }
+}
+
+fn path_to_clang(path: &str, is_c: bool) -> crate::Result<String> {
+  let path = check_bin(path).unwrap();
+  if is_c {
+    Ok(join(&path, "clang"))
+  } else {
+    Ok(join(&path, "clang++"))
+  }
+}
+
 pub static GCC_ID: &'static str = "gcc-mingw";
 
 pub static GCC_SETUP: CompilerSetup = CompilerSetup {
@@ -103,4 +126,5 @@ pub static GCC_SETUP: CompilerSetup = CompilerSetup {
   install: Some(install),
 
   verparser: verparse::gcc,
+  path_to_exe: path_to_gcc,
 };

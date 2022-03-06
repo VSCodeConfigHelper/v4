@@ -16,58 +16,15 @@
 // along with vscch4.  If not, see <http://www.gnu.org/licenses/>.
 
 use std::fs;
-use std::path::{Path};
+use std::path::Path;
 
 use serde_json::json;
 
 use super::run::*;
 use super::TaskArgs;
+use crate::steps::compiler::mingw::check_bin;
+use crate::utils::ToString;
 use crate::Result;
-use crate::{
-  steps::compiler::{mingw::check_bin, Compiler},
-  tasks::run::script_path,
-};
-
-fn compiler_executable(compiler: &Compiler, c: bool) -> Result<String> {
-  fn join(path: &str, name: &str) -> String {
-    Path::new(path).join(name).to_str().unwrap().to_string()
-  }
-  match compiler.setup.as_str() {
-    "gcc-mingw" => {
-      let path = check_bin(&compiler.path).unwrap();
-      if c {
-        Ok(join(&path, "gcc.exe"))
-      } else {
-        Ok(join(&path, "g++.exe"))
-      }
-    }
-    "llvm-mingw" => {
-      let path = check_bin(&compiler.path).unwrap();
-      if c {
-        Ok(join(&path, "clang.exe"))
-      } else {
-        Ok(join(&path, "clang++.exe"))
-      }
-    }
-    "msvc" => {
-      let version_txt = Path::new(&compiler.path)
-        .join("VC\\Auxiliary\\Build\\Microsoft.VCToolsVersion.default.txt");
-      if !version_txt.exists() {
-        return Err("无法找到 MSVC 版本文件".into());
-      }
-      let version = fs::read(version_txt).map_err(|_| "无法读取 MSVC 版本文件")?;
-      let version = String::from_utf8(version).unwrap();
-      Path::new(&compiler.path)
-        .join("VC\\Tools\\MSVC")
-        .join(version)
-        .join("bin\\HostX64\\x64\\cl.exe")
-        .to_str()
-        .map(str::to_string)
-        .ok_or("Path -> String failed".into())
-    }
-    _ => Err("Unknown compiler setup".into()),
-  }
-}
 
 #[cfg(target_os = "windows")]
 mod os_spec {
@@ -86,11 +43,11 @@ fn single_file_build_task(args: &TaskArgs) -> Result<serde_json::Value> {
   Ok(json!({
     "type": "process",
     "label": "single file build",
-    "command": compiler_executable(&args.compiler, args.is_c)?,
+    "command": (args.compiler_setup.path_to_exe)(&args.compiler_path, args.is_c)?,
     "args": args.args.iter().chain(&mut vec![
       "-g".to_string(),
       "${file}".to_string(),
-      format!("${{fileDirname}}{}${{fileBasenameNoExtension}}.{}", EXT, PATH_SLASH)
+      format!("${{fileDirname}}{}${{fileBasenameNoExtension}}.{}", PATH_SLASH, EXT)
     ].iter()).collect::<Vec<&String>>(),
     "group": {
       "kind": "build",
@@ -162,7 +119,7 @@ fn pause_task() -> Result<serde_json::Value> {
   }))
 }
 
-fn ascii_check_task(args: &TaskArgs) -> Result<serde_json::Value> {
+fn ascii_check_task(_: &TaskArgs) -> Result<serde_json::Value> {
   Ok(json!({
     "type": "process",
     "label": "ascii check",
@@ -173,7 +130,7 @@ fn ascii_check_task(args: &TaskArgs) -> Result<serde_json::Value> {
       "ByPass",
       "-NoProfile",
       "-File",
-      script_path().unwrap().join(CHECK_ASCII_SCRIPT_NAME).to_str().unwrap(),
+      script_path().unwrap().join(CHECK_ASCII_SCRIPT_NAME).to_string(),
       "${fileDirname}\\${fileBasenameNoExtension}.exe"
     ],
     "presentation": {
@@ -210,8 +167,8 @@ pub fn tasks_json(args: &TaskArgs) -> Result<()> {
       .as_object_mut()
       .unwrap(),
     );
-    if super::mingw_setup(&args.compiler.setup.as_str()) {
-      let path = check_bin(&args.compiler.path).unwrap();
+    if super::mingw_setup(args.compiler_setup) {
+      let path = check_bin(&args.compiler_path).unwrap();
       options.as_object_mut().unwrap().append(
         json!({
           "env": {
@@ -238,7 +195,48 @@ pub fn tasks_json(args: &TaskArgs) -> Result<()> {
 }
 
 pub fn launch_json(args: &TaskArgs) -> Result<()> {
-  Err("not implemented".into())
+  let exe_path = (args.compiler_setup.path_to_exe)(&args.compiler_path, args.is_c)?;
+  let debugger_name = if super::llvm_setup(args.compiler_setup) {
+    "lldb"
+  } else {
+    "gdb"
+  };
+  let debug_type = if super::llvm_setup(args.compiler_setup) {
+    "lldb"
+  } else {
+    "cppdbg"
+  };
+  let debugger_path = Path::new(&exe_path)
+    .parent()
+    .unwrap()
+    .join(debugger_name)
+    .to_string();
+  let json = json!({
+    "version": "0.2.0",
+    "configurations": [
+      {
+        "name": "single file debug",
+        "type": debug_type,
+        "request": "launch",
+        "program": format!("${{fileDirname}}{}${{fileBasenameNoExtension}}{}", PATH_SLASH, EXT),
+        "args": [],
+        "stopAtEntry": false,
+        "cwd": "${{fileDirname}}",
+        "environment": [],
+        "externalConsole": !args.compatible_mode,
+        "MIMode": debugger_name,
+        "miDebuggerPath": debugger_path,
+        "preLaunchTask": if args.ascii_check { "ascii check" } else { "single file build" },
+        "internalConsosleOptions": "neverOpen"
+      }
+    ]
+  });
+
+  let path = Path::new(&args.workspace)
+    .join(".vscode")
+    .join("launch.json");
+  fs::write(path, json.to_string())?;
+  Ok(())
 }
 
 pub fn c_cpp_properties_json(args: &TaskArgs) -> Result<()> {

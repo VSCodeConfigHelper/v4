@@ -17,3 +17,18 @@
 
 pub mod winreg;
 pub mod winapi;
+
+pub trait ToString { 
+  fn to_string(&self) -> String;
+}
+
+impl ToString for std::path::Path {
+  fn to_string(&self) -> String {
+    self.to_str().unwrap().to_string()
+  }
+}
+impl ToString for std::path::PathBuf {
+  fn to_string(&self) -> String {
+    self.to_str().unwrap().to_string()
+  }
+}

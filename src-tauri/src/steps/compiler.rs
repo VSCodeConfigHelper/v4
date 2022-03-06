@@ -56,6 +56,7 @@ pub struct CompilerSetup {
   pub install: Option<fn() -> bool>,
 
   pub verparser: verparse::Parser,
+  pub path_to_exe: fn(path: &str, is_c: bool) -> crate::Result<String>
 }
 
 #[cfg(target_os = "windows")]
@@ -76,6 +77,6 @@ pub static ENABLED_SETUPS: HashMap<&'static str, &'static CompilerSetup> = HashM
 #[ctor]
 pub static ENABLED_SETUPS: HashMap<&'static str, &'static CompilerSetup> = HashMap::from([]);
 
-pub fn get_setup(id: &str) -> &CompilerSetup {
+pub fn get_setup(id: &str) -> &'static CompilerSetup {
   ENABLED_SETUPS[id]
 }
