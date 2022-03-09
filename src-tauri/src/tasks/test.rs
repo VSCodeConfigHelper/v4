@@ -15,7 +15,7 @@
 // You should have received a copy of the GNU General Public License
 // along with vscch4.  If not, see <http://www.gnu.org/licenses/>.
 
-use crate::Result;
+use anyhow::Result;
 
 use super::TaskArgs;
 use std::fs;

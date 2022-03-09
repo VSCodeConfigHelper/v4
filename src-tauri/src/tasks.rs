@@ -16,12 +16,14 @@
 // along with vscch4.  If not, see <http://www.gnu.org/licenses/>.
 
 use serde::Deserialize;
+use anyhow::Result;
+
+use std::path::PathBuf;
 use std::{path::Path, sync::Arc};
 
 use crate::steps::compiler::{CompilerSetup, get_setup};
 use crate::steps::{compiler::Compiler, options::Options};
 use crate::utils::ToString;
-use crate::Result;
 
 mod dotvscode;
 mod extension;
@@ -39,7 +41,7 @@ pub struct TaskInitArgs {
 pub struct TaskArgs {
   pub vscode: String,
   pub compiler_setup: &'static CompilerSetup,
-  pub compiler_path: String,
+  pub compiler_path: PathBuf,
   pub workspace: String,
   pub compatible_mode: bool,
   pub is_c: bool,
@@ -67,13 +69,11 @@ mod debug {
 
 mod compiler {
   use super::TaskArgs;
-  use crate::steps::compiler::mingw::check_bin;
-  use crate::utils::winreg;
-  use crate::Result;
+  use crate::utils::{winreg, ToString};
+  use anyhow::Result;
 
   pub fn add_to_path(args: &TaskArgs) -> Result<()> {
-    let compiler_path = check_bin(&args.compiler_path).unwrap();
-    let compiler_path = compiler_path.as_str();
+    let compiler_path = args.compiler_path.parent().unwrap().to_str().unwrap();
     if winreg::get_machine_env("Path")
       .unwrap_or_default()
       .split(';')
@@ -93,16 +93,12 @@ mod compiler {
       .collect::<Vec<&str>>()
       .join(";");
 
-    if winreg::set_user_env("Path", &path) {
-      Ok(())
-    } else {
-      Err("Failed to set user Path env".into())
-    }
+    winreg::set_user_env("Path", &path)
   }
 }
 mod shortcut {
   use super::TaskArgs;
-  use crate::Result;
+  use anyhow::Result;
 
   #[cfg(target_os = "windows")]
   use crate::utils::winapi::create_lnk;
@@ -127,7 +123,7 @@ mod shortcut {
 
 mod vscode {
   use super::TaskArgs;
-  use crate::Result;
+  use anyhow::Result;
 
   pub fn open(args: &TaskArgs) -> Result<()> {
     let mut vscode_args = vec![args.workspace.as_str()];
@@ -137,8 +133,7 @@ mod vscode {
     }
     std::process::Command::new(&args.vscode)
       .args(vscode_args)
-      .spawn()
-      .map_err(|_| "Failed to open vscode")?;
+      .spawn()?;
     Ok(())
   }
 }
@@ -174,11 +169,12 @@ pub fn list(args: TaskInitArgs) -> Vec<(&'static str, Box<dyn Fn() -> Result<()>
       None
     }
   };
+  let setup = get_setup(&args.compiler.setup);
 
   let args = Arc::from(TaskArgs {
     vscode: args.vscode,
-    compiler_setup: get_setup(&args.compiler.setup),
-    compiler_path: args.compiler.path,
+    compiler_setup: setup,
+    compiler_path: (setup.path_to_exe)(&args.compiler.path, is_c),
     workspace: args.workspace,
     compatible_mode: args.options.compatible_mode,
     is_c: is_c,
@@ -207,6 +203,7 @@ pub fn list(args: TaskInitArgs) -> Vec<(&'static str, Box<dyn Fn() -> Result<()>
     (run::create_keybinding, a => !a.compatible_mode),
     (debug::create_checker, a => a.ascii_check),
     (compiler::add_to_path, a => a.add_to_path),
+    (dotvscode::create_folder, _ => true),
     (dotvscode::tasks_json, _ => true),
     (dotvscode::launch_json, _ => true),
     (dotvscode::c_cpp_properties_json, _ => true),

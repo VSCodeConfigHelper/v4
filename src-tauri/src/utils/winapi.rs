@@ -27,7 +27,7 @@ use std::slice;
 use windows::Win32::Globalization::GetACP;
 use windows::Win32::System::Com::{CoTaskMemFree, CoInitialize, CLSCTX_INPROC_SERVER, CoCreateInstance, IPersistFile, CoUninitialize};
 use windows::Win32::UI::Shell::{SHGetKnownFolderPath, IShellLinkW, ShellLink};
-use windows::core::{GUID, Interface,Result};
+use windows::core::{GUID, Interface};
 use windows::Win32::Foundation::PWSTR;
 use windows::Win32::System::Environment::ExpandEnvironmentStringsW;
 

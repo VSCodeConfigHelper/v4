@@ -24,9 +24,8 @@ mod utils;
 
 use handlers::*;
 
-type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
-
 fn main() {
+  std::env::set_var("RUST_BACKTRACE", "1");
   tauri::Builder::default()
     .invoke_handler(tauri::generate_handler![
       vscode_verify,

@@ -16,12 +16,13 @@
 // along with vscch4.  If not, see <http://www.gnu.org/licenses/>.
 
 use once_cell::sync::OnceCell;
+use anyhow::Result;
+
 use std::os::windows::process::CommandExt;
 use std::path::{Path, PathBuf};
 use std::process::Command;
 use std::sync::Mutex;
 
-use crate::Result;
 use crate::steps::vscode::adjust_path;
 #[cfg(target_os = "windows")]
 use crate::utils::winapi::CREATE_NO_WINDOW;

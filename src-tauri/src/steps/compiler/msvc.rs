@@ -129,20 +129,15 @@ fn install() -> bool {
   open::that("https://aka.ms/vs/17/release/vs_BuildTools.exe").is_ok()
 }
 
-fn path_to_cl(path: &str, _: bool) -> crate::Result<String> {
+fn path_to_cl(path: &str, _: bool) -> PathBuf {
   let version_txt =
     Path::new(&path).join("VC\\Auxiliary\\Build\\Microsoft.VCToolsVersion.default.txt");
-  if !version_txt.exists() {
-    return Err("无法找到 MSVC 版本文件".into());
-  }
-  let version = fs::read(version_txt).map_err(|_| "无法读取 MSVC 版本文件")?;
+  let version = fs::read(version_txt).unwrap();
   let version = String::from_utf8(version).unwrap();
-  let p = Path::new(&path)
+  Path::new(path.trim())
     .join("VC\\Tools\\MSVC")
     .join(version)
     .join("bin\\HostX64\\x64\\cl.exe")
-    .to_string();
-  Ok(p)
 }
 
 pub static ID: &str = "msvc";

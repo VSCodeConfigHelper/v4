@@ -18,13 +18,12 @@
 use std::fs;
 use std::path::Path;
 
+use anyhow::Result;
 use serde_json::json;
 
 use super::run::*;
 use super::TaskArgs;
-use crate::steps::compiler::mingw::check_bin;
 use crate::utils::ToString;
-use crate::Result;
 
 #[cfg(target_os = "windows")]
 mod os_spec {
@@ -43,10 +42,11 @@ fn single_file_build_task(args: &TaskArgs) -> Result<serde_json::Value> {
   Ok(json!({
     "type": "process",
     "label": "single file build",
-    "command": (args.compiler_setup.path_to_exe)(&args.compiler_path, args.is_c)?,
+    "command": args.compiler_path.to_string(),
     "args": args.args.iter().chain(&mut vec![
       "-g".to_string(),
       "${file}".to_string(),
+      "-o".to_string(),
       format!("${{fileDirname}}{}${{fileBasenameNoExtension}}.{}", PATH_SLASH, EXT)
     ].iter()).collect::<Vec<&String>>(),
     "group": {
@@ -102,11 +102,13 @@ fn pause_task() -> Result<serde_json::Value> {
   process.args.push(pause_script_path.to_str().unwrap());
 
   Ok(json!({
-    "type": "process",
+    "type": "shell",
     "label": "run and pause",
     "command": process.command,
     "dependsOn": "single file build",
-    "args": process.args,
+    "args": process.args.into_iter().map(serde_json::Value::from).chain(vec![
+      serde_json::Value::from(format!("${{fileDirname}}{}${{fileBasenameNoExtension}}.{}", PATH_SLASH, EXT)),
+    ]).collect::<Vec<_>>(),
     "presentation": {
       "reveal": "never",
       "focus": false,
@@ -168,7 +170,7 @@ pub fn tasks_json(args: &TaskArgs) -> Result<()> {
       .unwrap(),
     );
     if super::mingw_setup(args.compiler_setup) {
-      let path = check_bin(&args.compiler_path).unwrap();
+      let path = args.compiler_path.parent().unwrap().to_string();
       options.as_object_mut().unwrap().append(
         json!({
           "env": {
@@ -190,26 +192,33 @@ pub fn tasks_json(args: &TaskArgs) -> Result<()> {
   let path = Path::new(&args.workspace)
     .join(".vscode")
     .join("tasks.json");
-  fs::write(path, json.to_string())?;
+  fs::write(path, serde_json::to_string_pretty(&json)?)?;
   Ok(())
 }
 
 pub fn launch_json(args: &TaskArgs) -> Result<()> {
-  let exe_path = (args.compiler_setup.path_to_exe)(&args.compiler_path, args.is_c)?;
-  let debugger_name = if super::llvm_setup(args.compiler_setup) {
-    "lldb"
+  let debugger_name: String = if super::llvm_setup(args.compiler_setup) {
+    "lldb".into()
   } else {
-    "gdb"
+    "gdb".into()
   };
+
+  #[cfg(target_os = "windows")]
+  let debugger_ext = ".exe";
+
+  #[cfg(not(target_os = "windows"))]
+  let debugger_ext = "";
+
   let debug_type = if super::llvm_setup(args.compiler_setup) {
     "lldb"
   } else {
     "cppdbg"
   };
-  let debugger_path = Path::new(&exe_path)
+  let debugger_path = args
+    .compiler_path
     .parent()
     .unwrap()
-    .join(debugger_name)
+    .join(format!("{}{}", debugger_name, debugger_ext))
     .to_string();
   let json = json!({
     "version": "0.2.0",
@@ -218,10 +227,10 @@ pub fn launch_json(args: &TaskArgs) -> Result<()> {
         "name": "single file debug",
         "type": debug_type,
         "request": "launch",
-        "program": format!("${{fileDirname}}{}${{fileBasenameNoExtension}}{}", PATH_SLASH, EXT),
+        "program": format!("${{fileDirname}}{}${{fileBasenameNoExtension}}.{}", PATH_SLASH, EXT),
         "args": [],
         "stopAtEntry": false,
-        "cwd": "${{fileDirname}}",
+        "cwd": "${fileDirname}",
         "environment": [],
         "externalConsole": !args.compatible_mode,
         "MIMode": debugger_name,
@@ -235,10 +244,62 @@ pub fn launch_json(args: &TaskArgs) -> Result<()> {
   let path = Path::new(&args.workspace)
     .join(".vscode")
     .join("launch.json");
-  fs::write(path, json.to_string())?;
+  fs::write(path, serde_json::to_string_pretty(&json)?)?;
   Ok(())
 }
 
 pub fn c_cpp_properties_json(args: &TaskArgs) -> Result<()> {
-  Err("not implemented".into())
+  let intellisense_mode = match args.compiler_setup.id {
+    "gcc-mingw" => "windows-gcc-x64",
+    "msvc" => "windows-msvc-x64",
+    _ => panic!(),
+  };
+
+  #[cfg(target_os = "windows")]
+  let platform = "Win32";
+
+  #[cfg(target_os = "macos")]
+  let platform = "Mac";
+
+  #[cfg(target_os = "linux")]
+  let platform = "Linux";
+
+  let standard_key = if args.is_c {
+    "cStandard"
+  } else {
+    "cppStandard"
+  };
+  // TODO
+  let standard = args
+    .standard
+    .as_ref()
+    .map(String::as_str)
+    .unwrap_or("c++17");
+
+  let json = json!({
+    "version": 4i32,
+    "configurations": [
+      {
+        "name": platform,
+        "includePath": [
+          "${{workspaceFolder}}/**"
+        ],
+        "compilerPath": args.compiler_path.to_string(),
+        standard_key: standard,
+        "intelliSenseMode": intellisense_mode,
+      }
+    ]
+  });
+
+  let path = Path::new(&args.workspace)
+    .join(".vscode")
+    .join("c_cpp_properties.json");
+  fs::write(path, serde_json::to_string_pretty(&json)?)?;
+  Ok(())
+}
+
+pub fn create_folder(args: &TaskArgs) -> Result<()> {
+  let path = Path::new(&args.workspace).join(".vscode");
+  fs::create_dir_all(&path)?;
+  Ok(())
 }

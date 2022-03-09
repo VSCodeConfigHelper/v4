@@ -20,6 +20,7 @@
 use std::collections::HashSet;
 use std::os::windows::process::CommandExt;
 use std::path::Path;
+use std::path::PathBuf;
 use std::process::Command;
 
 use super::verparse;
@@ -91,25 +92,25 @@ fn install() -> bool {
   open::that("https://gytx.lanzoui.com/iy906s48llc").is_ok()
 }
 
-fn join(path: &str, name: &str) -> String {
-  Path::new(path).join(name).to_str().unwrap().to_string()
+fn join(path: &str, name: &str) -> PathBuf {
+  Path::new(path).join(name)
 }
 
-fn path_to_gcc(path: &str, is_c: bool) -> crate::Result<String> {
+fn path_to_gcc(path: &str, is_c: bool) -> PathBuf {
   let path = check_bin(path).unwrap();
   if is_c {
-    Ok(join(&path, "gcc"))
+    join(&path, "gcc.exe")
   } else {
-    Ok(join(&path, "g++"))
+    join(&path, "g++.exe")
   }
 }
 
-fn path_to_clang(path: &str, is_c: bool) -> crate::Result<String> {
+fn path_to_clang(path: &str, is_c: bool) -> PathBuf {
   let path = check_bin(path).unwrap();
   if is_c {
-    Ok(join(&path, "clang"))
+    join(&path, "clang.exe")
   } else {
-    Ok(join(&path, "clang++"))
+    join(&path, "clang++.exe")
   }
 }
 

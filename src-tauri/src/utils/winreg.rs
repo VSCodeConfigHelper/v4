@@ -20,7 +20,8 @@
 pub use winreg::enums::{
   HKEY_CLASSES_ROOT, HKEY_CURRENT_CONFIG, HKEY_CURRENT_USER, HKEY_LOCAL_MACHINE, HKEY_USERS,
 };
-use winreg::RegKey;
+use winreg::{RegKey, enums::{KEY_READ, KEY_WRITE}};
+use anyhow::Result;
 
 use super::winapi::expand_environment_strings;
 
@@ -36,16 +37,11 @@ pub fn get(hkey: winreg::HKEY, path: &str, key: &str) -> Option<String> {
   }
 }
 
-fn set(hkey: winreg::HKEY, path: &str, key: &str, value: &str) -> bool {
+fn set(hkey: winreg::HKEY, path: &str, key: &str, value: &str) -> Result<()> {
   let hkey = RegKey::predef(hkey);
-  let path = match hkey.open_subkey(path) {
-    Ok(key) => key,
-    Err(_) => return false,
-  };
-  match path.set_value(key, &value) {
-    Ok(_) => true,
-    Err(_) => false,
-  }
+  let path = hkey.open_subkey_with_flags(path, KEY_READ | KEY_WRITE)?;
+  path.set_value(key, &value)?;
+  Ok(())
 }
 
 fn expand(path: &str) -> Option<String> {
@@ -66,6 +62,6 @@ pub fn get_machine_env(key: &str) -> Option<String> {
   expand(&value)
 }
 
-pub fn set_user_env(key: &str, value: &str) -> bool {
+pub fn set_user_env(key: &str, value: &str) -> Result<()> {
   set(HKEY_CURRENT_USER, "Environment", key, value)
 }

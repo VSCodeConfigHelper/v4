@@ -17,7 +17,7 @@
 
 use ctor::ctor;
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
+use std::{collections::HashMap, path::PathBuf};
 
 pub mod verparse;
 
@@ -56,7 +56,7 @@ pub struct CompilerSetup {
   pub install: Option<fn() -> bool>,
 
   pub verparser: verparse::Parser,
-  pub path_to_exe: fn(path: &str, is_c: bool) -> crate::Result<String>
+  pub path_to_exe: fn(path: &str, is_c: bool) -> PathBuf
 }
 
 #[cfg(target_os = "windows")]

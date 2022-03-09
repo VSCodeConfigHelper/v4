@@ -157,7 +157,7 @@ pub fn task_init(args: TaskInitArgs, window: tauri::Window) -> usize {
         Ok(_) => TaskFinishResult::Ok { name },
         Err(e) => TaskFinishResult::Err {
           name,
-          message: e.to_string(),
+          message: e.backtrace().to_string() + e.to_string().as_str(),
         },
       };
       window.emit("task_finish", payload).unwrap();
