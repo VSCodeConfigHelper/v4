@@ -28,7 +28,7 @@ mod scripts {
   pub static PAUSE_CONSOLE_SCRIPT_NAME: &str = "pause-console.ps1";
   pub static PAUSE_CONSOLE_SCRIPT: &str = include_str!("../scripts/pause-console.ps1");
 
-  pub static CHECK_ASCII_SCRIPT_NAME: &str = "";
+  pub static CHECK_ASCII_SCRIPT_NAME: &str = "check-ascii.ps1";
   pub static CHECK_ASCII_SCRIPT: &str = include_str!("../scripts/check-ascii.ps1");
 }
 

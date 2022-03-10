@@ -15,13 +15,13 @@
 // You should have received a copy of the GNU General Public License
 // along with vscch4.  If not, see <http://www.gnu.org/licenses/>.
 
-use serde::Deserialize;
 use anyhow::Result;
+use serde::Deserialize;
 
 use std::path::PathBuf;
 use std::{path::Path, sync::Arc};
 
-use crate::steps::compiler::{CompilerSetup, get_setup};
+use crate::steps::compiler::{get_setup, CompilerSetup};
 use crate::steps::{compiler::Compiler, options::Options};
 use crate::utils::ToString;
 

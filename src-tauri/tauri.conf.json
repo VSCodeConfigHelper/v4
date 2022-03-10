@@ -48,7 +48,14 @@
       "active": false
     },
     "allowlist": {
-      "all": true
+      "all": true,
+      "fs": {
+        "all": true,
+        "scope": [
+          "$APP",
+          "$APP/*"
+        ]
+      }
     },
     "windows": [
       {

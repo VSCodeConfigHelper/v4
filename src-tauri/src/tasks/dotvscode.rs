@@ -39,16 +39,38 @@ mod os_spec {
 use os_spec::*;
 
 fn single_file_build_task(args: &TaskArgs) -> Result<serde_json::Value> {
+  let debug = if args.compiler_setup.id == "msvc" {
+    "/Zi"
+  } else {
+    "-g"
+  };
+  let output = if args.compiler_setup.id == "msvc" {
+    "/Fe:"
+  } else {
+    "-o"
+  };
+  let mut c_args = vec![
+    debug.to_string(),
+    "${file}".to_string(),
+    output.to_string(),
+    format!("${{fileDirname}}{}${{fileBasenameNoExtension}}.{}", PATH_SLASH, EXT)
+  ];
+  if args.compiler_setup.id == "msvc" {
+    c_args.push("/EHsc".to_string());
+    c_args.push("/utf-8".to_string());
+  }
+  c_args.extend(args.args.clone());
+
+  let mut compiler_cmd = args.compiler_path.to_string();
+  if args.compiler_setup.id == "msvc" {
+    compiler_cmd = "cl.exe".to_string();
+  }
+
   Ok(json!({
-    "type": "process",
+    "type": "shell",
     "label": "single file build",
-    "command": args.compiler_path.to_string(),
-    "args": args.args.iter().chain(&mut vec![
-      "-g".to_string(),
-      "${file}".to_string(),
-      "-o".to_string(),
-      format!("${{fileDirname}}{}${{fileBasenameNoExtension}}.{}", PATH_SLASH, EXT)
-    ].iter()).collect::<Vec<&String>>(),
+    "command": compiler_cmd,
+    "args": c_args,
     "group": {
       "kind": "build",
       "isDefault": true
@@ -159,11 +181,19 @@ pub fn tasks_json(args: &TaskArgs) -> Result<()> {
 
   #[cfg(target_os = "windows")]
   {
+    let mut shell_args = vec!["/C".to_string()];
+    if args.compiler_setup.id == "msvc" {
+      let mut cl_path = Path::new(&args.compiler_path).join("..\\..\\..\\..\\..\\..\\..\\..");
+      cl_path.push("Common7\\Tools\\VsDevCmd.bat");
+      shell_args.push(format!("\"{}\"", cl_path.to_string()));
+      shell_args.push("&&".to_string());
+    }
+
     options.as_object_mut().unwrap().append(
       json!({
         "shell": {
           "executable": "C:\\Windows\\System32\\cmd.exe",
-          "args": [ "/C" ]
+          "args": shell_args
         }
       })
       .as_object_mut()
@@ -211,6 +241,8 @@ pub fn launch_json(args: &TaskArgs) -> Result<()> {
 
   let debug_type = if super::llvm_setup(args.compiler_setup) {
     "lldb"
+  } else if args.compiler_setup.id == "msvc" {
+    "cppvsdbg"
   } else {
     "cppdbg"
   };
@@ -233,8 +265,8 @@ pub fn launch_json(args: &TaskArgs) -> Result<()> {
         "cwd": "${fileDirname}",
         "environment": [],
         "externalConsole": !args.compatible_mode,
-        "MIMode": debugger_name,
-        "miDebuggerPath": debugger_path,
+        "MIMode": debugger_name,          // Only used in GDB mode
+        "miDebuggerPath": debugger_path,  // ..
         "preLaunchTask": if args.ascii_check { "ascii check" } else { "single file build" },
         "internalConsosleOptions": "neverOpen"
       }

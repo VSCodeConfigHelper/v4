@@ -18,7 +18,12 @@
 -->
 <script lang="ts">
   import Icon from "@iconify/svelte";
-  import { readTextFile } from "@tauri-apps/api/fs";
+  import {
+    BaseDirectory,
+    createDir,
+    readTextFile,
+    writeFile,
+  } from "@tauri-apps/api/fs";
   import { invoke } from "@tauri-apps/api/tauri";
   import { onMount } from "svelte";
 
@@ -80,7 +85,7 @@
     e.stopPropagation();
   }
   function generateArgs() {
-    const args: [string, string][] = [["", "/utf-8"]];
+    const args: [string, string][] = [];
     args.push([
       activeStandard
         ? useGnu
@@ -210,8 +215,21 @@
       customArgs,
     } = profile);
   }
-  function writeProfile(): OptionsProfile {
-    return {
+  let lastProfileAvailable = true;
+  async function readLastProfile() {
+    try {
+      const text = await readTextFile("profile.json", {
+        dir: BaseDirectory.App,
+      });
+      const profile: OptionsProfile = JSON.parse(text);
+      readProfile(profile);
+    } catch {
+      readProfile(DEFAULT_PROFILE);
+      lastProfileAvailable = false;
+    }
+  }
+  $: {
+    let profile: OptionsProfile = {
       compatibleMode,
       activeLanguage,
       activeStandard,
@@ -231,22 +249,22 @@
       staticStd,
       customArgs,
     };
+    options.update(() => ({
+      ...profile,
+      args: [...generatedArgs, ...customArgs],
+    }));
+    createDir("", { dir: BaseDirectory.App, recursive: true }).then(() =>
+      writeFile(
+        {
+          contents: JSON.stringify(profile),
+          path: "profile.json",
+        },
+        {
+          dir: BaseDirectory.App,
+        }
+      )
+    );
   }
-  let lastProfileAvailable = true;
-  async function readLastProfile() {
-    try {
-      const text = await readTextFile("profile.json");
-      const profile: OptionsProfile = JSON.parse(text);
-      readProfile(profile);
-    } catch {
-      readProfile(DEFAULT_PROFILE);
-      lastProfileAvailable = false;
-    }
-  }
-  $: options.update(() => ({
-    ...writeProfile(),
-    args: [...generatedArgs, ...customArgs],
-  }));
 
   async function scan(setup?: string) {
     if (!setup) return;

@@ -28,7 +28,7 @@
   },
   "dependencies": {
     "@tauri-apps/api": "^1.0.0-rc.1",
-    "daisyui": "^1.25.4"
+    "daisyui": "^2.6.3"
   },
   "packageManager": "pnpm@6.30.1"
 }

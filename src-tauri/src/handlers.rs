@@ -164,6 +164,8 @@ pub fn task_init(args: TaskInitArgs, window: tauri::Window) -> usize {
       if res.is_err() {
         break;
       }
+      let dur = std::time::Duration::from_millis(100);
+      std::thread::sleep(dur);
     }
   });
   len

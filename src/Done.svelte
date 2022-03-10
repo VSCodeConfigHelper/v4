@@ -35,13 +35,22 @@
   let working = true;
   let success = false;
 
+  let total = 1;
+  let finished = 0;
+  $: percentage = Math.round(finished / total * 100);
+
   $: done.update(() => !working);
+
+  $: if (finished == total) {
+    working = false;
+    success = true;
+  }
 
   listen("task_finish", (r) => {
     const p = r.payload as TaskResult;
     console.log(p);
     if (p.type === "Ok") {
-
+      finished++;
     } else {
       alert(p.message);
       working = false;
@@ -49,7 +58,7 @@
   });
 
   onMount(async () => {
-    const taskNum = await invoke("task_init", {
+    const taskNum: number = await invoke("task_init", {
       args: {
         vscode: $vscode,
         compiler: $compiler,
@@ -57,7 +66,7 @@
         options: $options,
       }
     });
-    console.log(taskNum);
+    total = taskNum;
   });
 </script>
 
@@ -69,11 +78,16 @@
         <span>正在配置</span>
       </div>
     {:else}
-    {#if success}
-      配置完成！
-    {:else}
-      配置失败。
-    {/if}
+      {#if success}
+        配置完成！
+      {:else}
+        配置失败。
+      {/if}
     {/if}
   </h3>
+  <div class="flex flex-row justify-center">
+    <div class="radial-progress text-primary" style={`--value:${percentage};`}>
+      {percentage}%
+    </div>
+  </div>
 </div>

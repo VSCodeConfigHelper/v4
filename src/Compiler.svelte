@@ -202,7 +202,7 @@
         </div>
         {#if setup.canInstall}
           <button
-            class="btn btn-info btn-lg btn-circle shadow-lg"
+            class="btn btn-accent btn-lg btn-circle shadow-lg"
             on:click={install}
           >
             <Icon icon="mdi:download" width={35} />
@@ -223,7 +223,7 @@
         </div>
         {#if verifyResult !== null}
           <div
-            class="alert flex-row justify-start items-center p-2"
+            class="alert bg-opacity-50 flex-row justify-start items-center p-2"
             class:alert-success={verifyResult.type === "Ok"}
             class:alert-error={verifyResult.type !== "Ok"}
           >

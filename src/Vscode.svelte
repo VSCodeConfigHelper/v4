@@ -82,7 +82,7 @@
   </div>
   <div>首先，请确认您的 VS Code 安装情况。</div>
   <div
-    class="alert flex-row justify-start items-center p-2"
+    class="alert bg-opacity-50 flex-row justify-start items-center p-2"
     class:alert-success={state !== "working" && $vscode !== null}
     class:alert-error={state !== "working" && $vscode === null}
     class:alert-info={state === "working"}

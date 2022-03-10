@@ -68,7 +68,7 @@
   </div>
   {#if verifyResult.type !== "Ok"}
     <div
-      class="alert flex-row justify-start items-center p-2"
+      class="alert bg-opacity-50 flex-row justify-start items-center p-2"
       class:alert-warning={verifyResult.type === "Warn"}
       class:alert-error={verifyResult.type === "Err"}
     >

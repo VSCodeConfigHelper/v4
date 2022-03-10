@@ -134,9 +134,9 @@ fn path_to_cl(path: &str, _: bool) -> PathBuf {
     Path::new(&path).join("VC\\Auxiliary\\Build\\Microsoft.VCToolsVersion.default.txt");
   let version = fs::read(version_txt).unwrap();
   let version = String::from_utf8(version).unwrap();
-  Path::new(path.trim())
+  Path::new(path)
     .join("VC\\Tools\\MSVC")
-    .join(version)
+    .join(version.trim())
     .join("bin\\HostX64\\x64\\cl.exe")
 }
 
