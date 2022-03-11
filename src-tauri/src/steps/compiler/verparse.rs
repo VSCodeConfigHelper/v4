@@ -15,14 +15,25 @@
 // You should have received a copy of the GNU General Public License
 // along with vscch4.  If not, see <http://www.gnu.org/licenses/>.
 
+use std::io;
+
+use anyhow::Result;
 use regex::Regex;
 
-pub type Parser = fn(&str) -> (&str, &str);
+pub type Parser = fn(&str) -> Result<(&str, &str)>;
 
-pub fn gcc(version_text: &str) -> (&str, &str) {
-  let re = Regex::new(r"^g(cc|\+\+)(\.exe)? \((.+)\) (.*)$").unwrap();
+pub fn gcc(version_text: &str) ->Result<(&str, &str)>{
+  let re = Regex::new(r"^g(cc|\+\+)(\.exe)? \((.*)\) (.+)$").unwrap();
   match re.captures(version_text) {
-    Some(caps) => (caps.get(4).unwrap().as_str(), caps.get(3).unwrap().as_str()),
-    None => ("unknown", version_text),
+    Some(caps) => Ok((caps.get(4).unwrap().as_str(), caps.get(3).unwrap().as_str())),
+    None => Err(io::Error::new(io::ErrorKind::Other, "gcc version parse error"))?,
+  }
+}
+
+pub fn clang(version_text: &str) -> Result<(&str, &str)> {
+  let re = Regex::new(r"^clang version (.+) \((.*)\)$").unwrap();
+  match re.captures(version_text) {
+    Some(caps) => Ok((caps.get(1).unwrap().as_str(), caps.get(2).unwrap().as_str())),
+    None => Err(io::Error::new(io::ErrorKind::Other, "clang version parse error"))?,
   }
 }

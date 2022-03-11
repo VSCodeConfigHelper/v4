@@ -15,9 +15,8 @@
 // You should have received a copy of the GNU General Public License
 // along with vscch4.  If not, see <http://www.gnu.org/licenses/>.
 
-use ctor::ctor;
 use serde::{Deserialize, Serialize};
-use std::{collections::HashMap, path::PathBuf};
+use std::path::PathBuf;
 
 pub mod verparse;
 
@@ -34,14 +33,15 @@ pub struct Compiler {
 }
 
 impl Compiler {
-  pub fn new(setup: &CompilerSetup, path: &str, version_text: &str) -> Compiler {
-    let (version, package_string) = (setup.verparser)(version_text);
-    Compiler {
+  pub fn new(setup: &CompilerSetup, path: &str, version_text: &str) -> Option<Compiler> {
+    let (version, package_string) = (setup.verparser)(version_text).ok()?;
+    let compiler = Compiler {
       setup: setup.id.to_string(),
       path: path.to_string(),
       version: version.to_string(),
       package_string: package_string.to_string(),
-    }
+    };
+    Some(compiler)
   }
 }
 
@@ -56,27 +56,19 @@ pub struct CompilerSetup {
   pub install: Option<fn() -> bool>,
 
   pub verparser: verparse::Parser,
-  pub path_to_exe: fn(path: &str, is_c: bool) -> PathBuf
+  pub path_to_exe: fn(path: &str, is_c: bool) -> PathBuf,
 }
 
 #[cfg(target_os = "windows")]
-#[rustfmt::skip]
-#[ctor]
-pub static ENABLED_SETUPS: HashMap<&'static str, &'static CompilerSetup> = HashMap::from([
-  (mingw::GCC_ID, &mingw::GCC_SETUP),
-  (msvc::ID, &msvc::SETUP)
-]);
+pub static ENABLED_SETUPS: &[&CompilerSetup] =
+  &[&mingw::GCC_SETUP, &msvc::SETUP, &mingw::LLVM_SETUP];
 
 #[cfg(target_os = "macos")]
-#[rustfmt::skip]
-#[ctor]
-pub static ENABLED_SETUPS: HashMap<&'static str, &'static CompilerSetup> = HashMap::from([]);
+pub static ENABLED_SETUPS: &[&CompilerSetup] = &[];
 
 #[cfg(target_os = "linux")]
-#[rustfmt::skip]
-#[ctor]
-pub static ENABLED_SETUPS: HashMap<&'static str, &'static CompilerSetup> = HashMap::from([]);
+pub static ENABLED_SETUPS: &[&CompilerSetup] = &[];
 
 pub fn get_setup(id: &str) -> &'static CompilerSetup {
-  ENABLED_SETUPS[id]
+  ENABLED_SETUPS.iter().find(|s| s.id == id).unwrap()
 }

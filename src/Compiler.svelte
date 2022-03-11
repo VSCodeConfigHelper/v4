@@ -101,7 +101,7 @@
     compilers = await invoke("compiler_scan", {
       setup: setups[setupNo].id,
     });
-    if (useNew && compilers.length === 0) {
+    if (!useNew && compilers.length === 0) {
       toggleNew();
     }
   }

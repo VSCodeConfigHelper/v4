@@ -29,12 +29,14 @@ use crate::utils::ToString;
 mod os_spec {
   pub static EXT: &str = "exe";
   pub static PATH_SLASH: &str = "\\";
+  pub static PATH_SEPARATOR: &str = ";";
 }
 
 #[cfg(not(target_os = "windows"))]
 mod os_spec {
   pub static EXT: &str = "out";
   pub static PATH_SLASH: &str = "/";
+  pub static PATH_SEPARATOR: &str = ":";
 }
 use os_spec::*;
 
@@ -53,11 +55,14 @@ fn single_file_build_task(args: &TaskArgs) -> Result<serde_json::Value> {
     debug.to_string(),
     "${file}".to_string(),
     output.to_string(),
-    format!("${{fileDirname}}{}${{fileBasenameNoExtension}}.{}", PATH_SLASH, EXT)
+    format!(
+      "${{fileDirname}}{}${{fileBasenameNoExtension}}.{}",
+      PATH_SLASH, EXT
+    ),
   ];
   if args.compiler_setup.id == "msvc" {
     c_args.push("/EHsc".to_string());
-    c_args.push("/utf-8".to_string());
+    c_args.push("/source-charset:utf-8".to_string());
   }
   c_args.extend(args.args.clone());
 
@@ -183,8 +188,8 @@ pub fn tasks_json(args: &TaskArgs) -> Result<()> {
   {
     let mut shell_args = vec!["/C".to_string()];
     if args.compiler_setup.id == "msvc" {
-      let mut cl_path = Path::new(&args.compiler_path).join("..\\..\\..\\..\\..\\..\\..\\..");
-      cl_path.push("Common7\\Tools\\VsDevCmd.bat");
+      let cl_path = Path::new(&args.compiler_path)
+        .join("..\\..\\..\\..\\..\\..\\..\\..\\Common7\\Tools\\VsDevCmd.bat");
       shell_args.push(format!("\"{}\"", cl_path.to_string()));
       shell_args.push("&&".to_string());
     }
@@ -204,7 +209,7 @@ pub fn tasks_json(args: &TaskArgs) -> Result<()> {
       options.as_object_mut().unwrap().append(
         json!({
           "env": {
-            "Path": format!("{};${{env:Path}}",path)
+            "Path": format!("{}{}${{env:Path}}", path, PATH_SEPARATOR)
           }
         })
         .as_object_mut()
@@ -246,12 +251,20 @@ pub fn launch_json(args: &TaskArgs) -> Result<()> {
   } else {
     "cppdbg"
   };
-  let debugger_path = args
-    .compiler_path
-    .parent()
-    .unwrap()
+
+  let bin_path = args.compiler_path.parent().unwrap();
+  let debugger_path = bin_path
     .join(format!("{}{}", debugger_name, debugger_ext))
     .to_string();
+  let console_settings = if args.compiler_setup.id == "gdb" {
+    (
+      "externalConsole",
+      serde_json::to_value(!args.compatible_mode)?,
+    )
+  } else {
+    ("console", serde_json::to_value("externalTerminal")?)
+  };
+
   let json = json!({
     "version": "0.2.0",
     "configurations": [
@@ -264,7 +277,12 @@ pub fn launch_json(args: &TaskArgs) -> Result<()> {
         "stopAtEntry": false,
         "cwd": "${fileDirname}",
         "environment": [],
-        "externalConsole": !args.compatible_mode,
+        "env": {
+          "Path": format!("{}{}${{env:Path}}",
+            bin_path.to_string(),
+            PATH_SEPARATOR)
+        },
+        console_settings.0: console_settings.1,
         "MIMode": debugger_name,          // Only used in GDB mode
         "miDebuggerPath": debugger_path,  // ..
         "preLaunchTask": if args.ascii_check { "ascii check" } else { "single file build" },
@@ -284,6 +302,7 @@ pub fn c_cpp_properties_json(args: &TaskArgs) -> Result<()> {
   let intellisense_mode = match args.compiler_setup.id {
     "gcc-mingw" => "windows-gcc-x64",
     "msvc" => "windows-msvc-x64",
+    "llvm-mingw" => "windows-clang-x64",
     _ => panic!(),
   };
 

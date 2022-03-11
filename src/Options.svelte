@@ -135,7 +135,7 @@
       }
     }
     if (acpOutput) {
-      args.push(["-fexec-charset=GBK", ""]);
+      args.push(["-fexec-charset=GBK", "/execution-charset:gbk"]);
     }
     return args
       .map((p) => p[$compiler?.setup === "msvc" ? 1 : 0])
@@ -267,7 +267,7 @@
   }
 
   async function scan(setup?: string) {
-    if (!setup) return;
+    if (setup === void 0) return;
     ({
       useGnuEnabled,
       pedanticEnabled,
@@ -276,16 +276,17 @@
       addToPathEnabled,
       desktopShortcutEnabled,
     } = await invoke("options_scan", { setup }));
-    useGnu ||= useGnuEnabled;
-    pedantic ||= pedanticEnabled;
-    acpOutput ||= acpOutputEnabled;
-    asciiCheck ||= asciiCheckEnabled;
-    addToPath ||= addToPathEnabled;
+    console.log(useGnuEnabled, pedanticEnabled, acpOutputEnabled, asciiCheckEnabled, addToPathEnabled, desktopShortcutEnabled);
+    useGnu &&= useGnuEnabled;
+    pedantic &&= pedanticEnabled;
+    acpOutput &&= acpOutputEnabled;
+    asciiCheck &&= asciiCheckEnabled;
+    addToPath &&= addToPathEnabled;
   }
 
   onMount(async () => {
-    await scan();
     await readLastProfile();
+    await scan($compiler?.setup);
   });
 </script>
 

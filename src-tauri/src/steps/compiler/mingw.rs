@@ -54,7 +54,7 @@ fn get_paths() -> HashSet<String> {
   all_path.split(';').map(|p| p.to_string()).collect()
 }
 
-fn test_compiler(path: &str, name: &'static str) -> Option<Compiler> {
+fn test_compiler(path: &str, name: &'static str, setup: &'static CompilerSetup) -> Option<Compiler> {
   let compiler = Path::new(path).join(name);
   if !compiler.exists() {
     return None;
@@ -66,14 +66,18 @@ fn test_compiler(path: &str, name: &'static str) -> Option<Compiler> {
     .ok()?;
   let output = String::from_utf8(output.stdout).ok()?;
   let version_text = output.lines().nth(0)?;
-  Some(Compiler::new(&GCC_SETUP, path, version_text))
+  Compiler::new(setup, path, version_text)
 }
 
-fn scan() -> Vec<Compiler> {
-  get_paths().iter().filter_map(|p| verify(p).ok()).collect()
+fn scan_gcc() -> Vec<Compiler> {
+  get_paths().iter().filter_map(|p| verify(p, "g++.exe", &GCC_SETUP).ok()).collect()
 }
 
-fn verify(path: &str) -> Result<Compiler, &'static str> {
+fn scan_clang() -> Vec<Compiler> {
+  get_paths().iter().filter_map(|p| verify(p, "clang++.exe", &LLVM_SETUP).ok()).collect()
+}
+
+fn verify(path: &str, name: &'static str, setup: &'static CompilerSetup) -> Result<Compiler, &'static str> {
   if path.contains(';') {
     return Err("路径中不能含有分号 ';'");
   }
@@ -85,11 +89,15 @@ fn verify(path: &str) -> Result<Compiler, &'static str> {
   }
   check_bin(path)
     .ok_or("bin 不存在")
-    .and_then(|p| test_compiler(&p, "g++.exe").ok_or("g++.exe 不是编译器"))
+    .and_then(|p| test_compiler(&p, name, setup).ok_or(".exe 不是编译器"))
 }
 
-fn install() -> bool {
+fn install_gcc() -> bool {
   open::that("https://gytx.lanzoui.com/iy906s48llc").is_ok()
+}
+
+fn install_clang() -> bool {
+  open::that("https://github.com/mstorsjo/llvm-mingw/releases").is_ok()
 }
 
 fn join(path: &str, name: &str) -> PathBuf {
@@ -122,10 +130,26 @@ pub static GCC_SETUP: CompilerSetup = CompilerSetup {
   description: "GCC for Windows",
   how_to_install: r"下载 MinGW。下载并解压后，您将得到一个 <code>mingw64</code> 文件夹。建议您将它妥善保存在合适的位置（如 <code>C:\mingw64</code>），并在下方输入其路径。",
 
-  scan: scan,
-  verify: Some(verify),
-  install: Some(install),
+  scan: scan_gcc,
+  verify: Some(|path| verify(path, "g++.exe", &GCC_SETUP)),
+  install: Some(install_gcc),
 
   verparser: verparse::gcc,
   path_to_exe: path_to_gcc,
+};
+
+pub static LLVM_ID: &'static str = "llvm-mingw";
+
+pub static LLVM_SETUP: CompilerSetup = CompilerSetup {
+  id: LLVM_ID,
+  name: "LLVM MinGW",
+  description: "LLVM-based MinGW toolchain",
+  how_to_install: r"下载 LLVM-MinGW。下载并解压后，您将得到一个名字类似 <code>llvm-mingw-2021...</code> 的文件夹。建议您将它妥善保存在合适的位置（如 <code>C:\llvm-mingw</code>），并在下方输入其路径。",
+
+  scan: scan_clang,
+  verify: Some(|path| verify(path, "clang++.exe", &LLVM_SETUP)),
+  install: Some(install_clang),
+
+  verparser: verparse::clang,
+  path_to_exe: path_to_clang,
 };

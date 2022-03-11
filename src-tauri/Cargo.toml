@@ -16,7 +16,7 @@ tauri-build = { version = "1.0.0-rc.3", features = [] }
 
 [dependencies]
 anyhow = { version = "1.0.55", features = ["backtrace"] }
-ctor = "0.1.21"
+ctor = "0.1.21" # Maybe unused now
 dirs = "4.0.0"
 once_cell = "1.9.0"
 open = "2.1.0"

@@ -47,7 +47,7 @@ pub fn pedantic_enabled(setup: &str) -> bool {
 
 #[cfg(target_os = "windows")]
 pub fn acp_output_enabled(setup: &str) -> bool {
-  setup == "gcc-mingw" && get_acp() == 936
+  ["gcc-mingw", "msvc"].contains(&setup) && get_acp() == 936
 }
 
 #[cfg(not(target_os = "windows"))]

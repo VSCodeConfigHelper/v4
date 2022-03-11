@@ -69,7 +69,7 @@ mod debug {
 
 mod compiler {
   use super::TaskArgs;
-  use crate::utils::{winreg, ToString};
+  use crate::utils::{winreg};
   use anyhow::Result;
 
   pub fn add_to_path(args: &TaskArgs) -> Result<()> {

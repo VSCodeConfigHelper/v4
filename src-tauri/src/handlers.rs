@@ -59,7 +59,7 @@ pub struct CompilerSetupListResult {
 pub fn compiler_setup_list() -> Vec<CompilerSetupListResult> {
   ENABLED_SETUPS
     .iter()
-    .map(|(_, s)| CompilerSetupListResult {
+    .map(|s| CompilerSetupListResult {
       id: s.id,
       name: s.name,
       description: s.description,
@@ -164,8 +164,8 @@ pub fn task_init(args: TaskInitArgs, window: tauri::Window) -> usize {
       if res.is_err() {
         break;
       }
-      let dur = std::time::Duration::from_millis(100);
-      std::thread::sleep(dur);
+      // let dur = std::time::Duration::from_millis(100);
+      // std::thread::sleep(dur);
     }
   });
   len
