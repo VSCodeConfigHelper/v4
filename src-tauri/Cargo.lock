@@ -3593,7 +3593,6 @@ name = "vscch"
 version = "4.0.0"
 dependencies = [
  "anyhow",
- "ctor",
  "dirs 4.0.0",
  "once_cell",
  "open",

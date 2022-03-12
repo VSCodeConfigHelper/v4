@@ -148,6 +148,7 @@ fn pause_task() -> Result<serde_json::Value> {
   }))
 }
 
+#[cfg(target_os = "windows")]
 fn ascii_check_task(_: &TaskArgs) -> Result<serde_json::Value> {
   Ok(json!({
     "type": "process",
@@ -179,6 +180,7 @@ pub fn tasks_json(args: &TaskArgs) -> Result<()> {
   if !args.compatible_mode {
     task_list.push(pause_task()?);
   }
+  #[cfg(target_os = "windows")]
   if args.ascii_check {
     task_list.push(ascii_check_task(args)?);
   }

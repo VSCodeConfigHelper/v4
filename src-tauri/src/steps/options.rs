@@ -16,7 +16,7 @@
 // along with vscch4.  If not, see <http://www.gnu.org/licenses/>.
 
 use serde::Deserialize;
-
+#[cfg(target_os = "windows")]
 use crate::utils::winapi::get_acp;
 
 #[derive(Deserialize)]

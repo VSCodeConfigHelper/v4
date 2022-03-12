@@ -69,9 +69,11 @@ mod debug {
 
 mod compiler {
   use super::TaskArgs;
-  use crate::utils::{winreg};
+  #[cfg(target_os = "windows")]
+  use crate::utils::winreg;
   use anyhow::Result;
 
+  #[cfg(target_os = "windows")]
   pub fn add_to_path(args: &TaskArgs) -> Result<()> {
     let compiler_path = args.compiler_path.parent().unwrap().to_str().unwrap();
     if winreg::get_machine_env("Path")
@@ -95,11 +97,15 @@ mod compiler {
 
     winreg::set_user_env("Path", &path)
   }
+
+  #[cfg(not(target_os = "windows"))]
+  pub fn add_to_path(_args: &TaskArgs) -> Result<()> {
+    panic!("Not available on this platform")
+  }
 }
 mod shortcut {
   use super::TaskArgs;
   use anyhow::Result;
-
   #[cfg(target_os = "windows")]
   use crate::utils::winapi::create_lnk;
 
@@ -117,7 +123,7 @@ mod shortcut {
 
   #[cfg(not(target_os = "windows"))]
   pub fn create(_args: &TaskArgs) -> Result<()> {
-    Err("Not supported on this platform")
+    panic!("Not available on this platform")
   }
 }
 

@@ -20,6 +20,7 @@ use std::io::BufReader;
 use std::path::PathBuf;
 
 use anyhow::Result;
+use serde_json::json;
 
 use super::TaskArgs;
 
@@ -48,7 +49,6 @@ mod scripts {
   pub static PAUSE_CONSOLE_SCRIPT: &str = include_str!("../scripts/pause-console.sh");
 }
 pub use scripts::*;
-use serde_json::json;
 
 pub fn script_path() -> Option<PathBuf> {
   dirs::data_dir().map(|p| p.join("vscch"))
@@ -74,6 +74,12 @@ pub fn create_pauser(_: &TaskArgs) -> Result<()> {
 #[cfg(target_os = "windows")]
 pub fn create_checker(_: &TaskArgs) -> Result<()> {
   save_script(CHECK_ASCII_SCRIPT_NAME, CHECK_ASCII_SCRIPT)
+}
+
+
+#[cfg(not(target_os = "windows"))]
+pub fn create_checker(_: &TaskArgs) -> Result<()> {
+  panic!("Not supported on this platform")
 }
 
 pub fn create_keybinding(_: &TaskArgs) -> Result<()> {
