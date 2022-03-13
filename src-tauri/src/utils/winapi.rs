@@ -18,18 +18,20 @@
 #![cfg(target_os = "windows")]
 
 use std::alloc::{alloc, dealloc, Layout};
-use std::ffi::{OsStr, OsString, c_void};
+use std::ffi::{c_void, OsStr, OsString};
 use std::io;
 use std::os::windows::prelude::*;
 use std::ptr;
 use std::slice;
 
-use windows::Win32::Globalization::GetACP;
-use windows::Win32::System::Com::{CoTaskMemFree, CoInitialize, CLSCTX_INPROC_SERVER, CoCreateInstance, IPersistFile, CoUninitialize};
-use windows::Win32::UI::Shell::{SHGetKnownFolderPath, IShellLinkW, ShellLink};
-use windows::core::{GUID, Interface};
+use windows::core::{Interface, GUID};
 use windows::Win32::Foundation::PWSTR;
+use windows::Win32::Globalization::GetACP;
+use windows::Win32::System::Com::{
+  CoCreateInstance, CoInitialize, CoTaskMemFree, CoUninitialize, IPersistFile, CLSCTX_INPROC_SERVER,
+};
 use windows::Win32::System::Environment::ExpandEnvironmentStringsW;
+use windows::Win32::UI::Shell::{IShellLinkW, SHGetKnownFolderPath, ShellLink};
 
 pub static CREATE_NO_WINDOW: u32 = windows::Win32::System::Threading::CREATE_NO_WINDOW.0;
 
@@ -71,7 +73,7 @@ pub fn get_known_folder_path(id: *const GUID) -> io::Result<String> {
       len += 1;
     }
     slice = slice::from_raw_parts(path, len);
-    CoTaskMemFree(path as * const c_void);
+    CoTaskMemFree(path as *const c_void);
   };
 
   let os_string = OsString::from_wide(slice);
@@ -105,11 +107,15 @@ pub fn create_lnk(lnk: &str, target: &str, desc: &str, args: &str) -> io::Result
   Ok(())
 }
 
+pub fn alloc_console() -> bool {
+  unsafe { windows::Win32::System::Console::AllocConsole() }.0 != 0
+}
+
 #[cfg(test)]
 mod tests {
   use windows::Win32::UI::Shell::FOLDERID_ProgramFilesX86;
 
-use super::*;
+  use super::*;
 
   #[test]
   fn test_expand_environment_strings() {

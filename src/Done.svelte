@@ -39,7 +39,7 @@
   let finished = 0;
   $: percentage = Math.round(finished / total * 100);
 
-  $: done.update(() => !working);
+  $: done.update(() => working ? null : true);
 
   $: if (finished == total) {
     working = false;

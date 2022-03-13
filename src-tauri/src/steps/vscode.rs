@@ -19,7 +19,6 @@ use std::path::{Path,PathBuf};
 
 #[cfg(target_os = "windows")]
 use crate::utils::winreg;
-use crate::utils::ToString;
 
 #[cfg(target_os = "windows")]
 pub fn scan() -> Option<String> {

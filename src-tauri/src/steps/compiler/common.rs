@@ -35,7 +35,7 @@ pub fn test_compiler(path: &str, name: Option<&'static str>, setup: &'static Com
 
   #[cfg(target_os = "windows")]
   {
-    cmd = cmd.creation_flags(CREATE_NO_WINDOW);
+    cmd.creation_flags(CREATE_NO_WINDOW);
   }
 
   let output = cmd.arg("--version")

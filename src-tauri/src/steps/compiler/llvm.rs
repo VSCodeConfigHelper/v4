@@ -15,6 +15,7 @@
 // You should have received a copy of the GNU General Public License
 // along with vscch4.  If not, see <http://www.gnu.org/licenses/>.
 
+#![cfg(not(target_os = "windows"))]
 
 use std::path::{Path, PathBuf};
 

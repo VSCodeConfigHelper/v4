@@ -20,19 +20,36 @@ use serde::Serialize;
 use crate::steps::{
   compiler::get_setup, compiler::Compiler, compiler::ENABLED_SETUPS, options::*, vscode, workspace,
 };
-use crate::tasks::TaskInitArgs;
 use crate::tasks;
+use crate::tasks::TaskInitArgs;
+
+pub fn gui() {
+  tauri::Builder::default()
+    .invoke_handler(tauri::generate_handler![
+      vscode_verify,
+      vscode_scan,
+      compiler_setup_list,
+      compiler_scan,
+      compiler_verify,
+      compiler_install,
+      workspace_verify,
+      options_scan,
+      task_init
+    ])
+    .run(tauri::generate_context!())
+    .expect("error while running tauri application");
+}
 
 #[derive(Serialize)]
 #[serde(tag = "type")]
-pub enum VerifyResult<T = ()> {
+enum VerifyResult<T = ()> {
   Ok { value: T },
   Warn { message: &'static str },
   Err { message: &'static str },
 }
 
 #[tauri::command]
-pub fn vscode_verify(path: String) -> VerifyResult {
+fn vscode_verify(path: String) -> VerifyResult {
   match vscode::verify(&path) {
     Ok(_) => VerifyResult::Ok { value: () },
     Err(e) => VerifyResult::Err { message: e },
@@ -40,13 +57,13 @@ pub fn vscode_verify(path: String) -> VerifyResult {
 }
 
 #[tauri::command]
-pub fn vscode_scan() -> Option<String> {
+fn vscode_scan() -> Option<String> {
   vscode::scan()
 }
 
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
-pub struct CompilerSetupListResult {
+struct CompilerSetupListResult {
   id: &'static str,
   name: &'static str,
   description: &'static str,
@@ -57,7 +74,7 @@ pub struct CompilerSetupListResult {
 }
 
 #[tauri::command]
-pub fn compiler_setup_list() -> Vec<CompilerSetupListResult> {
+fn compiler_setup_list() -> Vec<CompilerSetupListResult> {
   ENABLED_SETUPS
     .iter()
     .map(|s| CompilerSetupListResult {
@@ -73,12 +90,12 @@ pub fn compiler_setup_list() -> Vec<CompilerSetupListResult> {
 }
 
 #[tauri::command]
-pub fn compiler_scan(setup: String) -> Vec<Compiler> {
+fn compiler_scan(setup: String) -> Vec<Compiler> {
   (get_setup(&setup).scan)()
 }
 
 #[tauri::command]
-pub fn compiler_verify(setup: String, path: String) -> VerifyResult<Compiler> {
+fn compiler_verify(setup: String, path: String) -> VerifyResult<Compiler> {
   if let Some(verify) = get_setup(&setup).verify {
     match verify(&path) {
       Ok(compiler) => VerifyResult::Ok { value: compiler },
@@ -92,7 +109,7 @@ pub fn compiler_verify(setup: String, path: String) -> VerifyResult<Compiler> {
 }
 
 #[tauri::command]
-pub fn compiler_install(setup: String) -> bool {
+fn compiler_install(setup: String) -> bool {
   if let Some(install) = get_setup(&setup).install {
     install()
   } else {
@@ -101,7 +118,7 @@ pub fn compiler_install(setup: String) -> bool {
 }
 
 #[tauri::command]
-pub fn workspace_verify(path: String) -> VerifyResult {
+fn workspace_verify(path: String) -> VerifyResult {
   if let Err(msg) = workspace::path_available(&path) {
     return VerifyResult::Err { message: msg };
   }
@@ -115,7 +132,7 @@ pub fn workspace_verify(path: String) -> VerifyResult {
 
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
-pub struct EnabledOptions {
+struct EnabledOptions {
   use_gnu_enabled: bool,
   pedantic_enabled: bool,
   acp_output_enabled: bool,
@@ -125,7 +142,7 @@ pub struct EnabledOptions {
 }
 
 #[tauri::command]
-pub fn options_scan(setup: &str) -> EnabledOptions {
+fn options_scan(setup: &str) -> EnabledOptions {
   EnabledOptions {
     use_gnu_enabled: use_gnu_enabled(setup),
     pedantic_enabled: pedantic_enabled(setup),
@@ -139,17 +156,12 @@ pub fn options_scan(setup: &str) -> EnabledOptions {
 #[derive(Serialize, Clone)]
 #[serde(tag = "type")]
 enum TaskFinishResult {
-  Ok {
-    name: &'static str,
-  },
-  Err {
-    name: &'static str,
-    message: String,
-  },
+  Ok { name: &'static str },
+  Err { name: &'static str, message: String },
 }
 
 #[tauri::command]
-pub fn task_init(args: TaskInitArgs, window: tauri::Window) -> usize {
+fn task_init(args: TaskInitArgs, window: tauri::Window) -> usize {
   let t = tasks::list(args);
   let len = t.len();
   std::thread::spawn(move || {

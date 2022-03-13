@@ -20,7 +20,6 @@
 use std::collections::HashSet;
 use std::path::Path;
 use std::path::PathBuf;
-use std::process::Command;
 
 use super::verparse;
 use super::Compiler;

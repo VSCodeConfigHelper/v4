@@ -17,27 +17,14 @@
 
 #![windows_subsystem = "windows"]
 
-mod handlers;
+mod cli;
+mod gui;
+
 mod steps;
 mod tasks;
 mod utils;
 
-use handlers::*;
-
 fn main() {
   std::env::set_var("RUST_BACKTRACE", "1");
-  tauri::Builder::default()
-    .invoke_handler(tauri::generate_handler![
-      vscode_verify,
-      vscode_scan,
-      compiler_setup_list,
-      compiler_scan,
-      compiler_verify,
-      compiler_install,
-      workspace_verify,
-      options_scan,
-      task_init
-    ])
-    .run(tauri::generate_context!())
-    .expect("error while running tauri application");
+  cli::parse_args();
 }
