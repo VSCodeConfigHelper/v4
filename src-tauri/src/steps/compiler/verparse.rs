@@ -23,17 +23,17 @@ use regex::Regex;
 pub type Parser = fn(&str) -> Result<(&str, &str)>;
 
 pub fn gcc(version_text: &str) ->Result<(&str, &str)>{
-  let re = Regex::new(r"^g(cc|\+\+)(\.exe)? \((.*)\) (.+)$").unwrap();
+  let re = Regex::new(r"^\S*g(cc|\+\+)\S* \((.*)\) (.+)$").unwrap();
   match re.captures(version_text) {
-    Some(caps) => Ok((caps.get(4).unwrap().as_str(), caps.get(3).unwrap().as_str())),
+    Some(caps) => Ok((caps.get(3).unwrap().as_str(), caps.get(2).unwrap().as_str())),
     None => Err(io::Error::new(io::ErrorKind::Other, "gcc version parse error"))?,
   }
 }
 
 pub fn clang(version_text: &str) -> Result<(&str, &str)> {
-  let re = Regex::new(r"^clang version (.+) \((.*)\)$").unwrap();
+  let re = Regex::new(r"(.* )?clang version (.+)( \(.*\))?$").unwrap();
   match re.captures(version_text) {
-    Some(caps) => Ok((caps.get(1).unwrap().as_str(), caps.get(2).unwrap().as_str())),
+    Some(caps) => Ok((caps.get(2).unwrap().as_str(), caps.get(3).map(|m| m.as_str()).unwrap_or(""))),
     None => Err(io::Error::new(io::ErrorKind::Other, "clang version parse error"))?,
   }
 }

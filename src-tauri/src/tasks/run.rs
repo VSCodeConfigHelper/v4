@@ -15,6 +15,7 @@
 // You should have received a copy of the GNU General Public License
 // along with vscch4.  If not, see <http://www.gnu.org/licenses/>.
 
+use std::os::unix::prelude::PermissionsExt;
 use std::{fs, io};
 use std::io::BufReader;
 use std::path::PathBuf;
@@ -57,7 +58,12 @@ pub fn script_path() -> Option<PathBuf> {
 fn save_script(filename: &str, content: &str) -> Result<()> {
   let path = script_path().ok_or(io::Error::new(io::ErrorKind::Other, "failed to get script path"))?;
   fs::create_dir_all(&path)?;
-  fs::write(&path.join(filename), content)?;
+  let filepath = path.join(filename);
+  fs::write(&filepath, content)?;
+  #[cfg(not(target_os = "windows"))]
+  {
+    fs::set_permissions(&filepath, fs::Permissions::from_mode(0o755))?;
+  }
   Ok(())
 }
 

@@ -16,8 +16,10 @@
 // along with vscch4.  If not, see <http://www.gnu.org/licenses/>.
 
 use std::path::{Path,PathBuf};
+
 #[cfg(target_os = "windows")]
 use crate::utils::winreg;
+use crate::utils::ToString;
 
 #[cfg(target_os = "windows")]
 pub fn scan() -> Option<String> {
@@ -34,8 +36,16 @@ pub fn scan() -> Option<String> {
 
 #[cfg(target_os = "linux")]
 pub fn scan() -> Option<String> {
-  // TODO
-  None
+  match which::which("code") {
+    Ok(path) => {
+      let path = path.to_string();
+      match verify(&path) {
+        Ok(_) => Some(path),
+        Err(_) => None,
+      }
+    },
+    Err(_) => None,
+  }
 }
 
 #[cfg(target_os = "windows")]

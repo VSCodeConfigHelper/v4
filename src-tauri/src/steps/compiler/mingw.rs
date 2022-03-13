@@ -18,7 +18,6 @@
 #![cfg(target_os = "windows")]
 
 use std::collections::HashSet;
-use std::os::windows::process::CommandExt;
 use std::path::Path;
 use std::path::PathBuf;
 use std::process::Command;
@@ -26,7 +25,7 @@ use std::process::Command;
 use super::verparse;
 use super::Compiler;
 use super::CompilerSetup;
-use crate::utils::winapi::CREATE_NO_WINDOW;
+use super::common::test_compiler;
 use crate::utils::winreg;
 use crate::utils::ToString;
 
@@ -54,21 +53,6 @@ fn get_paths() -> HashSet<String> {
   all_path.split(';').map(|p| p.to_string()).collect()
 }
 
-fn test_compiler(path: &str, name: &'static str, setup: &'static CompilerSetup) -> Option<Compiler> {
-  let compiler = Path::new(path).join(name);
-  if !compiler.exists() {
-    return None;
-  }
-  let output = Command::new(compiler)
-    .creation_flags(CREATE_NO_WINDOW)
-    .arg("--version")
-    .output()
-    .ok()?;
-  let output = String::from_utf8(output.stdout).ok()?;
-  let version_text = output.lines().nth(0)?;
-  Compiler::new(setup, path, version_text)
-}
-
 fn scan_gcc() -> Vec<Compiler> {
   get_paths().iter().filter_map(|p| verify(p, "g++.exe", &GCC_SETUP).ok()).collect()
 }
@@ -89,7 +73,7 @@ fn verify(path: &str, name: &'static str, setup: &'static CompilerSetup) -> Resu
   }
   check_bin(path)
     .ok_or("bin 不存在")
-    .and_then(|p| test_compiler(&p, name, setup).ok_or(".exe 不是编译器"))
+    .and_then(|p| test_compiler(&p, Some(name), setup).ok_or("无法解析编译器版本"))
 }
 
 fn install_gcc() -> bool {

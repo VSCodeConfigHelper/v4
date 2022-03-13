@@ -20,8 +20,11 @@ use std::path::PathBuf;
 
 pub mod verparse;
 
+mod common;
 pub mod mingw;
 pub mod msvc;
+pub mod gcc;
+pub mod llvm;
 
 #[derive(Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -67,7 +70,7 @@ pub static ENABLED_SETUPS: &[&CompilerSetup] =
 pub static ENABLED_SETUPS: &[&CompilerSetup] = &[];
 
 #[cfg(target_os = "linux")]
-pub static ENABLED_SETUPS: &[&CompilerSetup] = &[];
+pub static ENABLED_SETUPS: &[&CompilerSetup] = &[&gcc::SETUP, &llvm::SETUP];
 
 pub fn get_setup(id: &str) -> &'static CompilerSetup {
   ENABLED_SETUPS.iter().find(|s| s.id == id).unwrap()

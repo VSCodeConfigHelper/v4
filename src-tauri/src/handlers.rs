@@ -51,6 +51,7 @@ pub struct CompilerSetupListResult {
   name: &'static str,
   description: &'static str,
   how_to_install: &'static str,
+  is_mingw: bool,
   can_verify: bool,
   can_install: bool,
 }
@@ -64,6 +65,7 @@ pub fn compiler_setup_list() -> Vec<CompilerSetupListResult> {
       name: s.name,
       description: s.description,
       how_to_install: s.how_to_install,
+      is_mingw: ["llvm-mingw", "gcc-mingw"].contains(&s.id),
       can_verify: (s.verify).is_some(),
       can_install: (s.install).is_some(),
     })

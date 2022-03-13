@@ -152,6 +152,6 @@ pub static SETUP: CompilerSetup = CompilerSetup {
   verify: None,
   install: Some(install),
 
-  verparser: verparse::gcc,
+  verparser: verparse::gcc, // Not used
   path_to_exe: path_to_cl,
 };

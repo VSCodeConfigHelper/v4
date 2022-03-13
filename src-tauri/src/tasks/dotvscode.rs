@@ -258,7 +258,7 @@ pub fn launch_json(args: &TaskArgs) -> Result<()> {
   let debugger_path = bin_path
     .join(format!("{}{}", debugger_name, debugger_ext))
     .to_string();
-  let console_settings = if args.compiler_setup.id == "gdb" {
+  let console_settings = if debug_type == "cppdbg" {
     (
       "externalConsole",
       serde_json::to_value(!args.compatible_mode)?,
@@ -305,6 +305,8 @@ pub fn c_cpp_properties_json(args: &TaskArgs) -> Result<()> {
     "gcc-mingw" => "windows-gcc-x64",
     "msvc" => "windows-msvc-x64",
     "llvm-mingw" => "windows-clang-x64",
+    "gcc" => "linux-gcc-x64",    // TODO: Should be platform specific
+    "llvm" => "linux-clang-x64",
     _ => panic!(),
   };
 

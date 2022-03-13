@@ -29,6 +29,7 @@
     name: string;
     description: string;
     howToInstall: string;
+    isMingw: boolean;
     canVerify: boolean;
     canInstall: boolean;
   };
@@ -79,7 +80,7 @@
   async function browse() {
     const result = await open({
       multiple: false,
-      directory: true,
+      directory: setup.isMingw,
     });
     if (typeof result === "string") {
       newPath = result;
@@ -241,7 +242,12 @@
                 ，打包信息
                 <code>{verifyResult.value.packageString}</code>
               {:else}
-                该路径下没有 {setup.name}（{verifyResult.message}）
+                {#if setup.isMingw}
+                  该路径下没有 {setup.name}
+                {:else}
+                  不是有效的 {setup.name}
+                {/if}
+                （{verifyResult.message}）
               {/if}
             </span>
           </div>
