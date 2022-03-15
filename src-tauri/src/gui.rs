@@ -15,6 +15,7 @@
 // You should have received a copy of the GNU General Public License
 // along with vscch4.  If not, see <http://www.gnu.org/licenses/>.
 
+use anyhow::{anyhow, Result};
 use serde::Serialize;
 
 use crate::steps::{
@@ -23,7 +24,7 @@ use crate::steps::{
 use crate::tasks;
 use crate::tasks::TaskInitArgs;
 
-pub fn gui() {
+pub fn gui() -> Result<()> {
   tauri::Builder::default()
     .invoke_handler(tauri::generate_handler![
       vscode_verify,
@@ -37,7 +38,8 @@ pub fn gui() {
       task_init
     ])
     .run(tauri::generate_context!())
-    .expect("error while running tauri application");
+    .map_err(|t| anyhow!(t.to_string()))?;
+  Ok(())
 }
 
 #[derive(Serialize)]

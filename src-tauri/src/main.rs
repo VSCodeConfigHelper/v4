@@ -26,5 +26,7 @@ mod utils;
 
 fn main() {
   std::env::set_var("RUST_BACKTRACE", "1");
-  cli::parse_args();
+  if let Err(_) = cli::parse_args() {
+    std::process::exit(1);
+  }
 }

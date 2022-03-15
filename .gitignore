@@ -21,3 +21,6 @@ lerna-debug.log*
 
 # OS
 .DS_Store
+
+# Temp
+temp/

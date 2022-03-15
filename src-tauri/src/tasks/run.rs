@@ -18,11 +18,10 @@
 #[cfg(not(target_os = "windows"))]
 use std::os::unix::prelude::PermissionsExt;
 use std::fs;
-use std::io;
 use std::io::BufReader;
 use std::path::PathBuf;
 
-use anyhow::Result;
+use anyhow::{anyhow, Result};
 use serde_json::json;
 
 use super::TaskArgs;
@@ -58,7 +57,7 @@ pub fn script_path() -> Option<PathBuf> {
 }
 
 fn save_script(filename: &str, content: &str) -> Result<()> {
-  let path = script_path().ok_or(io::Error::new(io::ErrorKind::Other, "failed to get script path"))?;
+  let path = script_path().ok_or(anyhow!("failed to get script path"))?;
   fs::create_dir_all(&path)?;
   let filepath = path.join(filename);
   fs::write(&filepath, content)?;
@@ -96,7 +95,7 @@ pub fn create_keybinding(_: &TaskArgs) -> Result<()> {
   let args = "run and pause";
 
   let filepath = dirs::config_dir()
-    .ok_or(io::Error::new(io::ErrorKind::Other, "Config dir not found"))?
+    .ok_or(anyhow!("Config dir not found"))?
     .join("Code")
     .join("User")
     .join("keybindings.json");
