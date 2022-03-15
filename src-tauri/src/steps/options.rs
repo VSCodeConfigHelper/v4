@@ -19,7 +19,7 @@ use serde::Deserialize;
 #[cfg(target_os = "windows")]
 use crate::utils::winapi::get_acp;
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct Options {
   pub compatible_mode: bool,

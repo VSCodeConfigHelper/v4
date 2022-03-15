@@ -15,6 +15,7 @@
 // You should have received a copy of the GNU General Public License
 // along with vscch4.  If not, see <http://www.gnu.org/licenses/>.
 
+use log::{debug, trace};
 use once_cell::sync::OnceCell;
 use anyhow::Result;
 
@@ -40,6 +41,7 @@ impl ExtensionManager {
     static INSTANCE: OnceCell<Mutex<ExtensionManager>> = OnceCell::new();
     INSTANCE.get_or_init(|| {
       let path = adjust_path(Path::new(&args.vscode));
+      debug!("初始化扩展管理器，路径：{:?}", &path);
       let mut instance = ExtensionManager {
         path: path,
         installed: vec![],
@@ -59,28 +61,38 @@ impl ExtensionManager {
       .output()?
       .stdout;
     let stdout = String::from_utf8(stdout)?;
+    trace!("Run code with args {:?}, got output: {:?}", args, stdout);
     Ok(stdout)
   }
 
   fn update(&mut self) -> Result<()> {
     let output = self.run(&["--list-extensions"])?;
     self.installed = output.lines().map(|line| line.to_string()).collect();
+    debug!("已安装的扩展有：{:?}", &self.installed);
     Ok(())
   }
 
-  fn install(&self, id: &str) -> Result<()> {
+  fn install(&mut self, id: &str) -> Result<()> {
+    debug!("安装扩展 {}...", id);
     if self.installed.contains(&id.to_string()) {
+      debug!("扩展 {} 已经安装，跳过。", id);
       return Ok(());
     }
     self.run(&["--install-extension", id])?;
+    self.installed.push(id.to_string());
+    debug!("扩展 {} 安装成功。", id);
     Ok(())
   }
 
-  fn uninstall(&self, id: &str) -> Result<()> {
+  fn uninstall(&mut self, id: &str) -> Result<()> {
+    debug!("卸载扩展 {}...", id);
     if !self.installed.contains(&id.to_string()) {
+      debug!("扩展 {} 未安装，跳过。", id);
       return Ok(());
     }
     self.run(&["--uninstall-extension", id])?;
+    self.installed.retain(|installed| installed != id);
+    debug!("扩展 {} 卸载成功。", id);
     Ok(())
   }
 }
@@ -89,17 +101,17 @@ static C_CPP_ID: &str = "ms-vscode.cpptools";
 static CODE_LLDB_ID: &str = "vadimcn.vscode-lldb";
 
 pub fn install_c_cpp(args: &TaskArgs) -> Result<()> {
-  let m = ExtensionManager::get(args).lock().unwrap();
+  let mut m = ExtensionManager::get(args).lock().unwrap();
   m.install(C_CPP_ID)
 }
 
 pub fn install_code_lldb(args: &TaskArgs) -> Result<()> {
-  let m = ExtensionManager::get(args).lock().unwrap();
+  let mut m = ExtensionManager::get(args).lock().unwrap();
   m.install(CODE_LLDB_ID)
 }
 
 pub fn remove_unrecommended(args: &TaskArgs) -> Result<()> {
-  let m = ExtensionManager::get(args).lock().unwrap();
+  let mut m = ExtensionManager::get(args).lock().unwrap();
   [
     "formulahendry.code-runner",
     "austin.code-gnu-global",

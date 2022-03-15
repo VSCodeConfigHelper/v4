@@ -16,6 +16,7 @@
 // along with vscch4.  If not, see <http://www.gnu.org/licenses/>.
 
 use anyhow::{anyhow, Result};
+use log::{info, debug, trace};
 use serde::Serialize;
 
 use crate::steps::{
@@ -25,6 +26,7 @@ use crate::tasks;
 use crate::tasks::TaskInitArgs;
 
 pub fn gui() -> Result<()> {
+  debug!("即将启动 tauri GUI。");
   tauri::Builder::default()
     .invoke_handler(tauri::generate_handler![
       vscode_verify,
@@ -42,7 +44,7 @@ pub fn gui() -> Result<()> {
   Ok(())
 }
 
-#[derive(Serialize)]
+#[derive(Serialize, Debug)]
 #[serde(tag = "type")]
 enum VerifyResult<T = ()> {
   Ok { value: T },
@@ -52,18 +54,24 @@ enum VerifyResult<T = ()> {
 
 #[tauri::command]
 fn vscode_verify(path: String) -> VerifyResult {
-  match vscode::verify(&path) {
+  trace!("vscode_verify: <- {}", path);
+  let result = match vscode::verify(&path) {
     Ok(_) => VerifyResult::Ok { value: () },
     Err(e) => VerifyResult::Err { message: e },
-  }
+  };
+  trace!("vscode_verify: -> {:?}", result);
+  result
 }
 
 #[tauri::command]
 fn vscode_scan() -> Option<String> {
-  vscode::scan()
+  trace!("vscode_scan: <- ()");
+  let result = vscode::scan();
+  trace!("vscode_scan: -> {:?}", result);
+  result
 }
 
-#[derive(Serialize)]
+#[derive(Serialize, Debug)]
 #[serde(rename_all = "camelCase")]
 struct CompilerSetupListResult {
   id: &'static str,
@@ -77,7 +85,8 @@ struct CompilerSetupListResult {
 
 #[tauri::command]
 fn compiler_setup_list() -> Vec<CompilerSetupListResult> {
-  ENABLED_SETUPS
+  trace!("compiler_setup_list: <- ()");
+  let result: Vec<_> = ENABLED_SETUPS
     .iter()
     .map(|s| CompilerSetupListResult {
       id: s.id,
@@ -88,51 +97,65 @@ fn compiler_setup_list() -> Vec<CompilerSetupListResult> {
       can_verify: (s.verify).is_some(),
       can_install: (s.install).is_some(),
     })
-    .collect()
+    .collect();
+  trace!("compiler_setup_list: -> {:?}", result);
+  result
 }
 
 #[tauri::command]
 fn compiler_scan(setup: String) -> Vec<Compiler> {
-  (get_setup(&setup).scan)()
+  trace!("compiler_scan: <- {}", setup);
+  let result = (get_setup(&setup).scan)();
+  trace!("compiler_scan: -> {:?}", result);
+  result
 }
 
 #[tauri::command]
 fn compiler_verify(setup: String, path: String) -> VerifyResult<Compiler> {
-  if let Some(verify) = get_setup(&setup).verify {
+  trace!("compiler_verify: <- {} {}", setup, path);
+  let result = if let Some(verify) = get_setup(&setup).verify {
     match verify(&path) {
       Ok(compiler) => VerifyResult::Ok { value: compiler },
       Err(e) => VerifyResult::Err { message: e },
     }
   } else {
     VerifyResult::Err {
-      message: "Not implemented",
+      message: "不可以验证该编译器。",
     }
-  }
+  };
+  trace!("compiler_verify: -> {:?}", result);
+  result
 }
 
 #[tauri::command]
 fn compiler_install(setup: String) -> bool {
-  if let Some(install) = get_setup(&setup).install {
+  trace!("compiler_install: <- {}", setup);
+  let result = if let Some(install) = get_setup(&setup).install {
     install()
   } else {
     false
-  }
+  };
+  trace!("compiler_install: -> {}", result);
+  result
 }
 
 #[tauri::command]
 fn workspace_verify(path: String) -> VerifyResult {
-  if let Err(msg) = workspace::path_available(&path) {
-    return VerifyResult::Err { message: msg };
-  }
-  if workspace::exists(&path) {
-    return VerifyResult::Warn {
+  trace!("workspace_verify: <- {}", path);
+  let result = if let Err(msg) = workspace::path_available(&path) {
+    VerifyResult::Err { message: msg }
+  } else if workspace::exists(&path) {
+    VerifyResult::Warn {
       message: "此工作文件夹下已有配置。若继续则原有配置会被覆盖。",
-    };
-  }
-  VerifyResult::Ok { value: () }
+    }
+  } else {
+    VerifyResult::Ok { value: () }
+  };
+  trace!("workspace_verify: -> {:?}", result);
+  result
 }
 
-#[derive(Serialize)]
+#[derive(Serialize, Debug)]
 #[serde(rename_all = "camelCase")]
 struct EnabledOptions {
   use_gnu_enabled: bool,
@@ -145,17 +168,20 @@ struct EnabledOptions {
 
 #[tauri::command]
 fn options_scan(setup: &str) -> EnabledOptions {
-  EnabledOptions {
+  trace!("options_scan: <- {}", setup);
+  let result = EnabledOptions {
     use_gnu_enabled: use_gnu_enabled(setup),
     pedantic_enabled: pedantic_enabled(setup),
     acp_output_enabled: acp_output_enabled(setup),
     ascii_check_enabled: ascii_check_enabled(setup),
     add_to_path_enabled: add_to_path_enabled(setup),
     desktop_shortcut_enabled: desktop_shortcut_enabled(setup),
-  }
+  };
+  trace!("options_scan: -> {:?}", result);
+  result
 }
 
-#[derive(Serialize, Clone)]
+#[derive(Serialize, Clone, Debug)]
 #[serde(tag = "type")]
 enum TaskFinishResult {
   Ok { name: &'static str },
@@ -164,11 +190,14 @@ enum TaskFinishResult {
 
 #[tauri::command]
 fn task_init(args: TaskInitArgs, window: tauri::Window) -> usize {
+  trace!("task_init: <- {:?}", args);
   let t = tasks::list(args);
   let len = t.len();
   std::thread::spawn(move || {
     for (name, action) in t {
+      info!("正在执行任务 {}...", name);
       let res = action();
+      info!("任务 {} 执行完毕。", name);
       let payload = match &res {
         Ok(_) => TaskFinishResult::Ok { name },
         Err(e) => TaskFinishResult::Err {
@@ -176,13 +205,13 @@ fn task_init(args: TaskInitArgs, window: tauri::Window) -> usize {
           message: e.backtrace().to_string() + e.to_string().as_str(),
         },
       };
+      trace!("task_finish: -> {:?}", payload);
       window.emit("task_finish", payload).unwrap();
       if res.is_err() {
         break;
       }
-      // let dur = std::time::Duration::from_millis(100);
-      // std::thread::sleep(dur);
     }
   });
+  trace!("task_init: -> {}", len);
   len
 }

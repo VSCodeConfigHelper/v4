@@ -19,6 +19,8 @@ use std::{process::Command, path::Path};
 #[cfg(target_os = "windows")]
 use std::os::windows::process::CommandExt;
 
+use log::debug;
+
 #[cfg(target_os = "windows")]
 use crate::utils::winapi::CREATE_NO_WINDOW;
 use super::{Compiler, CompilerSetup};
@@ -31,6 +33,8 @@ pub fn test_compiler(path: &str, name: Option<&'static str>, setup: &'static Com
   if !compiler.exists() {
     return None;
   }
+  debug!("测试编译器: {:?}（类型 {}）", &compiler, &setup.id);
+
   let mut cmd = Command::new(compiler);
 
   #[cfg(target_os = "windows")]
@@ -43,5 +47,6 @@ pub fn test_compiler(path: &str, name: Option<&'static str>, setup: &'static Com
     .ok()?;
   let output = String::from_utf8(output.stdout).ok()?;
   let version_text = output.lines().nth(0)?;
+  debug!("编译器版本（首行）：{}", version_text);
   Compiler::new(setup, path, version_text)
 }

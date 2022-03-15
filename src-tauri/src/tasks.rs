@@ -15,8 +15,10 @@
 // You should have received a copy of the GNU General Public License
 // along with vscch4.  If not, see <http://www.gnu.org/licenses/>.
 
-use anyhow::Result;
+use anyhow::{Result, anyhow};
+use log::{warn, debug, trace};
 use serde::Deserialize;
+use derivative::*;
 
 use std::path::PathBuf;
 use std::{path::Path, sync::Arc};
@@ -30,7 +32,7 @@ mod extension;
 mod run;
 mod test;
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Debug)]
 pub struct TaskInitArgs {
   pub vscode: String,
   pub compiler: Compiler,
@@ -38,8 +40,11 @@ pub struct TaskInitArgs {
   pub options: Options,
 }
 
+#[derive(Derivative)]
+#[derivative(Debug)]
 pub struct TaskArgs {
   pub vscode: String,
+  #[derivative(Debug = "ignore")]
   pub compiler_setup: &'static CompilerSetup,
   pub compiler_path: PathBuf,
   pub workspace: String,
@@ -68,20 +73,21 @@ mod debug {
 }
 
 mod compiler {
-  use super::TaskArgs;
+  use super::*;
   #[cfg(target_os = "windows")]
   use crate::utils::winreg;
-  use anyhow::Result;
 
   #[cfg(target_os = "windows")]
   pub fn add_to_path(args: &TaskArgs) -> Result<()> {
     let compiler_path = args.compiler_path.parent().unwrap().to_str().unwrap();
+    debug!("将编译器 {} 添加到用户 Path...", compiler_path);
     if winreg::get_machine_env("Path")
       .unwrap_or_default()
       .split(';')
       .collect::<Vec<&str>>()
       .contains(&compiler_path)
     {
+      debug!("系统 Path 已包含 {}，不再添加。", compiler_path);
       return Ok(());
     }
 
@@ -95,23 +101,26 @@ mod compiler {
       .collect::<Vec<&str>>()
       .join(";");
 
+    debug!("新的用户 Path：{}", path);
     winreg::set_user_env("Path", &path)
   }
 
   #[cfg(not(target_os = "windows"))]
   pub fn add_to_path(_args: &TaskArgs) -> Result<()> {
-    panic!("Not available on this platform")
+    Err(anyhow!("不支持在此操作系统上将编译器添加到 PATH。"))
   }
 }
 mod shortcut {
-  use super::TaskArgs;
-  use anyhow::Result;
+  use super::*;
   #[cfg(target_os = "windows")]
   use crate::utils::winapi::create_lnk;
 
   #[cfg(target_os = "windows")]
   pub fn create(args: &TaskArgs) -> Result<()> {
-    let path = dirs::desktop_dir().unwrap().join("Visual Studio Code.lnk");
+    let path = dirs::desktop_dir().ok_or(anyhow!("找不到桌面路径。"))?.join("Visual Studio Code.lnk");
+    if path.exists() {
+      warn!("快捷方式 {:?} 已存在，将被覆盖。", path);
+    }
     create_lnk(
       path.to_str().unwrap(),
       &args.vscode,
@@ -123,13 +132,12 @@ mod shortcut {
 
   #[cfg(not(target_os = "windows"))]
   pub fn create(_args: &TaskArgs) -> Result<()> {
-    panic!("Not available on this platform")
+    Err(anyhow!("不支持在此操作系统上创建快捷方式。"))
   }
 }
 
 mod vscode {
-  use super::TaskArgs;
-  use anyhow::Result;
+  use super::*;
 
   pub fn open(args: &TaskArgs) -> Result<()> {
     let mut vscode_args = vec![args.workspace.as_str()];
@@ -196,6 +204,8 @@ pub fn list(args: TaskInitArgs) -> Vec<(&'static str, Box<dyn Fn() -> Result<()>
     collect_data: args.options.collect_data,
   });
 
+  trace!("args passed to tasks: {:?}", args);
+
   let mapper = |task: Task| -> (&'static str, Box<dyn Fn() -> Result<()> + Send>) {
     let args = Arc::clone(&args);
     (task.name, Box::new(move || (task.action)(args.as_ref())))
@@ -208,7 +218,7 @@ pub fn list(args: TaskInitArgs) -> Vec<(&'static str, Box<dyn Fn() -> Result<()>
     (run::create_pauser, a => !a.compatible_mode),
     (run::create_keybinding, a => !a.compatible_mode),
     (debug::create_checker, a => a.ascii_check),
-    (compiler::add_to_path, a => a.add_to_path),
+    (compiler::add_to_path, a => mingw_setup(&a.compiler_setup) && a.add_to_path),
     (dotvscode::create_folder, _ => true),
     (dotvscode::tasks_json, _ => true),
     (dotvscode::launch_json, _ => true),

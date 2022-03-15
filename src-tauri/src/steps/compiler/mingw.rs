@@ -21,6 +21,8 @@ use std::collections::HashSet;
 use std::path::Path;
 use std::path::PathBuf;
 
+use log::debug;
+
 use super::verparse;
 use super::Compiler;
 use super::CompilerSetup;
@@ -45,7 +47,11 @@ pub fn check_bin(path: &str) -> Option<String> {
 /// Get user & machine `Path` environment variables.
 fn get_paths() -> HashSet<String> {
   let user_path = winreg::get_user_env("Path").unwrap_or_default();
+  debug!("用户 Path: {}", &user_path);
+
   let machine_path = winreg::get_machine_env("Path").unwrap_or_default();
+  debug!("系统 Path: {}", &machine_path);
+
   let all_path = user_path + ";" + &machine_path;
 
   // FIXME: deal with paths contain quotes

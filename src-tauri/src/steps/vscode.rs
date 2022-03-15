@@ -15,6 +15,8 @@
 // You should have received a copy of the GNU General Public License
 // along with vscch4.  If not, see <http://www.gnu.org/licenses/>.
 
+use log::debug;
+
 use std::path::{Path,PathBuf};
 
 #[cfg(target_os = "windows")]
@@ -23,6 +25,7 @@ use crate::utils::winreg;
 #[cfg(target_os = "windows")]
 pub fn scan() -> Option<String> {
   let cmd = winreg::get(winreg::HKEY_CLASSES_ROOT, "vscode\\shell\\open\\command", "")?;
+  debug!("vscode:// 的注册表项：{}", &cmd);
   // The value should be like:
   // "C:\Program Files\Microsoft VS Code\Code.exe" --open-url -- "%1"
   // and we just use the string inside the first quotation marks

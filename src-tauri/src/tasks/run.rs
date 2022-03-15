@@ -23,6 +23,7 @@ use std::path::PathBuf;
 
 use anyhow::{anyhow, Result};
 use serde_json::json;
+use log::warn;
 
 use super::TaskArgs;
 
@@ -57,7 +58,7 @@ pub fn script_path() -> Option<PathBuf> {
 }
 
 fn save_script(filename: &str, content: &str) -> Result<()> {
-  let path = script_path().ok_or(anyhow!("failed to get script path"))?;
+  let path = script_path().ok_or(anyhow!("找不到用于存放脚本的路径。"))?;
   fs::create_dir_all(&path)?;
   let filepath = path.join(filename);
   fs::write(&filepath, content)?;
@@ -95,7 +96,7 @@ pub fn create_keybinding(_: &TaskArgs) -> Result<()> {
   let args = "run and pause";
 
   let filepath = dirs::config_dir()
-    .ok_or(anyhow!("Config dir not found"))?
+    .ok_or(anyhow!("找不到配置文件存放的路径。"))?
     .join("Code")
     .join("User")
     .join("keybindings.json");
@@ -108,10 +109,10 @@ pub fn create_keybinding(_: &TaskArgs) -> Result<()> {
     for i in &content {
       let this_key = i["key"]
         .as_str()
-        .expect("'key' of keybinding is not string");
+        .ok_or(anyhow!("keybindings.json 中的 \"key\" 字段应为 string 类型。"))?;
       if this_key == key {
         // Warning for overwriting
-        println!("Warning: overwriting keybinding {}", key);
+        warn!("快捷键 {} 已有配置，将被覆盖。", key);
       } else {
         result.push(i.clone());
       }

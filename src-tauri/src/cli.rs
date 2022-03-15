@@ -17,10 +17,13 @@
 
 use std::str::FromStr;
 
+#[allow(unused_imports)]
+use ::log::{info, warn, debug};
 use anyhow::{anyhow, Result};
 use clap::{AppSettings, ArgEnum, CommandFactory, Parser};
 
 use crate::gui::gui;
+use crate::log;
 use crate::steps::compiler::{CompilerSetup, ENABLED_SETUPS};
 use crate::steps::options::Options;
 use crate::steps::{vscode, workspace};
@@ -149,23 +152,24 @@ fn print_setup_help() {
 }
 
 pub fn parse_args() -> Result<()> {
-  if std::env::args().len() <= 1 {
-    return gui();
-  }
-
   #[cfg(target_os = "windows")]
   {
     winapi::attach_console();
   }
 
-  let args = match CliArgs::try_parse() {
+  let mut args = match CliArgs::try_parse() {
     Err(e) => {
       println!("{}", e);
-      return Err(anyhow!("Command line parse error"));
+      return Err(anyhow!("命令行解析错误。"));
     }
     Ok(args) => args,
   };
 
+  log::setup(args.verbose)?;
+
+  if std::env::args().len() <= 1 {
+    args.use_gui = true;
+  }
   if args.help {
     CliArgs::command().print_help().unwrap();
     print_setup_help();
@@ -182,11 +186,7 @@ GNU 通用公共许可证修改之，无论是版本 3 许可证，还是（按�
     return Ok(());
   }
 
-  let result = if args.use_gui { gui() } else { cli(args) };
-  if let Err(error) = &result {
-    eprintln!("{}", error);
-  }
-  result
+  if args.use_gui { gui() } else { cli(args) }
 }
 
 #[allow(unused_mut)]
@@ -195,7 +195,7 @@ fn cli(mut args: CliArgs) -> Result<()> {
   {
     fn nonsupport_check(name: &'static str, flag: &mut bool) {
       if *flag {
-        eprintln!("\x1b[31m{} 在此操作系统上不支持\x1b[0m", name);
+        warn!("{} 选项在此操作系统上不支持，已忽略。", name);
         *flag = false;
       }
     }
@@ -203,33 +203,47 @@ fn cli(mut args: CliArgs) -> Result<()> {
     nonsupport_check("--no-set-env", &mut args.no_set_env);
     nonsupport_check("--desktop-shortcut", &mut args.desktop_shortcut);
   }
+
+  info!("验证 VS Code 安装...");
   let vscode = args
     .vscode
     .or_else(|| vscode::scan())
     .ok_or(anyhow!("No vscode found"))?;
   if let Err(e) = vscode::verify(&vscode) {
-    return Err(anyhow!("VS Code verification failed: {}", e));
+    return Err(anyhow!("VS Code 验证失败: {}", e));
   }
+  info!("VS Code 安装在 {}，", vscode);
 
-  let workspace = args.workspace.ok_or(anyhow!("No workspace specified"))?;
+  info!("验证工作区路径...");
+  let workspace = args
+    .workspace
+    .ok_or(anyhow!("未在命令行中指定工作区文件夹。"))?;
   if let Err(e) = workspace::path_available(&workspace) {
-    return Err(anyhow!("Workspace verification failed: {}", e));
+    return Err(anyhow!("工作文件夹验证失败: {}", e));
   }
+  info!("工作区路径为 {}。", workspace);
 
-  let compilers = (args.setup.scan)();
-  let compiler = if compilers.len() == 0 {
-    match args.compiler.as_ref() {
-      Some(compiler) => match args.setup.verify {
-        Some(verify) => verify(&compiler).map_err(|str| anyhow!(str))?,
-        None => Err(anyhow!("No compiler found"))?,
-      },
-      None => Err(anyhow!("No compiler found"))?,
+  info!("验证 {} 类型编译器...", args.setup.id);
+  let compiler = match args.compiler.as_ref() {
+    // 验证命令行传入的编译器
+    Some(compiler) => match args.setup.verify {
+      Some(verify) => verify(&compiler).map_err(|str| anyhow!("验证编译器 {} 失败：{}", &compiler, str))?,
+      None => Err(anyhow!("该编译器类型不支持自定义。"))?,
+    },
+    // 寻找已安装的编译器
+    None => {
+      let compilers = (args.setup.scan)();
+      debug!("找到的编译器有：{:?}", compilers);
+      if compilers.len() == 0 {
+        Err(anyhow!("未在命令行传入编译器，也找不到已安装的编译器。"))?
+      } else {
+        // TODO: selection
+        compilers.into_iter().nth(0).unwrap()
+      }
     }
-  } else {
-    // TODO: selection
-    compilers.into_iter().nth(0).unwrap()
   };
-  
+  info!("编译器为 {}。", compiler.path);
+
   let language = if args.language == Language::Cpp {
     "C++"
   } else {
@@ -262,11 +276,16 @@ fn cli(mut args: CliArgs) -> Result<()> {
       collect_data: !args.no_stats,
     },
   };
+  debug!("task_init_args: {:?}", task_init_args);
 
+  info!("正在初始化任务列表...");
   let task_list = tasks::list(task_init_args);
+  debug!("任务列表：{:?}", task_list.iter().map(|t| t.0).collect::<Vec<_>>());
 
-  for (_, action) in task_list {
+  for (name, action) in task_list {
+    info!("正在执行任务 {}...", name);
     action()?;
+    info!("任务 {} 执行完毕。", name);
   }
   Ok(())
 }

@@ -16,6 +16,7 @@
 // along with vscch4.  If not, see <http://www.gnu.org/licenses/>.
 
 use anyhow::Result;
+use log::debug;
 
 use super::TaskArgs;
 use std::fs;
@@ -72,6 +73,10 @@ pub fn generate(args: &TaskArgs) -> Result<()> {
       &(if args.is_c { c_comment } else { cpp_comment })(&format!($( $x ),*))
     };
   }
+  let test_file = args.test_file.as_ref().unwrap();
+
+  debug!("生成测试文件 {}...", test_file);
+
   let helloworld = if args.is_c { &C_HELLOWORLD } else { &CPP_HELLOWORLD };
 
   let run_key = if args.compatible_mode {
@@ -81,7 +86,7 @@ pub fn generate(args: &TaskArgs) -> Result<()> {
   };
 
   fs::write(
-    args.test_file.as_ref().unwrap(),
+    test_file,
     &[
       cmt!("VS Code C/C++ 测试代码 \"Hello World\""),
       cmt!("由 VSCodeConfigHelper v{} 生成", env!("CARGO_PKG_VERSION")),
@@ -109,5 +114,6 @@ pub fn generate(args: &TaskArgs) -> Result<()> {
     ]
     .join("\n"),
   )?;
+  debug!("测试文件 {} 生成成功。", test_file);
   Ok(())
 }

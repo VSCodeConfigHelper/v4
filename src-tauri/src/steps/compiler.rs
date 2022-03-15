@@ -26,7 +26,7 @@ pub mod msvc;
 pub mod gcc;
 pub mod llvm;
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct Compiler {
   pub setup: String,

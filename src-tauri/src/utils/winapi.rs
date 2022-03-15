@@ -102,12 +102,10 @@ pub fn create_lnk(lnk: &str, target: &str, desc: &str, args: &str) -> Result<()>
 }
 
 pub fn attach_console() -> bool {
+  use windows::Win32::System::Console;
   unsafe {
-    windows::Win32::System::Console::FreeConsole().as_bool()
-      && windows::Win32::System::Console::AttachConsole(
-        windows::Win32::System::Console::ATTACH_PARENT_PROCESS,
-      )
-      .as_bool()
+    Console::FreeConsole().as_bool()
+      && Console::AttachConsole(Console::ATTACH_PARENT_PROCESS).as_bool()
   }
 }
 
