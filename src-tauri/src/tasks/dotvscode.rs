@@ -20,6 +20,7 @@ use std::path::Path;
 
 use anyhow::Result;
 use serde_json::json;
+use log::debug;
 
 use super::run::*;
 use super::TaskArgs;
@@ -226,6 +227,8 @@ pub fn tasks_json(args: &TaskArgs) -> Result<()> {
     "options": options
   });
 
+  debug!("tasks.json: {}", json);
+
   let path = Path::new(&args.workspace)
     .join(".vscode")
     .join("tasks.json");
@@ -293,6 +296,8 @@ pub fn launch_json(args: &TaskArgs) -> Result<()> {
     ]
   });
 
+  debug!("launch.json: {}", json);
+
   let path = Path::new(&args.workspace)
     .join(".vscode")
     .join("launch.json");
@@ -345,6 +350,8 @@ pub fn c_cpp_properties_json(args: &TaskArgs) -> Result<()> {
       }
     ]
   });
+
+  debug!("c_cpp_properties.json: {}", json);
 
   let path = Path::new(&args.workspace)
     .join(".vscode")
