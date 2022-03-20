@@ -25,6 +25,7 @@ pub mod mingw;
 pub mod msvc;
 pub mod gcc;
 pub mod llvm;
+pub mod apple;
 
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
@@ -67,7 +68,7 @@ pub static ENABLED_SETUPS: &[&CompilerSetup] =
   &[&mingw::GCC_SETUP, &msvc::SETUP, &mingw::LLVM_SETUP];
 
 #[cfg(target_os = "macos")]
-pub static ENABLED_SETUPS: &[&CompilerSetup] = &[];
+pub static ENABLED_SETUPS: &[&CompilerSetup] = &[&apple::SETUP];
 
 #[cfg(target_os = "linux")]
 pub static ENABLED_SETUPS: &[&CompilerSetup] = &[&gcc::SETUP, &llvm::SETUP];

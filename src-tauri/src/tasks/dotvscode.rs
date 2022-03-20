@@ -19,8 +19,8 @@ use std::fs;
 use std::path::Path;
 
 use anyhow::Result;
-use serde_json::json;
 use log::debug;
+use serde_json::json;
 
 use super::run::*;
 use super::TaskArgs;
@@ -113,11 +113,11 @@ fn pause_task() -> Result<serde_json::Value> {
   };
 
   #[cfg(target_os = "macos")]
-  let mut process = Process {
-    command: script_path
-      .join(PAUSE_CONSOLE_SCRIPT_LAUNCHER_NAME)
-      .to_str()
-      .unwrap(),
+  let command = script_path.join(PAUSE_CONSOLE_LAUNCHER_SCRIPT_NAME);
+
+  #[cfg(target_os = "macos")]
+  let process = Process {
+    command: command.to_str().unwrap(),
     args: vec![],
   };
 
@@ -126,8 +126,12 @@ fn pause_task() -> Result<serde_json::Value> {
     command: "x-terminal-emulator",
     args: vec!["-e"],
   };
-  let pause_script_path = script_path.join(PAUSE_CONSOLE_SCRIPT_NAME);
-  process.args.push(pause_script_path.to_str().unwrap());
+
+  #[cfg(not(target_os = "macos"))]
+  {
+    let pause_script_path = script_path.join(PAUSE_CONSOLE_SCRIPT_NAME);
+    process.args.push(pause_script_path.to_str().unwrap());
+  }
 
   Ok(json!({
     "type": "shell",
@@ -283,7 +287,7 @@ pub fn launch_json(args: &TaskArgs) -> Result<()> {
         "cwd": "${fileDirname}",
         "environment": [],
         "env": {
-          "Path": format!("{}{}${{env:Path}}",
+          "PATH": format!("{}{}${{env:PATH}}",
             bin_path.to_string(),
             PATH_SEPARATOR)
         },
@@ -310,8 +314,9 @@ pub fn c_cpp_properties_json(args: &TaskArgs) -> Result<()> {
     "gcc-mingw" => "windows-gcc-x64",
     "msvc" => "windows-msvc-x64",
     "llvm-mingw" => "windows-clang-x64",
-    "gcc" => "linux-gcc-x64",    // TODO: Should be platform specific
+    "gcc" => "linux-gcc-x64", // TODO: Should be platform specific
     "llvm" => "linux-clang-x64",
+    "apple" => "macos-clang-x64",
     _ => panic!(),
   };
 

@@ -15,9 +15,12 @@
 // You should have received a copy of the GNU General Public License
 // along with vscch4.  If not, see <http://www.gnu.org/licenses/>.
 
+#![allow(unused_imports)]
+
 use log::debug;
 
 use std::path::{Path,PathBuf};
+use crate::utils::ToString;
 
 #[cfg(target_os = "windows")]
 use crate::utils::winreg;
@@ -47,6 +50,22 @@ pub fn scan() -> Option<String> {
       }
     },
     Err(_) => None,
+  }
+}
+
+#[cfg(target_os = "macos")]
+pub fn scan() -> Option<String> {
+  if let Ok(path) = which::which("code") {
+    let path = path.to_string();
+    if verify(&path).is_ok() {
+      return Some(path);
+    }
+  }
+  let common_installation = "/Applications/Visual Studio Code.app/Contents/Resources/app/bin/code";
+  if Path::new(common_installation).exists() {
+    Some(common_installation.to_string())
+  } else {
+    None
   }
 }
 

@@ -29,7 +29,7 @@ pub fn gcc(version_text: &str) ->Result<(&str, &str)>{
 }
 
 pub fn clang(version_text: &str) -> Result<(&str, &str)> {
-  let re = Regex::new(r"(.* )?clang version (.+)( \(.*\))?$").unwrap();
+  let re = Regex::new(r"(.* )?clang version (.+?)( \(.*\))?$").unwrap();
   match re.captures(version_text) {
     Some(caps) => Ok((caps.get(2).unwrap().as_str(), caps.get(3).map(|m| m.as_str()).unwrap_or(""))),
     None => Err(anyhow!("clang version parse error"))?,

@@ -29,6 +29,8 @@ use crate::steps::options::Options;
 use crate::steps::{vscode, workspace};
 use crate::tasks;
 use crate::tasks::TaskInitArgs;
+
+#[cfg(target_os = "windows")]
 use crate::utils::winapi;
 
 #[derive(Parser)]

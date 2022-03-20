@@ -39,11 +39,13 @@ fn verify(path: &str) -> Result<Compiler, &'static str> {
   Ok(compiler)
 }
 
-fn path_to_exe(path: &str, is_c: bool) -> PathBuf {
+pub fn path_to_exe(path: &str, is_c: bool) -> PathBuf {
   let path = Path::new(path);
   let basename = path.file_name().unwrap().to_str().unwrap();
   let basename = if is_c {
     basename.replace("clang++", "clang")
+  } else if basename.contains("clang++") {
+    basename.to_string()
   } else {
     basename.replace("clang", "clang++")
   };
