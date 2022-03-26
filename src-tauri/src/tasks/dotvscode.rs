@@ -114,7 +114,6 @@ fn pause_task() -> Result<serde_json::Value> {
 
   #[cfg(target_os = "macos")]
   let command = script_path.join(PAUSE_CONSOLE_LAUNCHER_SCRIPT_NAME);
-
   #[cfg(target_os = "macos")]
   let process = Process {
     command: command.to_str().unwrap(),
@@ -128,10 +127,9 @@ fn pause_task() -> Result<serde_json::Value> {
   };
 
   #[cfg(not(target_os = "macos"))]
-  {
-    let pause_script_path = script_path.join(PAUSE_CONSOLE_SCRIPT_NAME);
-    process.args.push(pause_script_path.to_str().unwrap());
-  }
+  let pause_script_path = script_path.join(PAUSE_CONSOLE_SCRIPT_NAME);
+  #[cfg(not(target_os = "macos"))]
+  process.args.push(pause_script_path.to_str().unwrap());
 
   Ok(json!({
     "type": "shell",
