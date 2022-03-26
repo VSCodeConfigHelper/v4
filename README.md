@@ -43,8 +43,8 @@ pnpm tauri build
 | Linux 支持       | ❌   | ❌   | ❔   | ✔️   |
 | Linux GCC        | ❌   | ❌   | ✔️   | ✔️   |
 | Linux Clang      | ❌   | ❌   | ❌   | ✔️   |
-| macOS 支持       | ❌   | ❌   | ❔   | 🛠️   |
-| Apple Clang      | ❌   | ❌   | ✔️   | 🛠️   |
+| macOS 支持       | ❌   | ❌   | ❔   | ✔️   |
+| Apple Clang      | ❌   | ❌   | ✔️   | ✔️   |
 | 非法调试前警告   | ❌   | ❌   | ✔️   | ✔️   |
 | CLI              | ❌   | ❌   | ✔️   | ✔️   |
 | 管理员配置       | ✔️   | ✔️   | ❌   | ❌   |
