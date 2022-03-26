@@ -39,12 +39,12 @@ jobs:
           pnpm install
       - name: Tauri build
         if: ${{ !startsWith(github.ref, 'refs/tags/') }}
-        uses: tauri-apps/tauri-action@v0
+        uses: tauri-apps/tauri-action@v0.2
         with:
           tauriScript: ${{ env.TAURI_SCRIPT }}
       - name: Tauri build & release
         if: ${{ startsWith(github.ref, 'refs/tags/') }}
-        uses: tauri-apps/tauri-action@v0
+        uses: tauri-apps/tauri-action@v0.2
         with:
           tauriScript: ${{ env.TAURI_SCRIPT }}
           tagName: v__VERSION__
