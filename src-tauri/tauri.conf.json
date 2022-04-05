@@ -10,7 +10,7 @@
   },
   "tauri": {
     "bundle": {
-      "active": false,
+      "active": true,
       "targets": "all",
       "identifier": "io.github.guyutongxue.vscch4",
       "icon": [
@@ -27,13 +27,11 @@
       "shortDescription": "",
       "longDescription": "",
       "deb": {
-        "depends": [],
-        "useBootstrapper": false
+        "depends": []
       },
       "macOS": {
         "frameworks": [],
         "minimumSystemVersion": "",
-        "useBootstrapper": false,
         "exceptionDomain": "",
         "signingIdentity": null,
         "entitlements": null

@@ -37,12 +37,11 @@ jobs:
         run: |
           corepack enable
           pnpm install
-      - name: Tauri build
-        if: ${{ !startsWith(github.ref, 'refs/tags/') }}
-        uses: tauri-apps/tauri-action@v0.2
-        with:
-          tauriScript: ${{ env.TAURI_SCRIPT }}
-      - name: Tauri build & release
+      - name: Cargo build
+        run: |
+          cd src-tauri
+          cargo build
+      - name: Tauri build bundle & release
         if: ${{ startsWith(github.ref, 'refs/tags/') }}
         uses: tauri-apps/tauri-action@v0.2
         with:
