@@ -8,6 +8,7 @@ on:
 
 env:
   TAURI_SCRIPT: pnpm tauri
+  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
 jobs:
   build:
