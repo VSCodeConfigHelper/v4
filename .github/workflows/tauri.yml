@@ -39,6 +39,7 @@ jobs:
           pnpm install
       - name: Cargo build
         run: |
+          pnpm build
           cd src-tauri
           cargo build
       - name: Tauri build bundle & release
