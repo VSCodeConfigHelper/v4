@@ -18,7 +18,7 @@
 use std::str::FromStr;
 
 #[allow(unused_imports)]
-use ::log::{info, warn, debug};
+use ::log::{debug, info, warn};
 use anyhow::{anyhow, Result};
 use clap::{AppSettings, ArgEnum, CommandFactory, Parser};
 
@@ -154,12 +154,16 @@ fn print_setup_help() {
 }
 
 pub fn parse_args() -> Result<()> {
+  if std::env::args().len() <= 1 {
+    return gui();
+  }
+
   #[cfg(target_os = "windows")]
   {
     winapi::attach_console();
   }
 
-  let mut args = match CliArgs::try_parse() {
+  let args = match CliArgs::try_parse() {
     Err(e) => {
       println!("{}", e);
       return Err(anyhow!("命令行解析错误。"));
@@ -169,9 +173,6 @@ pub fn parse_args() -> Result<()> {
 
   log::setup(args.verbose)?;
 
-  if std::env::args().len() <= 1 {
-    args.use_gui = true;
-  }
   if args.help {
     CliArgs::command().print_help().unwrap();
     print_setup_help();
@@ -188,7 +189,11 @@ GNU 通用公共许可证修改之，无论是版本 3 许可证，还是（按�
     return Ok(());
   }
 
-  if args.use_gui { gui() } else { cli(args) }
+  if args.use_gui {
+    gui()
+  } else {
+    cli(args)
+  }
 }
 
 #[allow(unused_mut)]
@@ -229,7 +234,9 @@ fn cli(mut args: CliArgs) -> Result<()> {
   let compiler = match args.compiler.as_ref() {
     // 验证命令行传入的编译器
     Some(compiler) => match args.setup.verify {
-      Some(verify) => verify(&compiler).map_err(|str| anyhow!("验证编译器 {} 失败：{}", &compiler, str))?,
+      Some(verify) => {
+        verify(&compiler).map_err(|str| anyhow!("验证编译器 {} 失败：{}", &compiler, str))?
+      }
       None => Err(anyhow!("该编译器类型不支持自定义。"))?,
     },
     // 寻找已安装的编译器
@@ -282,7 +289,10 @@ fn cli(mut args: CliArgs) -> Result<()> {
 
   info!("正在初始化任务列表...");
   let task_list = tasks::list(task_init_args);
-  debug!("任务列表：{:?}", task_list.iter().map(|t| t.0).collect::<Vec<_>>());
+  debug!(
+    "任务列表：{:?}",
+    task_list.iter().map(|t| t.0).collect::<Vec<_>>()
+  );
 
   for (name, action) in task_list {
     info!("正在执行任务 {}...", name);
