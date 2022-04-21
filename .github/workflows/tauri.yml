@@ -20,9 +20,9 @@ jobs:
           - os: windows-latest
             bundle: "vscch.exe"
           - os: ubuntu-latest
-            bundle: "bundle/appimage/*.AppImage"
+            bundle: "bundle/appimage/vscch*.AppImage"
           - os: macos-latest
-            bundle: "bundle/dmg/*.dmg"
+            bundle: "bundle/dmg/vscch*.dmg"
 
     runs-on: ${{ matrix.os }}
     # https://github.com/tauri-apps/tauri-action#testing-the-build
