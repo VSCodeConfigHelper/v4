@@ -2,7 +2,7 @@ name: "Tauri"
 on:
   push:
     branches: [ main ]
-    tags: [ "v*.*.*" ]
+    tags: [ "*" ]
   pull_request:
     branches: [ main ]
 
@@ -15,6 +15,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
+        os: [windows-latest, ubuntu-latest, macos-latest]
         include:
           - os: windows-latest
             bundle: "vscch.exe"
