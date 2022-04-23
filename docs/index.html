@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- <link href="https://cdn.jsdelivr.net/npm/bootstrap-dark-5@1.1.3/dist/css/bootstrap-night.min.css" rel="stylesheet"> -->
+
+    <title>vscch 4</title>
+
+    <style>
+      .hero {
+        height: 100vh;
+        padding: 80px 0;
+      }
+      .logo {
+        height: calc(1.325rem + .9vw);
+      }
+    </style>
+  </head>
+  <body>
+    <main class="container">
+      <div class="hero row">
+        <div class="col-10 col-sm-8 col-lg-6 d-flex flex-column justify-content-between py-lg-5">
+          <div>
+            <div class="d-flex flex-row gap-3 mb-2 align-items-center">
+              <img class="logo" src="https://cdn.jsdelivr.net/gh/VSCodeConfigHelper/v4@main/public/favicon.png" alt="logo">
+              <h2 class="m-0">
+                VS Code Config Helper
+              </h2>
+              <span class="badge rounded-pill bg-danger">
+                v4
+              </span>
+            </div>
+            <h1 class="display-3">
+              功能强大的 VS Code C++ 配置器
+            </h1>
+            <div class="text-muted lead my-3">
+              若你想使用 VS Code 编写 C/C++ 代码，VS Code Config Helper 可以帮你完成所有准备工作，不必再为繁琐的配置流程而烦恼。
+            </div>
+          </div>
+          <div class="d-flex flex-row gap-4">
+            <button type="button" onclick="download()" class="btn btn-lg btn-primary">
+              下载
+            </button>
+            <button type="button" class="btn btn-lg btn-light">
+              GitHub
+            </button>
+          </div>
+        </div>
+        <div class="col-lg-6 d-flex justify-content-center align-items-center mt-3 mt-lg-0">
+          <div>
+            <img src="https://via.placeholder.com/450">
+          </div>
+        </div>
+      </div>
+    </main>
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js">
+    </script>
+
+    <script>
+      function download() {
+        window.open('https://github.com/VSCodeConfigHelper/v4/releases');
+      }
+    </script>
+  </body>
+</html>
