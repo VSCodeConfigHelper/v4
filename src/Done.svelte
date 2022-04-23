@@ -44,6 +44,9 @@
   $: if (finished == total) {
     working = false;
     success = true;
+
+    const donateModal = document.getElementById("donate-modal") as HTMLInputElement;
+    donateModal.checked = true;
   }
 
   listen("task_finish", (r) => {

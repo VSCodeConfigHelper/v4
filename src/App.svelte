@@ -95,6 +95,21 @@
     );
   }
 
+  function goBack() {
+    if (step === LEN - 1) {
+      window.location.reload();
+    } else {
+      go(-1);
+    }
+  }
+
+  function showDonateModal() {
+    const donateModal = document.getElementById(
+      "donate-modal"
+    ) as HTMLInputElement;
+    donateModal.checked = true;
+  }
+
   onMount(() => {
     for (const i in STEPS) {
       const subscribe = STEPS[i].resultWritable?.subscribe((v) => {
@@ -113,11 +128,18 @@
   });
 </script>
 
-<div class="fixed top-2 right-2 z-10">
+<div class="fixed top-4 right-4 z-10 flex flex-row gap-4">
   <button
-    class="btn btn-sm glass tooltip tooltip-left"
+    class="btn btn-sm glass tooltip tooltip-bottom"
+    on:click={showDonateModal}
+    data-tip="显示捐助"
+  >
+    <Icon icon="mdi:dollar" />
+  </button>
+  <button
+    class="btn btn-sm glass tooltip tooltip-bottom"
     on:click={changeBackground}
-    data-tip="换一张背景"
+    data-tip="更换背景"
   >
     <Icon icon="mdi:refresh" />
   </button>
@@ -139,10 +161,10 @@
       <div class="justify-end card-actions !mt-3">
         <button
           class="btn btn-ghost"
-          class:invisible={step === 0 || step === LEN - 1}
-          on:click={() => go(-1)}
+          class:invisible={step === 0}
+          on:click={goBack}
         >
-          上一步
+          {step === LEN - 1 ? '重新开始' : '上一步'}
         </button>
         <button
           class="btn btn-primary"
@@ -172,6 +194,33 @@
     {/each}
   </ul>
 </footer>
+
+<input type="checkbox" id="donate-modal" class="modal-toggle" />
+<label for="donate-modal" class="modal">
+  <label class="modal-box relative" for="">
+    <label
+      for="donate-modal"
+      class="btn btn-ghost btn-sm btn-circle absolute right-2 top-2"
+    >
+      ✕
+    </label>
+    <h3 class="text-lg text-center">
+      如果这个软件对你有帮助，可以给作者买一杯咖啡
+    </h3>
+    <div class="py-4 flex flex-row justify-around">
+      <img
+        class="h-32"
+        src="https://z3.ax1x.com/2021/08/29/hGe1SK.jpg"
+        alt="alipay"
+      />
+      <img
+        class="h-32"
+        src="https://s4.ax1x.com/2021/12/20/TuVLv9.jpg"
+        alt="wechat"
+      />
+    </div>
+  </label>
+</label>
 
 <style>
   main {

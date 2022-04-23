@@ -155,6 +155,7 @@ fn print_setup_help() {
 
 pub fn parse_args() -> Result<()> {
   if std::env::args().len() <= 1 {
+    log::setup(false)?;
     return gui();
   }
 
