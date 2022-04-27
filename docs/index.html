@@ -10,8 +10,12 @@
       rel="stylesheet"
     />
     <!-- <link href="https://cdn.jsdelivr.net/npm/bootstrap-dark-5@1.1.3/dist/css/bootstrap-night.min.css" rel="stylesheet"> -->
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css"
+    />
 
-    <title>vscch 4</title>
+    <title>VS Code Config Helper 4</title>
 
     <style>
       section {
@@ -27,8 +31,19 @@
         background-color: #f5f5f5;
       }
       section > * {
-        width: 100%;
+        width: calc(100% - 2rem);
       }
+      .footer {
+        background-color: #333333;
+        color: white;
+      }
+      .footer a {
+        color: white;
+      }
+      .footer a:hover {
+        color: #b4a0ff;
+      }
+      /* Justify content width. Values come from Bootstrap's `.container` */
       @media (min-width: 576px) {
         section > * {
           max-width: 540px;
@@ -55,13 +70,33 @@
         }
       }
       .hero {
-        height: calc(100vh - 2rem);
-        padding: 80px 0;
+        padding-top: 80px;
+      }
+      @media (min-width: 992px) {
+        .hero {
+          height: calc(100vh - 2rem);
+          padding-bottom: 80px;
+        }
       }
       .logo {
         height: calc(1.325rem + 0.9vw);
       }
+      .compiler-img-container {
+        width: 100%;
+        display: flex;
+        flex-direction: row;
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        gap: 2rem;
+      }
+      /* Push images into center. justify-content won't work with overflow */
+      .compiler-img-container::before,
+      .compiler-img-container::after {
+        content: "";
+        margin: auto;
+      }
       .compiler-img {
+        flex: 0 0 100px;
         display: flex;
         flex-direction: column;
         align-items: center;
@@ -72,6 +107,7 @@
       }
       .compiler-img > div {
         color: #6c757d;
+        text-align: center;
       }
       .os-img {
         display: flex;
@@ -90,7 +126,7 @@
       <section>
         <div class="hero row">
           <div
-            class="col-10 col-sm-8 col-lg-6 d-flex flex-column justify-content-between py-lg-5"
+            class="col col-sm-8 col-lg-6 d-flex flex-column justify-content-between py-lg-5"
           >
             <div>
               <div class="d-flex flex-row gap-3 mb-2 align-items-center">
@@ -108,15 +144,27 @@
                 可以帮你完成所有准备工作。不再为繁琐的配置流程发愁！
               </div>
             </div>
-            <div class="d-flex flex-row gap-4">
+            <div class="d-flex flex-row gap-4 flex-wrap">
               <button
                 type="button"
-                onclick="download()"
                 class="btn btn-lg btn-primary"
+                id="downloadBtn"
+                disabled
               >
-                下载
+                不支持此操作系统
               </button>
-              <button type="button" class="btn btn-lg btn-light">GitHub</button>
+              <a
+                type="button"
+                class="btn btn-lg btn-light"
+                href="https://github.com/VSCodeConfigHelper/v4"
+                target="_blank"
+                rel="noopenner"
+              >
+                GitHub
+              </a>
+              <a type="button" class="btn btn-link" href="#download">
+                其它版本...
+              </a>
             </div>
           </div>
           <div
@@ -130,7 +178,7 @@
       </section>
       <section>
         <h3 class="mb-3">支持所有主流编译平台</h3>
-        <div class="w-100 d-flex flex-row justify-content-around">
+        <div class="compiler-img-container">
           <div class="compiler-img">
             <img src="assets/mingw64.png" />
             <div>MinGW</div>
@@ -158,11 +206,9 @@
         </div>
       </section>
       <section>
-        <h3 class="mb-3">下载</h3>
+        <h3 class="mb-3" id="download">下载</h3>
         <div class="row justify-content-center">
-          <div
-            class="col-md-6 d-flex flex-row justify-content-between gap-md-3"
-          >
+          <div class="col-md-6 d-flex flex-row justify-content-between gap-3">
             <div class="os-img">
               <img src="assets/windows.png" />
               <div>
@@ -188,12 +234,36 @@
         </div>
       </section>
       <section>
+        <p class="text-muted">
+          VS Code Config Helper
+          是自由软件：你可以再分发之和/或依照由自由软件基金会发布的 GNU
+          通用公共许可证修改之，无论是版本 3
+          许可证，还是（按你的决定）任何以后版都可以。<br />
+          发布该程序是希望它能有用，但是并无保障；甚至连可销售和符合某个特定的目的都不保证。
+          请参看 GNU 通用公共许可证，了解详情。<br />
+          你应该随程序获得一份 GNU 通用公共许可证的复本。 如果没有，请看
+          <a href="https://www.gnu.org/licenses/">
+            https://www.gnu.org/licenses/
+          </a>
+          。
+        </p>
+      </section>
+      <section class="footer">
         <div>
           <span>
-            <a href="https://v2.vscch.tk">版本 2.x</a>
-            <a href="https://v3.vscch.tk">版本 3.x</a>
+            <a target="_blank" rel="noopenner" href="https://v2.vscch.tk"
+              >版本 2.x</a
+            >
+            <a target="_blank" rel="noopenner" href="https://v3.vscch.tk"
+              >版本 3.x</a
+            >
             &copy;
-            <a href="https://guyutongxue.github.io">Guyutongxue</a>
+            <a
+              target="_blank"
+              rel="noopenner"
+              href="https://guyutongxue.github.io"
+              >Guyutongxue</a
+            >
             2022
           </span>
         </div>
@@ -201,10 +271,35 @@
     </main>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
-
-    <script>
-      function download() {
-        window.open("https://github.com/VSCodeConfigHelper/v4/releases");
+    <script src="https://cdn.jsdelivr.net/npm/ua-parser-js@1.0.2/src/ua-parser.min.js"></script>
+    <script type="module">
+      const parser = new UAParser();
+      const windows = ["Windows"];
+      const mac = ["Mac OS"];
+      const linux = [
+        "Linux",
+        "Debian",
+        "Ubuntu",
+        "Deepin",
+        "elementary OS",
+        "Raspbian",
+      ];
+      const os = parser.getOS().name;
+      let downloadName = null;
+      if (windows.includes(os)) {
+        downloadName = "Windows 版下载";
+      } else if (mac.includes(os)) {
+        downloadName = "macOS 版下载";
+      } else if (linux.includes(os)) {
+        downloadName = "Linux 版下载";
+      }
+      if (downloadName !== null) {
+        const btn = document.querySelector("#downloadBtn");
+        btn.attributes.removeNamedItem("disabled");
+        btn.innerHTML = `<i class="bi-download"></i>&nbsp;` + downloadName;
+        btn.addEventListener('click', () => {
+          window.open("https://github.com/VSCodeConfigHelper/v4/releases");
+        });
       }
     </script>
   </body>
