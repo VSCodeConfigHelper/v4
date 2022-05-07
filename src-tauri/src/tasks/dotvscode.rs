@@ -332,12 +332,6 @@ pub fn c_cpp_properties_json(args: &TaskArgs) -> Result<()> {
   } else {
     "cppStandard"
   };
-  // TODO
-  let standard = args
-    .standard
-    .as_ref()
-    .map(String::as_str)
-    .unwrap_or("c++17");
 
   let json = json!({
     "version": 4i32,
@@ -348,7 +342,7 @@ pub fn c_cpp_properties_json(args: &TaskArgs) -> Result<()> {
           "${{workspaceFolder}}/**"
         ],
         "compilerPath": args.compiler_path.to_string(),
-        standard_key: standard,
+        standard_key: args.standard,
         "intelliSenseMode": intellisense_mode,
       }
     ]

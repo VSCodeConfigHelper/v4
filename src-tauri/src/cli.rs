@@ -81,7 +81,7 @@ struct CliArgs {
   language: Language,
 
   /// 指定语言标准。若不提供，则工具根据编译器版本选取
-  #[clap(long)]
+  #[clap(long, possible_values = ["c++98", "c++11", "c++14", "c++17", "c++20", "c++23", "c89", "c99", "c11", "c17"])]
   standard: Option<String>,
 
   /// 指定编译选项
@@ -267,7 +267,7 @@ fn cli(mut args: CliArgs) -> Result<()> {
   } else {
     None
   };
-
+  
   let task_init_args = TaskInitArgs {
     vscode: vscode,
     workspace: workspace,

@@ -15,15 +15,15 @@
 // You should have received a copy of the GNU General Public License
 // along with vscch4.  If not, see <http://www.gnu.org/licenses/>.
 
-use anyhow::{Result, anyhow};
-use log::{warn, debug, trace};
-use serde::Deserialize;
+use anyhow::{anyhow, Result};
 use derivative::*;
+use log::{debug, info, trace, warn};
+use serde::Deserialize;
 
 use std::path::PathBuf;
 use std::{path::Path, sync::Arc};
 
-use crate::steps::compiler::{get_setup, CompilerSetup};
+use crate::steps::compiler::{get_setup, stdchoose, CompilerSetup};
 use crate::steps::{compiler::Compiler, options::Options};
 use crate::utils::ToString;
 
@@ -51,7 +51,7 @@ pub struct TaskArgs {
   pub compatible_mode: bool,
   pub is_c: bool,
   pub file_ext: &'static str,
-  pub standard: Option<String>,
+  pub standard: String,
   pub args: Vec<String>,
   pub ascii_check: bool,
   pub remove_extensions: bool,
@@ -117,7 +117,9 @@ mod shortcut {
 
   #[cfg(target_os = "windows")]
   pub fn create(args: &TaskArgs) -> Result<()> {
-    let path = dirs::desktop_dir().ok_or(anyhow!("找不到桌面路径。"))?.join("Visual Studio Code.lnk");
+    let path = dirs::desktop_dir()
+      .ok_or(anyhow!("找不到桌面路径。"))?
+      .join("Visual Studio Code.lnk");
     if path.exists() {
       warn!("快捷方式 {:?} 已存在，将被覆盖。", path);
     }
@@ -164,7 +166,7 @@ macro_rules! generate_task {
   };
 }
 
-pub fn list(args: TaskInitArgs) -> Vec<(&'static str, Box<dyn Fn() -> Result<()> + Send>)> {
+pub fn list(mut args: TaskInitArgs) -> Vec<(&'static str, Box<dyn Fn() -> Result<()> + Send>)> {
   let is_c = args.options.language == "C";
   let file_ext = if is_c { "c" } else { "cpp" };
   let test_file = {
@@ -184,6 +186,30 @@ pub fn list(args: TaskInitArgs) -> Vec<(&'static str, Box<dyn Fn() -> Result<()>
     }
   };
   let setup = get_setup(&args.compiler.setup);
+  let standard = args.options.standard.as_ref().cloned().unwrap_or_else(|| {
+    let std_p = match setup.id {
+      "gcc-mingw" => stdchoose::gcc,
+      "clang-mingw" => stdchoose::clang,
+      "gcc" => stdchoose::gcc,
+      "llvm" => stdchoose::clang,
+      "apple" => stdchoose::clang,
+      _ => (|_| ("c++20", "c17")) as fn(&str) -> (&'static str, &'static str),
+    }(&args.compiler.version);
+    (if is_c { std_p.1 } else { std_p.0 }).into()
+  });
+  {
+    let std_arg_prefix = if setup.id == "msvc" { "/std:" } else { "-std=" };
+    if !args
+      .options
+      .args
+      .iter()
+      .any(|a| a.starts_with(std_arg_prefix))
+    {
+      let std_arg = format!("{}{}", std_arg_prefix, standard);
+      info!("在编译选项中添加 {}。", std_arg);
+      args.options.args.push(std_arg);
+    }
+  }
 
   let args = Arc::from(TaskArgs {
     vscode: args.vscode,
@@ -193,7 +219,7 @@ pub fn list(args: TaskInitArgs) -> Vec<(&'static str, Box<dyn Fn() -> Result<()>
     compatible_mode: args.options.compatible_mode,
     is_c: is_c,
     file_ext: file_ext,
-    standard: args.options.standard,
+    standard: standard.to_string(),
     args: args.options.args,
     ascii_check: args.options.ascii_check,
     remove_extensions: args.options.remove_extensions,

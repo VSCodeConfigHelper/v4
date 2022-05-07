@@ -19,6 +19,7 @@ use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
 
 pub mod verparse;
+pub mod stdchoose;
 
 mod common;
 pub mod mingw;
