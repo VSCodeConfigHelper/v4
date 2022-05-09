@@ -53,7 +53,7 @@ jobs:
         if: ${{ github.ref_type == 'tag' }}
         run: |
           cd ${{ github.workspace }}
-          7z a src-tauri/target/vscch_${{ github.ref_name }}_${{ runner.os }}.7z src-tauri/target/release/${{ matrix.exe }} ${{ github.workspace }}/LICENSE
+          7z a ./src-tauri/target/vscch_${{ github.ref_name }}_${{ runner.os }}.7z ./src-tauri/target/release/${{ matrix.exe }} ./LICENSE
       - name: Release
         if: ${{ github.ref_type == 'tag' }}
         uses: softprops/action-gh-release@v1
