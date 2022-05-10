@@ -18,6 +18,10 @@
     <title>VS Code Config Helper 4</title>
 
     <style>
+      html, body {
+        width: 100vw;
+        overflow-x: hidden;
+      }
       section {
         display: flex;
         flex-direction: column;
@@ -71,10 +75,12 @@
       }
       .hero {
         padding-top: 80px;
+        width: 100vw;
+        overflow-x: visible;
       }
       @media (min-width: 992px) {
         .hero {
-          height: calc(100vh - 2rem);
+          min-height: calc(100vh - 2rem);
           padding-bottom: 80px;
         }
       }
@@ -118,6 +124,20 @@
       .os-img button {
         margin-top: 1rem;
         width: 100%;
+      }
+      #windowFrame {
+        float: left;
+        width: 728px;
+        height: 728px;
+        transform: scale(0.75);
+        transform-origin: 0 0;
+        margin-bottom: -182px;
+      }
+      @media (min-height: 728px) {
+        #windowFrame {
+          transform-origin: 0 50%;
+          margin-bottom: unset;
+        }
       }
     </style>
   </head>
@@ -168,10 +188,10 @@
             </div>
           </div>
           <div
-            class="d-none col-lg-6 d-lg-flex justify-content-center align-items-center mt-3 mt-lg-0"
+            class="d-none col-lg-6 d-lg-flex flex-column justify-content-center align-items-start mt-3 mt-lg-0"
           >
             <div>
-              <img src="https://via.placeholder.com/450" />
+              <iframe id="windowFrame" src="./window.html"></iframe>
             </div>
           </div>
         </div>
@@ -297,7 +317,7 @@
         const btn = document.querySelector("#downloadBtn");
         btn.attributes.removeNamedItem("disabled");
         btn.innerHTML = `<i class="bi-download"></i>&nbsp;` + downloadName;
-        btn.addEventListener('click', () => {
+        btn.addEventListener("click", () => {
           window.open("https://github.com/VSCodeConfigHelper/v4/releases");
         });
       }

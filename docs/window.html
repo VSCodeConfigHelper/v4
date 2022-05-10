@@ -1,0 +1,1859 @@
+<!-- 
+  1. Run the application with https://github.com/tauri-apps/tauri-invoke-http;
+  2. tauri dev, then open frontend in browser;
+  3. Patch all window.__TAURI_xxx__ things make tauri API works;
+  4. Use Chrome extension "SnipCSS" to grab all HTML+CSS stuff.
+  5. Apply flickity manually.
+-->
+<!DOCTYPE html>
+<html>
+  <head>
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/flickity@2/dist/flickity.min.css"
+    />
+    <script src="https://unpkg.com/flickity@2/dist/flickity.pkgd.min.js"></script>
+    <style>
+      * {
+        box-sizing: border-box;
+        border-width: 0;
+        border-style: solid;
+        border-color: #e5e7eb;
+        --tw-translate-x: 0;
+        --tw-translate-y: 0;
+        --tw-rotate: 0;
+        --tw-skew-x: 0;
+        --tw-skew-y: 0;
+        --tw-scale-x: 1;
+        --tw-scale-y: 1;
+        --tw-shadow: 0 0 #0000;
+        --background: url("https://www.dmoe.cc/random.php");
+      }
+
+      body {
+        margin: 0;
+        line-height: inherit;
+        position: relative;
+        width: 100vw;
+        height: 100vh;
+        overflow: hidden;
+        -webkit-user-select: none;
+        -moz-user-select: none;
+        -ms-user-select: none;
+        user-select: none;
+      }
+
+      #container {
+        width: 100%;
+        height: 100%;
+        background: no-repeat center/cover var(--background);
+      }
+
+      html {
+        line-height: 1.5;
+        -webkit-text-size-adjust: 100%;
+        -moz-tab-size: 4;
+        -o-tab-size: 4;
+        tab-size: 4;
+        font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+          "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif,
+          "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol",
+          "Noto Color Emoji";
+        -webkit-tap-highlight-color: transparent;
+        position: relative;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        -webkit-user-select: none;
+        -moz-user-select: none;
+        -ms-user-select: none;
+        user-select: none;
+      }
+
+      :root {
+        background-color: hsla(var(--b1) / var(--tw-bg-opacity, 1));
+        color: hsla(var(--bc) / var(--tw-text-opacity, 1));
+        --p: 259 94% 51%;
+        --su: 158 64% 52%;
+        --pc: 0 0% 100%;
+        --n: 219 14% 28%;
+        --nc: 0 0% 100%;
+        --b1: 0 0% 100%;
+        --b3: 216 12% 84%;
+        --bc: 215 28% 17%;
+      }
+
+      .flex {
+        display: flex;
+      }
+
+      .h-full {
+        height: 100%;
+      }
+
+      .w-full {
+        width: 100%;
+      }
+
+      .flex-row {
+        flex-direction: row;
+      }
+
+      .items-center {
+        align-items: center;
+      }
+
+      .justify-center {
+        justify-content: center;
+      }
+
+      .pb-20 {
+        padding-bottom: 5rem;
+      }
+
+      main.s-XsEmFtvddWTw {
+        perspective: 1000px;
+      }
+
+      *,
+      :before,
+      :after {
+        box-sizing: border-box;
+        border-width: 0;
+        border-style: solid;
+        border-color: #e5e7eb;
+      }
+
+      *,
+      :before,
+      :after {
+        --tw-translate-x: 0;
+        --tw-translate-y: 0;
+        --tw-rotate: 0;
+        --tw-skew-x: 0;
+        --tw-skew-y: 0;
+        --tw-scale-x: 1;
+        --tw-scale-y: 1;
+        --tw-shadow: 0 0 #0000;
+      }
+
+      main.s-XsEmFtvddWTw:before {
+        content: " ";
+        display: block;
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        opacity: 0.5;
+      }
+
+      :-webkit-scrollbar {
+        width: 16px;
+        height: 16px;
+      }
+
+      :-webkit-scrollbar-thumb {
+        background-color: hsl(var(--b3));
+        border: 4px solid transparent;
+        border-radius: 8px;
+        background-clip: padding-box;
+      }
+
+      .card {
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        border-radius: var(--rounded-box, 1rem);
+      }
+
+      .glass {
+        border: none;
+        -webkit-backdrop-filter: blur(var(--glass-blur, 40px));
+        backdrop-filter: blur(var(--glass-blur, 40px));
+        background-color: transparent;
+        background-image: linear-gradient(
+            135deg,
+            rgb(255 255 255 / var(--glass-opacity, 30%)) 0%,
+            rgb(0 0 0 / 0%) 100%
+          ),
+          linear-gradient(
+            var(--glass-reflex-degree, 100deg),
+            rgb(255 255 255 / var(--glass-reflex-opacity, 10%)) 25%,
+            rgb(0 0 0 / 0%) 25%
+          );
+        box-shadow: 0 0 0 1px
+            rgb(255 255 255 / var(--glass-border-opacity, 10%)) inset,
+          0 0 0 2px rgb(0 0 0 / 5%);
+        text-shadow: 0 1px rgb(0 0 0 / var(--glass-text-shadow-opacity, 5%));
+      }
+
+      .w-9\/12 {
+        width: 75%;
+      }
+
+      .max-w-3xl {
+        max-width: 48rem;
+      }
+
+      .shadow-lg {
+        --tw-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1),
+          0 4px 6px -4px rgb(0 0 0 / 0.1);
+        box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000),
+          var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow);
+      }
+
+      body .card {
+        overflow: visible;
+      }
+
+      .glass,
+      .glass:hover {
+        border: none;
+        -webkit-backdrop-filter: blur(var(--glass-blur, 40px));
+        backdrop-filter: blur(var(--glass-blur, 40px));
+        background-color: transparent;
+        background-image: linear-gradient(
+            135deg,
+            rgb(255 255 255 / var(--glass-opacity, 30%)) 0%,
+            rgb(0 0 0 / 0%) 100%
+          ),
+          linear-gradient(
+            var(--glass-reflex-degree, 100deg),
+            rgb(255 255 255 / var(--glass-reflex-opacity, 10%)) 25%,
+            rgb(0 0 0 / 0%) 25%
+          );
+        box-shadow: 0 0 0 1px
+            rgb(255 255 255 / var(--glass-border-opacity, 10%)) inset,
+          0 0 0 2px rgb(0 0 0 / 5%);
+        text-shadow: 0 1px rgb(0 0 0 / var(--glass-text-shadow-opacity, 5%));
+      }
+
+      .hover\:shadow-lg:hover {
+        --tw-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1),
+          0 4px 6px -4px rgb(0 0 0 / 0.1);
+        box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000),
+          var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow);
+      }
+
+      .card-body {
+        display: flex;
+        flex: 1 1 auto;
+        flex-direction: column;
+        padding: var(--padding-card, 2rem);
+        gap: 0.5rem;
+      }
+
+      .hidden {
+        display: none;
+      }
+
+      .card-actions {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: flex-start;
+        gap: 0.5rem;
+      }
+
+      .\!mt-3 {
+        margin-top: 0.75rem !important;
+      }
+
+      .justify-end {
+        justify-content: flex-end;
+      }
+
+      .form-control {
+        display: flex;
+        flex-direction: column;
+      }
+
+      button {
+        font-family: inherit;
+        font-size: 100%;
+        line-height: inherit;
+        color: inherit;
+        margin: 0;
+        padding: 0;
+        text-transform: none;
+        -webkit-appearance: button;
+        background-color: transparent;
+        background-image: none;
+        cursor: pointer;
+      }
+
+      .h-0 {
+        height: 0px;
+      }
+
+      .w-0 {
+        width: 0px;
+      }
+
+      .btn {
+        display: inline-flex;
+        flex-shrink: 0;
+        cursor: pointer;
+        -webkit-user-select: none;
+        -moz-user-select: none;
+        -ms-user-select: none;
+        user-select: none;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: center;
+        border-color: transparent;
+        border-color: hsl(var(--n) / var(--tw-border-opacity));
+        text-align: center;
+        transition-property: color, background-color, border-color, fill, stroke,
+          opacity, box-shadow, transform, filter, -webkit-text-decoration-color,
+          -webkit-backdrop-filter;
+        transition-property: color, background-color, border-color,
+          text-decoration-color, fill, stroke, opacity, box-shadow, transform,
+          filter, backdrop-filter;
+        transition-property: color, background-color, border-color,
+          text-decoration-color, fill, stroke, opacity, box-shadow, transform,
+          filter, backdrop-filter, -webkit-text-decoration-color,
+          -webkit-backdrop-filter;
+        transition-duration: 200ms;
+        transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+        border-radius: var(--rounded-btn, 0.5rem);
+        height: 3rem;
+        padding-left: 1rem;
+        padding-right: 1rem;
+        font-size: 0.875rem;
+        line-height: 1em;
+        min-height: 3rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        text-transform: var(--btn-text-case, uppercase);
+        border-width: var(--border-btn, 1px);
+        -webkit-animation: button-pop var(--animation-btn, 0.25s) ease-out;
+        animation: button-pop var(--animation-btn, 0.25s) ease-out;
+        --tw-border-opacity: 1;
+        --tw-bg-opacity: 1;
+        background-color: hsl(var(--n) / var(--tw-bg-opacity));
+        --tw-text-opacity: 1;
+        color: hsl(var(--nc) / var(--tw-text-opacity));
+      }
+
+      .btn-ghost {
+        border-width: 1px;
+        border-color: transparent;
+        background-color: transparent;
+        color: currentColor;
+      }
+
+      .btn:hover {
+        --tw-border-opacity: 1;
+        border-color: hsl(var(--nf, var(--n)) / var(--tw-border-opacity));
+        --tw-bg-opacity: 1;
+        background-color: hsl(var(--nf, var(--n)) / var(--tw-bg-opacity));
+      }
+
+      .btn-ghost:hover {
+        --tw-border-opacity: 0;
+        background-color: hsl(var(--bc) / var(--tw-bg-opacity));
+        --tw-bg-opacity: 0.2;
+      }
+
+      .btn:active:hover {
+        -webkit-animation: none;
+        animation: none;
+        transform: scale(var(--btn-focus-scale, 0.95));
+      }
+
+      .btn-primary {
+        --tw-border-opacity: 1;
+        border-color: hsl(var(--p) / var(--tw-border-opacity));
+        --tw-bg-opacity: 1;
+        background-color: hsl(var(--p) / var(--tw-bg-opacity));
+        --tw-text-opacity: 1;
+        color: hsl(var(--pc) / var(--tw-text-opacity));
+      }
+
+      .btn-primary:hover {
+        --tw-border-opacity: 1;
+        border-color: hsl(var(--pf, var(--p)) / var(--tw-border-opacity));
+        --tw-bg-opacity: 1;
+        background-color: hsl(var(--pf, var(--p)) / var(--tw-bg-opacity));
+      }
+
+      .justify-between {
+        justify-content: space-between;
+      }
+
+      .space-y-3 > :not([hidden]) ~ :not([hidden]) {
+        --tw-space-y-reverse: 0;
+        margin-top: calc(0.75rem * calc(1 - var(--tw-space-y-reverse)));
+        margin-bottom: calc(0.75rem * var(--tw-space-y-reverse));
+      }
+
+      .alert {
+        display: flex;
+        width: 100%;
+        flex-direction: column;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+        --tw-bg-opacity: 1;
+        background-color: hsl(var(--b2, var(--b1)) / var(--tw-bg-opacity));
+        padding: 1rem;
+        border-radius: var(--rounded-box, 1rem);
+      }
+
+      @media (min-width: 768px) {
+        .alert {
+          flex-direction: row;
+        }
+      }
+
+      .alert-success {
+        --tw-bg-opacity: 1;
+        background-color: hsl(var(--su) / var(--tw-bg-opacity));
+        --tw-text-opacity: 1;
+        color: hsl(var(--suc, var(--nc)) / var(--tw-text-opacity));
+      }
+
+      .justify-start {
+        justify-content: flex-start;
+      }
+
+      .bg-opacity-50 {
+        --tw-bg-opacity: 0.5;
+      }
+
+      .p-2 {
+        padding: 0.5rem;
+      }
+
+      .overflow-x-auto {
+        overflow-x: auto;
+      }
+
+      .rounded-lg {
+        border-radius: 0.5rem;
+      }
+
+      .bg-base-100 {
+        --tw-bg-opacity: 1;
+        background-color: hsl(var(--b1) / var(--tw-bg-opacity));
+      }
+
+      h3 {
+        font-size: inherit;
+        font-weight: inherit;
+        margin: 0;
+      }
+
+      .text-3xl {
+        font-size: 1.875rem;
+        line-height: 2.25rem;
+      }
+
+      .font-bold {
+        font-weight: 700;
+      }
+
+      .flex-col {
+        flex-direction: column;
+      }
+
+      .grid {
+        display: grid;
+      }
+
+      .grid-cols-2 {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .gap-2 {
+        gap: 0.5rem;
+      }
+
+      .btn-link {
+        border-color: transparent;
+        background-color: transparent;
+        --tw-text-opacity: 1;
+        color: hsl(var(--p) / var(--tw-text-opacity));
+      }
+
+      .btn-xs {
+        height: 1.5rem;
+        padding-left: 0.5rem;
+        padding-right: 0.5rem;
+        min-height: 1.5rem;
+        font-size: 0.75rem;
+      }
+
+      .font-normal {
+        font-weight: 400;
+      }
+
+      .btn-link:hover {
+        border-color: transparent;
+        background-color: transparent;
+        -webkit-text-decoration-line: underline;
+        text-decoration-line: underline;
+      }
+
+      svg {
+        display: block;
+        vertical-align: middle;
+      }
+
+      .alert > :where(*) {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+      }
+
+      .shrink-0 {
+        flex-shrink: 0;
+      }
+
+      .\!mt-0 {
+        margin-top: 0px !important;
+      }
+
+      .ml-2 {
+        margin-left: 0.5rem;
+      }
+
+      .inline {
+        display: inline;
+      }
+
+      .alert > :not([hidden]) ~ :not([hidden]) {
+        --tw-space-y-reverse: 0;
+        margin-top: calc(0.5rem * calc(1 - var(--tw-space-y-reverse)));
+        margin-bottom: calc(0.5rem * var(--tw-space-y-reverse));
+      }
+
+      @media (min-width: 768px) {
+        .alert > :not([hidden]) ~ :not([hidden]) {
+          --tw-space-y-reverse: 0;
+          margin-top: calc(0px * calc(1 - var(--tw-space-y-reverse)));
+          margin-bottom: calc(0px * var(--tw-space-y-reverse));
+        }
+      }
+
+      input {
+        font-family: inherit;
+        font-size: 100%;
+        line-height: inherit;
+        color: inherit;
+        margin: 0;
+        padding: 0;
+      }
+
+      .input {
+        flex-shrink: 1;
+        transition-property: color, background-color, border-color, fill, stroke,
+          opacity, box-shadow, transform, filter, -webkit-text-decoration-color,
+          -webkit-backdrop-filter;
+        transition-property: color, background-color, border-color,
+          text-decoration-color, fill, stroke, opacity, box-shadow, transform,
+          filter, backdrop-filter;
+        transition-property: color, background-color, border-color,
+          text-decoration-color, fill, stroke, opacity, box-shadow, transform,
+          filter, backdrop-filter, -webkit-text-decoration-color,
+          -webkit-backdrop-filter;
+        transition-duration: 200ms;
+        transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+        height: 3rem;
+        padding-left: 1rem;
+        padding-right: 1rem;
+        font-size: 0.875rem;
+        line-height: 2;
+        border-width: 1px;
+        border-color: hsl(var(--bc) / var(--tw-border-opacity));
+        --tw-border-opacity: 0;
+        --tw-bg-opacity: 1;
+        background-color: hsl(var(--b1) / var(--tw-bg-opacity));
+        border-radius: var(--rounded-btn, 0.5rem);
+      }
+
+      .input-bordered {
+        --tw-border-opacity: 0.2;
+      }
+
+      .flex-grow {
+        flex-grow: 1;
+      }
+
+      .btn-circle {
+        height: 3rem;
+        width: 3rem;
+        border-radius: 9999px;
+        padding: 0px;
+      }
+
+      .space-x-2 > :not([hidden]) ~ :not([hidden]) {
+        --tw-space-x-reverse: 0;
+        margin-right: calc(0.5rem * var(--tw-space-x-reverse));
+        margin-left: calc(0.5rem * calc(1 - var(--tw-space-x-reverse)));
+      }
+
+      .dropdown {
+        position: relative;
+        display: inline-block;
+      }
+
+      table {
+        text-indent: 0;
+        border-color: inherit;
+        border-collapse: collapse;
+      }
+
+      .table {
+        position: relative;
+        text-align: left;
+        display: table;
+      }
+
+      .min-w-full {
+        min-width: 100%;
+      }
+
+      .btn-sm {
+        height: 2rem;
+        padding-left: 0.75rem;
+        padding-right: 0.75rem;
+        min-height: 2rem;
+        font-size: 0.875rem;
+      }
+
+      strong {
+        font-weight: bolder;
+      }
+
+      .relative {
+        position: relative;
+      }
+
+      .mx-auto {
+        margin-left: auto;
+        margin-right: auto;
+      }
+
+      .text-sm {
+        font-size: 0.875rem;
+        line-height: 1.25rem;
+      }
+
+      select {
+        font-family: inherit;
+        font-size: 100%;
+        line-height: inherit;
+        color: inherit;
+        margin: 0;
+        padding: 0;
+        text-transform: none;
+      }
+
+      .select {
+        display: inline-flex;
+        flex-shrink: 0;
+        cursor: pointer;
+        -webkit-user-select: none;
+        -moz-user-select: none;
+        -ms-user-select: none;
+        user-select: none;
+        -webkit-appearance: none;
+        -moz-appearance: none;
+        appearance: none;
+        height: 3rem;
+        padding-left: 1rem;
+        padding-right: 2.5rem;
+        font-size: 0.875rem;
+        line-height: 2;
+        min-height: 3rem;
+        border-width: 1px;
+        border-color: hsl(var(--bc) / var(--tw-border-opacity));
+        --tw-border-opacity: 0;
+        --tw-bg-opacity: 1;
+        background-color: hsl(var(--b1) / var(--tw-bg-opacity));
+        font-weight: 600;
+        transition-property: color, background-color, border-color, fill, stroke,
+          opacity, box-shadow, transform, filter, -webkit-text-decoration-color,
+          -webkit-backdrop-filter;
+        transition-property: color, background-color, border-color,
+          text-decoration-color, fill, stroke, opacity, box-shadow, transform,
+          filter, backdrop-filter;
+        transition-property: color, background-color, border-color,
+          text-decoration-color, fill, stroke, opacity, box-shadow, transform,
+          filter, backdrop-filter, -webkit-text-decoration-color,
+          -webkit-backdrop-filter;
+        transition-duration: 200ms;
+        transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+        border-radius: var(--rounded-btn, 0.5rem);
+        background-image: linear-gradient(
+            45deg,
+            transparent 50%,
+            currentColor 50%
+          ),
+          linear-gradient(135deg, currentColor 50%, transparent 50%);
+        background-position: calc(100% - 20px) calc(1px + 50%),
+          calc(100% - 16px) calc(1px + 50%);
+        background-size: 4px 4px, 4px 4px;
+        background-repeat: no-repeat;
+        background-repeat-x: no-repeat;
+        background-repeat-y: no-repeat;
+      }
+
+      .select-bordered {
+        --tw-border-opacity: 0.2;
+      }
+
+      .select-sm {
+        height: 2rem;
+        padding-left: 0.75rem;
+        padding-right: 2rem;
+        font-size: 0.875rem;
+        line-height: 2rem;
+        min-height: 2rem;
+      }
+
+      ul {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+      }
+
+      .menu {
+        display: flex;
+        flex-direction: column;
+      }
+
+      .rounded-box {
+        border-radius: var(--rounded-box, 1rem);
+      }
+
+      .w-60 {
+        width: 15rem;
+      }
+
+      .dropdown .dropdown-content {
+        visibility: hidden;
+        position: absolute;
+        z-index: 50;
+        opacity: 0;
+        transform-origin: top;
+        --tw-scale-x: 0.95;
+        --tw-scale-y: 0.95;
+        transform: translate(var(--tw-translate-x), var(--tw-translate-y))
+          rotate(var(--tw-rotate)) skewX(var(--tw-skew-x))
+          skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x))
+          scaleY(var(--tw-scale-y));
+        transition-property: color, background-color, border-color, fill, stroke,
+          opacity, box-shadow, transform, filter, -webkit-text-decoration-color,
+          -webkit-backdrop-filter;
+        transition-property: color, background-color, border-color,
+          text-decoration-color, fill, stroke, opacity, box-shadow, transform,
+          filter, backdrop-filter;
+        transition-property: color, background-color, border-color,
+          text-decoration-color, fill, stroke, opacity, box-shadow, transform,
+          filter, backdrop-filter, -webkit-text-decoration-color,
+          -webkit-backdrop-filter;
+        transition-duration: 200ms;
+        transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+      }
+
+      .dropdown-end .dropdown-content {
+        right: 0px;
+      }
+
+      .z-10 {
+        z-index: 10;
+      }
+
+      .w-16 {
+        width: 4rem;
+      }
+
+      .absolute {
+        position: absolute;
+      }
+
+      .top-0 {
+        top: 0px;
+      }
+
+      .transition-all {
+        transition-property: all;
+        transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+        transition-duration: 150ms;
+      }
+
+      .ease-in-out {
+        transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+      }
+
+      .toggle {
+        flex-shrink: 0;
+        --chkbg: hsla(var(--bc) / 0.2);
+        --handleoffset: 1.5rem;
+        height: 1.5rem;
+        width: 3rem;
+        cursor: pointer;
+        -webkit-appearance: none;
+        -moz-appearance: none;
+        appearance: none;
+        border-width: 1px;
+        border-color: hsl(var(--bc) / var(--tw-border-opacity));
+        --tw-border-opacity: 0.2;
+        background-color: hsl(var(--bc) / var(--tw-bg-opacity));
+        --tw-bg-opacity: 0.2;
+        transition-duration: 300ms;
+        transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+        border-radius: var(--rounded-badge, 1.9rem);
+        transition: background,
+          box-shadow var(--animation-input, 0.2s) ease-in-out;
+        box-shadow: calc(var(--handleoffset) * -1) 0 0 2px hsl(var(--b1)) inset,
+          0 0 0 2px hsl(var(--b1)) inset;
+      }
+
+      .toggle-sm {
+        --handleoffset: 0.75rem;
+        height: 1.25rem;
+        width: 2rem;
+      }
+
+      .menu :where(li) {
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        flex-wrap: wrap;
+        align-items: stretch;
+      }
+
+      .menu > :where(li:first-child) {
+        border-top-left-radius: inherit;
+        border-top-right-radius: inherit;
+        border-bottom-right-radius: unset;
+        border-bottom-left-radius: unset;
+      }
+
+      .menu > :where(li:last-child) {
+        border-top-left-radius: unset;
+        border-top-right-radius: unset;
+        border-bottom-right-radius: inherit;
+        border-bottom-left-radius: inherit;
+      }
+
+      .rounded-xl {
+        border-radius: 0.75rem;
+      }
+
+      .text-center {
+        text-align: center;
+      }
+
+      .text-black {
+        --tw-text-opacity: 1;
+        color: rgb(0 0 0 / var(--tw-text-opacity));
+      }
+
+      .non-active.s-C5k3_Xc-WGUo {
+        cursor: pointer;
+      }
+
+      .non-active.s-C5k3_Xc-WGUo:hover {
+        color: hsla(var(--p));
+      }
+
+      .z-0 {
+        z-index: 0;
+      }
+
+      .bg-white {
+        --tw-bg-opacity: 1;
+        background-color: rgb(255 255 255 / var(--tw-bg-opacity));
+      }
+
+      .full.s-C5k3_Xc-WGUo {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+      }
+
+      .z-20 {
+        z-index: 20;
+      }
+
+      .mix-blend-difference {
+        mix-blend-mode: difference;
+      }
+
+      .z-30 {
+        z-index: 30;
+      }
+
+      .bg-primary {
+        --tw-bg-opacity: 1;
+        background-color: hsl(var(--p) / var(--tw-bg-opacity));
+      }
+
+      .mix-blend-screen {
+        mix-blend-mode: screen;
+      }
+
+      a {
+        color: inherit;
+        text-decoration: inherit;
+      }
+
+      .menu :where(li:not(.menu-title)) > :where(:not(ul)) {
+        display: flex;
+      }
+
+      .menu :where(li:not(.disabled):not(.menu-title)) > :where(:not(ul)) {
+        cursor: pointer;
+        -webkit-user-select: none;
+        -moz-user-select: none;
+        -ms-user-select: none;
+        user-select: none;
+        align-items: center;
+        outline: 2px solid transparent;
+        outline-offset: 2px;
+      }
+
+      .menu :where(li) > :where(:not(ul)) {
+        gap: 0.75rem;
+        padding-left: 1rem;
+        padding-right: 1rem;
+        padding-top: 0.75rem;
+        padding-bottom: 0.75rem;
+        color: currentColor;
+      }
+
+      .menu :where(li:not(.disabled)) > :where(:not(ul)) {
+        outline: 2px solid transparent;
+        outline-offset: 2px;
+        transition-property: color, background-color, border-color, fill, stroke,
+          opacity, box-shadow, transform, filter, -webkit-text-decoration-color,
+          -webkit-backdrop-filter;
+        transition-property: color, background-color, border-color,
+          text-decoration-color, fill, stroke, opacity, box-shadow, transform,
+          filter, backdrop-filter;
+        transition-property: color, background-color, border-color,
+          text-decoration-color, fill, stroke, opacity, box-shadow, transform,
+          filter, backdrop-filter, -webkit-text-decoration-color,
+          -webkit-backdrop-filter;
+        transition-duration: 200ms;
+        transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+      }
+
+      .menu > :where(li:first-child) > :where(:not(ul)) {
+        border-top-left-radius: inherit;
+        border-top-right-radius: inherit;
+        border-bottom-right-radius: unset;
+        border-bottom-left-radius: unset;
+      }
+
+      .menu-compact :where(li > *) {
+        padding-top: 0.5rem;
+        padding-bottom: 0.5rem;
+        font-size: 0.875rem;
+        line-height: 1.25rem;
+      }
+
+      .\!px-2 {
+        padding-left: 0.5rem !important;
+        padding-right: 0.5rem !important;
+      }
+
+      .menu :where(li:not(.menu-title):not(:empty)) > :where(:not(ul):hover) {
+        background-color: hsl(var(--bc) / var(--tw-bg-opacity));
+        --tw-bg-opacity: 0.1;
+      }
+
+      .menu > :where(li:last-child) > :where(:not(ul)) {
+        border-top-left-radius: unset;
+        border-top-right-radius: unset;
+        border-bottom-right-radius: inherit;
+        border-bottom-left-radius: inherit;
+      }
+
+      .table :where(th, td) {
+        white-space: nowrap;
+        padding: 1rem;
+        vertical-align: middle;
+      }
+
+      .table :where(thead, tfoot) :where(th, td) {
+        --tw-bg-opacity: 1;
+        background-color: hsl(var(--b2, var(--b1)) / var(--tw-bg-opacity));
+        font-size: 0.75rem;
+        line-height: 1rem;
+        font-weight: 700;
+        text-transform: uppercase;
+      }
+
+      .table-compact :where(th, td) {
+        padding: 0.5rem;
+        font-size: 0.875rem;
+        line-height: 1.25rem;
+      }
+
+      .table :where(thead, tfoot) :where(th, td):first-child {
+        border-top-left-radius: 0.5rem;
+        border-bottom-left-radius: 0.5rem;
+      }
+
+      .table th:first-child {
+        position: sticky;
+        position: -webkit-sticky;
+        left: 0px;
+        z-index: 11;
+      }
+
+      .table :where(thead, tfoot) :where(th, td):last-child {
+        border-top-right-radius: 0.5rem;
+        border-bottom-right-radius: 0.5rem;
+      }
+
+      .table :where(tbody th, tbody td) {
+        --tw-bg-opacity: 1;
+        background-color: hsl(var(--b1) / var(--tw-bg-opacity));
+      }
+
+      .items-start {
+        align-items: flex-start;
+      }
+
+      .pl-2 {
+        padding-left: 0.5rem;
+      }
+
+      .invisible {
+        visibility: hidden;
+      }
+
+      .checkbox {
+        --chkbg: var(--bc);
+        --chkfg: var(--b1);
+        height: 1.5rem;
+        width: 1.5rem;
+        cursor: pointer;
+        -webkit-appearance: none;
+        -moz-appearance: none;
+        appearance: none;
+        border-width: 1px;
+        border-color: hsl(var(--bc) / var(--tw-border-opacity));
+        --tw-border-opacity: 0.2;
+        border-radius: var(--rounded-btn, 0.5rem);
+      }
+
+      .checkbox-sm {
+        height: 1.25rem;
+        width: 1.25rem;
+      }
+
+      .translate-y-0\.5 {
+        --tw-translate-y: 0.125rem;
+        transform: translate(var(--tw-translate-x), var(--tw-translate-y))
+          rotate(var(--tw-rotate)) skewX(var(--tw-skew-x))
+          skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x))
+          scaleY(var(--tw-scale-y));
+      }
+
+      .cursor-default {
+        cursor: default;
+      }
+
+      .checkbox:checked {
+        --tw-bg-opacity: 1;
+        background-color: hsl(var(--bc) / var(--tw-bg-opacity));
+        background-repeat: no-repeat;
+        -webkit-animation: checkmark var(--animation-input, 0.2s) ease-in-out;
+        animation: checkmark var(--animation-input, 0.2s) ease-in-out;
+        background-image: linear-gradient(
+            -45deg,
+            transparent 65%,
+            hsl(var(--chkbg)) 65.99%
+          ),
+          linear-gradient(45deg, transparent 75%, hsl(var(--chkbg)) 75.99%),
+          linear-gradient(-45deg, hsl(var(--chkbg)) 40%, transparent 40.99%),
+          linear-gradient(
+            45deg,
+            hsl(var(--chkbg)) 30%,
+            hsl(var(--chkfg)) 30.99%,
+            hsl(var(--chkfg)) 40%,
+            transparent 40.99%
+          ),
+          linear-gradient(
+            -45deg,
+            hsl(var(--chkfg)) 50%,
+            hsl(var(--chkbg)) 50.99%
+          );
+        background-repeat-x: no-repeat;
+        background-repeat-y: no-repeat;
+      }
+
+      small {
+        font-size: 80%;
+      }
+
+      @keyframes button-pop {
+        0% {
+          transform: scale(var(--btn-focus-scale, 0.95));
+          transform: scale(var(--btn-focus-scale, 0.95));
+        }
+        40% {
+          transform: scale(1.02);
+          transform: scale(1.02);
+        }
+        100% {
+          transform: scale(1);
+          transform: scale(1);
+        }
+      }
+      @keyframes checkmark {
+        0% {
+          background-position-y: 5px;
+          background-position-y: 5px;
+        }
+        50% {
+          background-position-y: -2px;
+          background-position-y: -2px;
+        }
+        100% {
+          background-position-y: 0;
+          background-position-y: 0px;
+        }
+      }
+    </style>
+    <style>
+      * {
+        box-sizing: border-box;
+        border-width: 0;
+        border-style: solid;
+        border-color: #e5e7eb;
+        --tw-translate-x: 0;
+        --tw-translate-y: 0;
+        --tw-rotate: 0;
+        --tw-skew-x: 0;
+        --tw-skew-y: 0;
+        --tw-scale-x: 1;
+        --tw-scale-y: 1;
+        --tw-shadow: 0 0 #0000;
+      }
+
+      .rounded-b-box {
+        border-bottom-left-radius: var(--rounded-box, 1rem);
+        border-bottom-right-radius: var(--rounded-box, 1rem);
+      }
+
+      .rounded-tr-box {
+        border-top-right-radius: var(--rounded-box, 1rem);
+      }
+
+      .flex {
+        display: flex;
+      }
+
+      .min-h-\[6rem\] {
+        min-height: 6rem;
+      }
+
+      .min-w-\[18rem\] {
+        min-width: 18rem;
+      }
+
+      .max-w-4xl {
+        max-width: 56rem;
+      }
+
+      .flex-wrap {
+        flex-wrap: wrap;
+      }
+
+      .items-center {
+        align-items: center;
+      }
+
+      .justify-center {
+        justify-content: center;
+      }
+
+      .gap-2 {
+        gap: 0.5rem;
+      }
+
+      .overflow-x-hidden {
+        overflow-x: hidden;
+      }
+
+      .border {
+        border-width: 1px;
+      }
+
+      .border-base-300 {
+        --tw-border-opacity: 1;
+        border-color: hsl(var(--b3, var(--b2)) / var(--tw-border-opacity));
+      }
+
+      .bg-base-200 {
+        --tw-bg-opacity: 1;
+        background-color: hsl(var(--b2, var(--b1)) / var(--tw-bg-opacity));
+      }
+
+      .bg-cover {
+        background-size: cover;
+      }
+
+      .bg-top {
+        background-position: top;
+      }
+
+      .p-4 {
+        padding: 1rem;
+      }
+
+      .prose .component-preview .preview {
+        background-image: radial-gradient(
+          hsla(var(--bc) / 0.2) 0.5px,
+          hsla(var(--b2) / 1) 0.5px
+        );
+      }
+
+      .relative {
+        position: relative;
+      }
+
+      .overflow-x-auto {
+        overflow-x: auto;
+      }
+
+      .bg-base-300 {
+        --tw-bg-opacity: 1;
+        background-color: hsl(var(--b3, var(--b2)) / var(--tw-bg-opacity));
+      }
+
+      .grid {
+        display: grid;
+      }
+
+      .my-4 {
+        margin-top: 1rem;
+        margin-bottom: 1rem;
+      }
+
+      .text-base-content {
+        --tw-text-opacity: 1;
+        color: hsl(var(--bc) / var(--tw-text-opacity));
+      }
+
+      .prose {
+        color: var(--tw-prose-body);
+        max-width: 65ch;
+        --tw-prose-body: #374151;
+        font-size: 1rem;
+        line-height: 1.75;
+      }
+
+      .w-full {
+        width: 100%;
+      }
+
+      .flex-grow {
+        flex-grow: 1;
+      }
+
+      :root .prose {
+        --tw-prose-body: hsla(var(--bc) / 0.8);
+      }
+
+      .flex-col-reverse {
+        flex-direction: column-reverse;
+      }
+
+      .justify-between {
+        justify-content: space-between;
+      }
+
+      .gap-6 {
+        gap: 1.5rem;
+      }
+
+      .p-6 {
+        padding: 1.5rem;
+      }
+
+      .pb-16 {
+        padding-bottom: 4rem;
+      }
+
+      :where(.drawer-toggle ~ .drawer-content) {
+        height: inherit;
+      }
+
+      .drawer-toggle ~ .drawer-content {
+        z-index: 0;
+        grid-column-start: 1;
+        grid-row-start: 1;
+        overflow-y: auto;
+        transition-property: all;
+        transition-duration: 0.3s;
+        transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+      }
+
+      @media (min-width: 1024px) {
+        .drawer-mobile > .drawer-toggle ~ .drawer-content {
+          height: auto;
+          grid-column-start: 2;
+        }
+      }
+
+      .drawer {
+        display: grid;
+        width: 100%;
+        overflow: hidden;
+        height: 100svh;
+      }
+
+      @media (min-width: 1024px) {
+        .drawer-mobile {
+          grid-auto-columns: max-content auto;
+        }
+      }
+
+      .bg-base-100 {
+        --tw-bg-opacity: 1;
+        background-color: hsl(var(--b1) / var(--tw-bg-opacity));
+      }
+
+      :root,
+      [data-theme] {
+        background-color: hsla(var(--b1) / var(--tw-bg-opacity, 1));
+        color: hsla(var(--bc) / var(--tw-text-opacity, 1));
+      }
+
+      :root {
+        --p: 259 94% 51%;
+        --su: 158 64% 52%;
+        --pc: 0 0% 100%;
+        --n: 219 14% 28%;
+        --nc: 0 0% 100%;
+        --b1: 0 0% 100%;
+        --b2: 0 0% 95%;
+        --b3: 180 2% 90%;
+        --bc: 215 28% 17%;
+      }
+
+      [data-theme="light"] {
+        --p: 259 94% 51%;
+        --su: 158 64% 52%;
+        --pc: 0 0% 100%;
+        --n: 219 14% 28%;
+        --nc: 0 0% 100%;
+        --b1: 0 0% 100%;
+        --b2: 0 0% 95%;
+        --b3: 180 2% 90%;
+        --bc: 215 28% 17%;
+      }
+
+      .mockup-window {
+        position: relative;
+        overflow: hidden;
+        overflow-x: auto;
+        padding-top: 1.25rem;
+        border-radius: var(--rounded-box, 1rem);
+      }
+
+      *,
+      :before,
+      :after {
+        box-sizing: border-box;
+        border-width: 0;
+        border-style: solid;
+        border-color: #e5e7eb;
+      }
+
+      *,
+      :before,
+      :after {
+        --tw-translate-x: 0;
+        --tw-translate-y: 0;
+        --tw-rotate: 0;
+        --tw-skew-x: 0;
+        --tw-skew-y: 0;
+        --tw-scale-x: 1;
+        --tw-scale-y: 1;
+        --tw-shadow: 0 0 #0000;
+      }
+
+      .mockup-window:before {
+        content: "";
+        margin-bottom: 1rem;
+        display: block;
+        height: 0.75rem;
+        width: 0.75rem;
+        border-radius: 9999px;
+        opacity: 0.3;
+        box-shadow: 1.4em 0, 2.8em 0, 4.2em 0;
+      }
+
+      .px-4 {
+        padding-left: 1rem;
+        padding-right: 1rem;
+      }
+
+      .py-16 {
+        padding-top: 4rem;
+        padding-bottom: 4rem;
+      }
+    </style>
+  </head>
+  <body class="border mockup-window bg-base-300 w-full">
+    <div id="container">
+      <main
+        class="flex flex-row justify-center items-center w-full h-full s-XsEmFtvddWTw"
+      >
+        <div
+          class="card glass shadow-lg hover:shadow-lg max-w-3xl s-XsEmFtvddWTw"
+        >
+          <div class="card-body s-XsEmFtvddWTw">
+            <div class="s-XsEmFtvddWTw">
+              <h3 class="text-3xl font-bold mb-3">
+                欢迎使用 VS&nbsp;Code&nbsp;Config&nbsp;Helper！
+              </h3>
+              <div class="">此工具将帮助你完成 VS&nbsp;Code 的 C++ 配置。</div>
+            </div>
+            <div class="justify-end card-actions !mt-3 s-XsEmFtvddWTw">
+              <button class="btn btn-ghost s-XsEmFtvddWTw invisible">
+                上一步
+              </button>
+              <button class="btn btn-primary s-XsEmFtvddWTw">下一步</button>
+            </div>
+          </div>
+        </div>
+      </main>
+      <main
+        class="flex flex-row justify-center items-center w-full h-full s-XsEmFtvddWTw"
+      >
+        <div
+          class="card glass shadow-lg hover:shadow-lg max-w-3xl s-XsEmFtvddWTw"
+        >
+          <div class="card-body s-XsEmFtvddWTw">
+            <div class="s-XsEmFtvddWTw hidden">
+              <h3 class="text-3xl font-bold">
+                欢迎使用 VS&nbsp;Code&nbsp;Config&nbsp;Helper！
+              </h3>
+              <div class="">此工具将帮助你完成 VS&nbsp;Code 的 C++ 配置。</div>
+            </div>
+            <div class="s-XsEmFtvddWTw">
+              <div class="form-control space-y-3">
+                <div class="flex flex-row justify-between items-center">
+                  <h3 class="text-3xl font-bold">确认 VS Code</h3>
+                  <button class="btn btn-xs btn-link font-normal">
+                    重新检测
+                  </button>
+                </div>
+                <div>首先，请确认您的 VS Code 安装情况。</div>
+                <div
+                  class="alert bg-opacity-50 flex-row justify-start items-center p-2 alert-success"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    xmlns:xlink="http://www.w3.org/1999/xlink"
+                    aria-hidden="true"
+                    role="img"
+                    class="shrink-0 iconify iconify--mdi snip-svg"
+                    width="20"
+                    height="20"
+                    preserveAspectRatio="xMidYMid meet"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      fill="currentColor"
+                      d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10s10-4.5 10-10S17.5 2 12 2m-2 15l-5-5l1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9Z"
+                    ></path>
+                  </svg>
+                  <span class="!mt-0 ml-2 inline">
+                    检测到您安装的 VS Code
+                    路径如下。如没有任何问题，请点击下一步。
+                  </span>
+                </div>
+                <div class="flex space-x-2">
+                  <input
+                    type="text"
+                    placeholder="VS Code 安装路径"
+                    class="flex-grow input input-bordered"
+                  />
+                  <button class="btn btn-ghost btn-circle">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      xmlns:xlink="http://www.w3.org/1999/xlink"
+                      aria-hidden="true"
+                      role="img"
+                      width="20"
+                      height="20"
+                      preserveAspectRatio="xMidYMid meet"
+                      viewBox="0 0 24 24"
+                      class="iconify iconify--mdi snip-svg"
+                    >
+                      <path
+                        fill="currentColor"
+                        d="M19 20H4a2 2 0 0 1-2-2V6c0-1.11.89-2 2-2h6l2 2h7a2 2 0 0 1 2 2H4v10l2.14-8h17.07l-2.28 8.5c-.23.87-1.01 1.5-1.93 1.5Z"
+                      ></path>
+                    </svg>
+                  </button>
+                </div>
+              </div>
+            </div>
+            <div class="justify-end card-actions !mt-3 s-XsEmFtvddWTw">
+              <button class="btn btn-ghost s-XsEmFtvddWTw">上一步</button>
+              <button class="btn btn-primary s-XsEmFtvddWTw">下一步</button>
+            </div>
+          </div>
+        </div>
+      </main>
+      <main
+        class="flex flex-row justify-center items-center w-full h-full s-XsEmFtvddWTw"
+      >
+        <div
+          class="card glass shadow-lg hover:shadow-lg max-w-3xl s-XsEmFtvddWTw"
+        >
+          <div class="card-body s-XsEmFtvddWTw">
+            <div class="s-XsEmFtvddWTw">
+              <button class="w-0 h-0 s-4csqP1-O6sXQ"></button>
+              <div class="form-control space-y-3 s-4csqP1-O6sXQ">
+                <div
+                  class="flex flex-row justify-between items-center s-4csqP1-O6sXQ"
+                >
+                  <h3 class="text-3xl font-bold s-4csqP1-O6sXQ">选择编译器</h3>
+                  <div class="dropdown dropdown-end s-4csqP1-O6sXQ">
+                    <div class="btn btn-xs btn-link font-normal s-4csqP1-O6sXQ">
+                      更改编译器类型...
+                    </div>
+                    <ul
+                      class="dropdown-content shadow-lg menu menu-compact bg-base-100 rounded-box w-60 s-4csqP1-O6sXQ snip-ul"
+                    >
+                      <li class="s-4csqP1-O6sXQ">
+                        <a href="#" class="!px-2 s-4csqP1-O6sXQ">
+                          <div class="s-4csqP1-O6sXQ">
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              xmlns:xlink="http://www.w3.org/1999/xlink"
+                              aria-hidden="true"
+                              role="img"
+                              width="1em"
+                              height="1em"
+                              preserveAspectRatio="xMidYMid meet"
+                              viewBox="0 0 24 24"
+                              class="iconify iconify--mdi snip-svg"
+                            >
+                              <path
+                                fill="currentColor"
+                                d="M21 7L9 19l-5.5-5.5l1.41-1.41L9 16.17L19.59 5.59L21 7Z"
+                              ></path>
+                            </svg>
+                          </div>
+                          <div
+                            class="pl-2 flex flex-col items-start s-4csqP1-O6sXQ"
+                          >
+                            MinGW
+                            <small class="s-4csqP1-O6sXQ">
+                              GCC for Windows
+                            </small>
+                          </div>
+                        </a>
+                      </li>
+                      <li class="s-4csqP1-O6sXQ">
+                        <a href="#" class="!px-2 s-4csqP1-O6sXQ">
+                          <div class="s-4csqP1-O6sXQ invisible">
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              xmlns:xlink="http://www.w3.org/1999/xlink"
+                              aria-hidden="true"
+                              role="img"
+                              width="1em"
+                              height="1em"
+                              preserveAspectRatio="xMidYMid meet"
+                              viewBox="0 0 24 24"
+                              class="iconify iconify--mdi snip-svg"
+                            >
+                              <path
+                                fill="currentColor"
+                                d="M21 7L9 19l-5.5-5.5l1.41-1.41L9 16.17L19.59 5.59L21 7Z"
+                              ></path>
+                            </svg>
+                          </div>
+                          <div
+                            class="pl-2 flex flex-col items-start s-4csqP1-O6sXQ"
+                          >
+                            VC++ 生成工具
+                            <small class="s-4csqP1-O6sXQ">
+                              Microsoft Visual C++
+                            </small>
+                          </div>
+                        </a>
+                      </li>
+                      <li class="s-4csqP1-O6sXQ">
+                        <a href="#" class="!px-2 s-4csqP1-O6sXQ">
+                          <div class="s-4csqP1-O6sXQ invisible">
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              xmlns:xlink="http://www.w3.org/1999/xlink"
+                              aria-hidden="true"
+                              role="img"
+                              width="1em"
+                              height="1em"
+                              preserveAspectRatio="xMidYMid meet"
+                              viewBox="0 0 24 24"
+                              class="iconify iconify--mdi snip-svg"
+                            >
+                              <path
+                                fill="currentColor"
+                                d="M21 7L9 19l-5.5-5.5l1.41-1.41L9 16.17L19.59 5.59L21 7Z"
+                              ></path>
+                            </svg>
+                          </div>
+                          <div
+                            class="pl-2 flex flex-col items-start s-4csqP1-O6sXQ"
+                          >
+                            LLVM MinGW
+                            <small class="s-4csqP1-O6sXQ">
+                              LLVM-based MinGW toolchain
+                            </small>
+                          </div>
+                        </a>
+                      </li>
+                    </ul>
+                  </div>
+                </div>
+                <div class="s-4csqP1-O6sXQ">
+                  检测到下列 MinGW，请选择其中一个来编译您的代码。
+                </div>
+                <div
+                  class="overflow-x-auto rounded-lg bg-base-100 s-4csqP1-O6sXQ"
+                >
+                  <table class="table table-compact min-w-full s-4csqP1-O6sXQ">
+                    <thead class="s-4csqP1-O6sXQ">
+                      <tr class="s-4csqP1-O6sXQ">
+                        <th class="s-4csqP1-O6sXQ"></th>
+                        <th class="s-4csqP1-O6sXQ">路径</th>
+                        <th class="s-4csqP1-O6sXQ">版本</th>
+                        <th class="s-4csqP1-O6sXQ">打包信息</th>
+                      </tr>
+                    </thead>
+                    <tbody class="s-4csqP1-O6sXQ">
+                      <tr class="hover s-4csqP1-O6sXQ">
+                        <th class="s-4csqP1-O6sXQ">
+                          <input
+                            type="radio"
+                            class="checkbox checkbox-sm cursor-default s-4csqP1-O6sXQ"
+                          />
+                        </th>
+                        <td class="s-4csqP1-O6sXQ">C:\mingw64\bin</td>
+                        <td class="s-4csqP1-O6sXQ">12.1.0</td>
+                        <td class="s-4csqP1-O6sXQ">
+                          x86_64-posix-seh, Built by Guyutongxue
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+                <div class="s-4csqP1-O6sXQ">
+                  <button
+                    class="btn btn-sm btn-link font-normal s-4csqP1-O6sXQ"
+                  >
+                    或者，使用新的编译器...
+                  </button>
+                </div>
+              </div>
+            </div>
+            <div class="justify-end card-actions !mt-3 s-XsEmFtvddWTw">
+              <button class="btn btn-ghost s-XsEmFtvddWTw">上一步</button>
+              <button class="btn btn-primary s-XsEmFtvddWTw">下一步</button>
+            </div>
+          </div>
+        </div>
+      </main>
+      <main
+        class="flex flex-row justify-center items-center w-full h-full s-XsEmFtvddWTw"
+      >
+        <div
+          class="card glass shadow-lg hover:shadow-lg max-w-3xl s-XsEmFtvddWTw"
+        >
+          <div class="card-body s-XsEmFtvddWTw">
+            <div class="s-XsEmFtvddWTw">
+              <div class="form-control space-y-3">
+                <h3 class="text-3xl font-bold">选择工作文件夹</h3>
+                <div>
+                  VS Code
+                  的配置大多在特定文件夹下生效，方便您为不同的语言和不同的需求个性化配置。因此，请选择一个
+                  <em> 工作文件夹 </em>
+                  ，您将来的程序和代码
+                  <strong> 都需要 </strong>
+                  存放在此处。
+                </div>
+                <div class="flex space-x-2">
+                  <input
+                    type="text"
+                    placeholder="工作文件夹路径"
+                    class="flex-grow input input-bordered"
+                  />
+                  <button class="btn btn-ghost btn-circle">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      xmlns:xlink="http://www.w3.org/1999/xlink"
+                      aria-hidden="true"
+                      role="img"
+                      width="20"
+                      height="20"
+                      preserveAspectRatio="xMidYMid meet"
+                      viewBox="0 0 24 24"
+                      class="iconify iconify--mdi snip-svg"
+                    >
+                      <path
+                        fill="currentColor"
+                        d="M19 20H4a2 2 0 0 1-2-2V6c0-1.11.89-2 2-2h6l2 2h7a2 2 0 0 1 2 2H4v10l2.14-8h17.07l-2.28 8.5c-.23.87-1.01 1.5-1.93 1.5Z"
+                      ></path>
+                    </svg>
+                  </button>
+                </div>
+              </div>
+            </div>
+            <div class="justify-end card-actions !mt-3 s-XsEmFtvddWTw">
+              <button class="btn btn-ghost s-XsEmFtvddWTw">上一步</button>
+              <button class="btn btn-primary s-XsEmFtvddWTw">下一步</button>
+            </div>
+          </div>
+        </div>
+      </main>
+      <main
+        class="flex flex-row justify-center items-center w-full h-full s-XsEmFtvddWTw"
+      >
+        <div
+          class="card glass shadow-lg hover:shadow-lg max-w-3xl s-XsEmFtvddWTw"
+        >
+          <div class="card-body s-XsEmFtvddWTw">
+            <div class="s-XsEmFtvddWTw">
+              <div class="form-control space-y-3 s-C5k3_Xc-WGUo">
+                <h3 class="text-3xl font-bold s-C5k3_Xc-WGUo">配置选项</h3>
+                <div class="s-C5k3_Xc-WGUo">
+                  您可以在这里调整您的个性化设置。
+                </div>
+                <div
+                  class="w-full flex flex-col overflow-x-auto s-C5k3_Xc-WGUo"
+                >
+                  <div
+                    class="mx-auto flex flex-row text-sm font-bold relative s-C5k3_Xc-WGUo"
+                  >
+                    <div class="shrink-0 z-10 w-16 s-C5k3_Xc-WGUo">
+                      <div
+                        class="text-center text-black rounded-xl s-C5k3_Xc-WGUo non-active"
+                      >
+                        通用
+                      </div>
+                    </div>
+                    <div class="shrink-0 z-10 w-16 s-C5k3_Xc-WGUo">
+                      <div
+                        class="text-center text-black rounded-xl s-C5k3_Xc-WGUo"
+                      >
+                        语言
+                      </div>
+                    </div>
+                    <div class="shrink-0 z-10 w-16 s-C5k3_Xc-WGUo">
+                      <div
+                        class="text-center text-black rounded-xl s-C5k3_Xc-WGUo non-active"
+                      >
+                        编译
+                      </div>
+                    </div>
+                    <div class="shrink-0 z-10 w-16 s-C5k3_Xc-WGUo">
+                      <div
+                        class="text-center text-black rounded-xl s-C5k3_Xc-WGUo non-active"
+                      >
+                        功能
+                      </div>
+                    </div>
+                    <div
+                      class="absolute top-0 h-full w-16 transition-all ease-in-out s-C5k3_Xc-WGUo"
+                      style="left: 64px"
+                    >
+                      <div
+                        class="z-0 full rounded-xl bg-white s-C5k3_Xc-WGUo"
+                      ></div>
+                      <div
+                        class="z-20 full rounded-xl bg-white mix-blend-difference s-C5k3_Xc-WGUo"
+                      ></div>
+                      <div
+                        class="z-30 full rounded-xl bg-primary mix-blend-screen s-C5k3_Xc-WGUo"
+                      ></div>
+                    </div>
+                  </div>
+                </div>
+                <div class="s-C5k3_Xc-WGUo">
+                  <span class="s-C5k3_Xc-WGUo"> 您将使用 </span>
+                  <select
+                    class="select select-sm select-bordered s-C5k3_Xc-WGUo"
+                  >
+                    <option value="C++" class="s-C5k3_Xc-WGUo">C++</option>
+                    <option value="C" class="s-C5k3_Xc-WGUo">C</option>
+                  </select>
+                  <span class="s-C5k3_Xc-WGUo"> 编写代码，采用 </span>
+                  <select
+                    class="select select-sm select-bordered s-C5k3_Xc-WGUo"
+                  >
+                    <option value="null" class="s-C5k3_Xc-WGUo">
+                      最新可用
+                    </option>
+                    <option value="C++23" class="s-C5k3_Xc-WGUo">C++23</option>
+                    <option value="C++20" class="s-C5k3_Xc-WGUo">C++20</option>
+                    <option value="C++17" class="s-C5k3_Xc-WGUo">C++17</option>
+                    <option value="C++14" class="s-C5k3_Xc-WGUo">C++14</option>
+                    <option value="C++11" class="s-C5k3_Xc-WGUo">C++11</option>
+                    <option value="C++03" class="s-C5k3_Xc-WGUo">C++03</option>
+                    <option value="C++98" class="s-C5k3_Xc-WGUo">C++98</option>
+                  </select>
+                  <span class="s-C5k3_Xc-WGUo"> 的语言标准。 </span>
+                </div>
+                <div class="font-bold s-C5k3_Xc-WGUo">更多选项</div>
+                <div class="grid grid-cols-2 gap-2 s-C5k3_Xc-WGUo">
+                  <div
+                    class="flex flex-row items-center space-x-2 s-C5k3_Xc-WGUo"
+                  >
+                    <input
+                      type="checkbox"
+                      class="toggle toggle-sm s-C5k3_Xc-WGUo"
+                    />
+                    <div class="s-C5k3_Xc-WGUo">GNU 方言</div>
+                  </div>
+                  <div
+                    class="flex flex-row items-center space-x-2 s-C5k3_Xc-WGUo"
+                  >
+                    <input
+                      type="checkbox"
+                      class="toggle toggle-sm s-C5k3_Xc-WGUo"
+                    />
+                    <div class="s-C5k3_Xc-WGUo">严格执行标准</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="justify-end card-actions !mt-3 s-XsEmFtvddWTw">
+              <button class="btn btn-ghost s-XsEmFtvddWTw">上一步</button>
+              <button class="btn btn-primary s-XsEmFtvddWTw">下一步</button>
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+    <script>
+      const elem = document.querySelector("#container");
+      const flkty = new Flickity(elem, {
+        // options
+        cellAlign: "left",
+        contain: true,
+        setGallerySize: false
+      });
+    </script>
+  </body>
+</html>
