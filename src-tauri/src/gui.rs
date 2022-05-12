@@ -148,6 +148,10 @@ fn workspace_verify(path: String) -> VerifyResult {
     VerifyResult::Warn {
       message: "此工作文件夹下已有配置。若继续则原有配置会被覆盖。",
     }
+  } else if path.chars().any(|c| c == '&' || c == ' ') {
+    VerifyResult::Warn {
+      message: "包含字符 '&' 或空格的路径可能导致问题。建议重命名或更换路径。"
+    }
   } else {
     VerifyResult::Ok { value: () }
   };

@@ -3,7 +3,10 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <link rel="icon" href="https://cdn.jsdelivr.net/gh/VSCodeConfigHelper/v4@main/public/favicon.png" />
+    <link
+      rel="icon"
+      href="https://cdn.jsdelivr.net/gh/VSCodeConfigHelper/v4@main/public/favicon.png"
+    />
 
     <!-- Bootstrap CSS -->
     <link
@@ -19,7 +22,8 @@
     <title>VS Code Config Helper 4</title>
 
     <style>
-      html, body {
+      html,
+      body {
         width: 100vw;
         overflow-x: hidden;
       }
@@ -32,7 +36,7 @@
       section:not(:first-child) {
         padding-top: 2rem;
       }
-      section:nth-child(even) {
+      section:nth-child(even):not(:last-child) {
         background-color: #f5f5f5;
       }
       section > * {
@@ -198,6 +202,31 @@
         </div>
       </section>
       <section>
+        <h3 class="mb-3">一站式服务，又快又省心</h3>
+        <p>
+          从编译器、环境变量，到 VS Code 扩展、<code>.vscode</code> 配置文件，本工具统统包揽，你不再需要为他们操心。
+          <ul>
+            <li>工具自动检测当前安装的编译环境；如果没有则提供下载链接或安装方式。</li>
+            <li>选择工作文件夹后，工具自动生成 <code>.vscode</code> 内的 JSON 配置文件。</li>
+            <li>工具自动完成安装扩展、修改环境变量等操作。 此外，工具还提供生成测试文件、生成桌面快捷方式 <small>（仅 Windows）</small> 等功能。</li>
+          </ul>
+        </p>
+      </section>
+      <section>
+        <h3 class="mb-3">独创的弹窗运行样式</h3>
+        <p>
+          <img class="float-end" src="https://cdn.jsdelivr.net/gh/VSCodeConfigHelper/v2@v2.x/docs/assets/external.png" alt="external window">
+          不同于网络上的其它配置教程，本工具开创性地利用 VS Code Tasks
+          功能，生成美观、易用、高效的“弹窗运行”样式配置。 当运行 C/C++
+          程序时，工具将启动一个类似 Visual Studio / Code Block
+          的弹窗以进行程序的输入输出。
+        </p>
+        <p class="text-muted">
+          ※ 同时提供与传统行为一致的、基于调试器的内置终端运行。
+          在工具中启用“兼容模式”以应用该样式。
+        </p>
+      </section>
+      <section>
         <h3 class="mb-3">支持所有主流编译平台</h3>
         <div class="compiler-img-container">
           <div class="compiler-img">
@@ -226,6 +255,10 @@
           </div>
         </div>
       </section>
+      <!-- <section>
+        <h3 class="mb-3">用户评价</h3>
+
+      </section> -->
       <section>
         <h3 class="mb-3" id="download">下载</h3>
         <div class="row justify-content-center">
@@ -233,22 +266,34 @@
             <div class="os-img">
               <img src="assets/windows.png" />
               <div>
-                <button class="btn btn-primary">单文件(.exe)</button>
-                <button class="btn btn-secondary">安装器(.msi)</button>
+                <button class="dl-btn btn btn-primary" data-type="exe">
+                  单文件(.exe)
+                </button>
+                <button class="dl-btn btn btn-secondary" data-type="msi">
+                  安装器(.msi)
+                </button>
               </div>
             </div>
             <div class="os-img">
               <img src="assets/linux.png" />
               <div>
-                <button class="btn btn-primary">单文件(.AppImage)</button>
-                <button class="btn btn-secondary">可执行文件</button>
+                <button class="dl-btn btn btn-primary" data-type="appImage">
+                  单文件(.AppImage)
+                </button>
+                <button class="dl-btn btn btn-secondary" data-type="elf">
+                  可执行文件
+                </button>
               </div>
             </div>
             <div class="os-img">
               <img src="assets/apple.png" />
               <div>
-                <button class="btn btn-primary">镜像(.dmg)</button>
-                <button class="btn btn-secondary">单文件</button>
+                <button class="dl-btn btn btn-primary" data-type="dmg">
+                  镜像(.dmg)
+                </button>
+                <button class="dl-btn btn btn-secondary" data-type="macho">
+                  单文件
+                </button>
               </div>
             </div>
           </div>
@@ -307,21 +352,53 @@
       ];
       const os = parser.getOS().name;
       let downloadName = null;
+      let downloadType = null;
       if (windows.includes(os)) {
         downloadName = "Windows 版下载";
+        downloadType = "exe";
       } else if (mac.includes(os)) {
         downloadName = "macOS 版下载";
+        downloadType = "dmg";
       } else if (linux.includes(os)) {
         downloadName = "Linux 版下载";
+        downloadType = "appImage";
       }
+      const DEFAULT_LINK = `https://github.com/VSCodeConfigHelper/v4/releases`;
+      const DOWNLOAD_LINKS = {
+        msi: DEFAULT_LINK,
+        exe: DEFAULT_LINK,
+        appImage: DEFAULT_LINK,
+        elf: DEFAULT_LINK,
+        dmg: DEFAULT_LINK,
+        macho: DEFAULT_LINK,
+      };
       if (downloadName !== null) {
         const btn = document.querySelector("#downloadBtn");
         btn.attributes.removeNamedItem("disabled");
         btn.innerHTML = `<i class="bi-download"></i>&nbsp;` + downloadName;
         btn.addEventListener("click", () => {
-          window.open("https://github.com/VSCodeConfigHelper/v4/releases");
+          window.open(DOWNLOAD_LINKS[downloadType]);
         });
       }
+      document.querySelectorAll(".dl-btn").forEach((ele) => {
+        const downloadType = ele.getAttribute("data-type");
+        ele.addEventListener("click", () => {
+          window.open(DOWNLOAD_LINKS[downloadType]);
+        });
+      });
+      Promise.all(
+        [
+          `https://vscch4-release.guyutongxue.workers.dev/installer`,
+          `https://vscch4-release.guyutongxue.workers.dev/portable`,
+        ].map((url) => fetch(url).then((r) => r.json()))
+      ).then(([i, p]) => {
+        DOWNLOAD_LINKS.msi = i.platforms.win64.url;
+        DOWNLOAD_LINKS.exe = p.platforms.win64.url;
+        DOWNLOAD_LINKS.appImage = i.platforms.linux.url;
+        DOWNLOAD_LINKS.elf = p.platforms.linux.url;
+        DOWNLOAD_LINKS.dmg = i.platforms.darwin.url;
+        DOWNLOAD_LINKS.macho = p.platforms.darwin.url;
+      });
     </script>
   </body>
 </html>
