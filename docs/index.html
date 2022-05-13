@@ -388,8 +388,8 @@
       });
       Promise.all(
         [
-          `https://vscch4-release.guyutongxue.workers.dev/installer`,
-          `https://vscch4-release.guyutongxue.workers.dev/portable`,
+          `https://vscch4-release.glitch.me/installer`,
+          `https://vscch4-release.glitch.me/portable`,
         ].map((url) => fetch(url).then((r) => r.json()))
       ).then(([i, p]) => {
         DOWNLOAD_LINKS.msi = i.platforms.win64.url;
