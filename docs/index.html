@@ -372,24 +372,29 @@
         dmg: DEFAULT_LINK,
         macho: DEFAULT_LINK,
       };
+      function openWithProxy(/** @type {string} */ url) {
+        const proxyUrl = new URL("https://v4.vscch.tk/proxy");
+        proxyUrl.searchParams.append("target", url);
+        window.open(proxyUrl.href);
+      }
       if (downloadName !== null) {
         const btn = document.querySelector("#downloadBtn");
         btn.attributes.removeNamedItem("disabled");
         btn.innerHTML = `<i class="bi-download"></i>&nbsp;` + downloadName;
         btn.addEventListener("click", () => {
-          window.open(DOWNLOAD_LINKS[downloadType]);
+          openWithProxy(DOWNLOAD_LINKS[downloadType]);
         });
       }
       document.querySelectorAll(".dl-btn").forEach((ele) => {
         const downloadType = ele.getAttribute("data-type");
         ele.addEventListener("click", () => {
-          window.open(DOWNLOAD_LINKS[downloadType]);
+          openWithProxy(DOWNLOAD_LINKS[downloadType]);
         });
       });
       Promise.all(
         [
-          `https://vscch4-release.glitch.me/installer`,
-          `https://vscch4-release.glitch.me/portable`,
+          `//v4.vscch.tk/api/installer`,
+          `//v4.vscch.tk/api/portable`,
         ].map((url) => fetch(url).then((r) => r.json()))
       ).then(([i, p]) => {
         DOWNLOAD_LINKS.msi = i.platforms.win64.url;
