@@ -2,9 +2,6 @@
   "recommendations": [
     "tauri-apps.tauri-vscode",
     "svelte.svelte-vscode",
-    "matklad.rust-analyzer"
+    "rust-lang.rust-analyzer"
   ],
-  "unwantedRecommendations": [
-    "rust-lang.rust"
-  ]
 }

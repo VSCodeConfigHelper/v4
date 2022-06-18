@@ -335,7 +335,27 @@
         </div>
       </section>
     </main>
-
+    <!-- Windows 10 WebView installation hint -->
+    <div id="webViewInstallationModal" class="modal" tabindex="-1">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">请注意...</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <p>
+              您正在使用 Windows 10 或更低版本；该系统可能缺少运行本程序的必需 WebView 2 组件。
+              如果您在启动本程序时出现了问题，请点击下方的“获取 WebView 2 组件”按钮以安装它。
+            </p>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">我知道了</button>
+            <a href="https://go.microsoft.com/fwlink/p/?LinkId=2124703" target="_blank" rel="noreferrer" class="btn btn-primary">获取 WebView 2 组件</a>
+          </div>
+        </div>
+      </div>
+    </div>
     <script src="https://unpkg.com/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://unpkg.com/ua-parser-js@1.0.2/dist/ua-parser.min.js"></script>
     <script type="module">
@@ -350,16 +370,16 @@
         "elementary OS",
         "Raspbian",
       ];
-      const os = parser.getOS().name;
+      const os = parser.getOS();
       let downloadName = null;
       let downloadType = null;
-      if (windows.includes(os)) {
+      if (windows.includes(os.name)) {
         downloadName = "Windows 版下载";
         downloadType = "exe";
-      } else if (mac.includes(os)) {
+      } else if (mac.includes(os.name)) {
         downloadName = "macOS 版下载";
         downloadType = "dmg";
-      } else if (linux.includes(os)) {
+      } else if (linux.includes(os.name)) {
         downloadName = "Linux 版下载";
         downloadType = "appImage";
       }
@@ -384,6 +404,12 @@
         btn.addEventListener("click", () => {
           openWithProxy(DOWNLOAD_LINKS[downloadType]);
         });
+        btn.addEventListener("click", () => {
+          if (os.name === "Windows" && parseInt(os.version) < 11) {
+            const modal = new bootstrap.Modal("#webViewInstallationModal");
+            modal.show();
+          }
+        })
       }
       document.querySelectorAll(".dl-btn").forEach((ele) => {
         const downloadType = ele.getAttribute("data-type");
