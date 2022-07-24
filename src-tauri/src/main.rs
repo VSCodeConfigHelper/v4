@@ -29,7 +29,7 @@ use ::log::error;
 fn main() {
   std::env::set_var("RUST_BACKTRACE", "1");
   if let Err(err) = cli::parse_args() {
-    error!("{}", err);
+    error!("{}", err.backtrace());
     std::process::exit(1);
   }
 }

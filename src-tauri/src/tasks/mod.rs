@@ -30,6 +30,7 @@ use crate::utils::ToString;
 mod dotvscode;
 mod extension;
 mod run;
+mod statistics;
 mod test;
 
 #[derive(Deserialize, Debug)]
@@ -74,10 +75,10 @@ mod debug {
 
 mod compiler {
   use super::*;
-  #[cfg(target_os = "windows")]
+  #[cfg(windows)]
   use crate::utils::winreg;
 
-  #[cfg(target_os = "windows")]
+  #[cfg(windows)]
   pub fn add_to_path(args: &TaskArgs) -> Result<()> {
     let compiler_path = args.compiler_path.parent().unwrap().to_str().unwrap();
     debug!("将编译器 {} 添加到用户 Path...", compiler_path);
@@ -105,17 +106,17 @@ mod compiler {
     winreg::set_user_env("Path", &path)
   }
 
-  #[cfg(not(target_os = "windows"))]
+  #[cfg(not(windows))]
   pub fn add_to_path(_args: &TaskArgs) -> Result<()> {
     Err(anyhow!("不支持在此操作系统上将编译器添加到 PATH。"))
   }
 }
 mod shortcut {
   use super::*;
-  #[cfg(target_os = "windows")]
+  #[cfg(windows)]
   use crate::utils::winapi::create_lnk;
 
-  #[cfg(target_os = "windows")]
+  #[cfg(windows)]
   pub fn create(args: &TaskArgs) -> Result<()> {
     let path = dirs::desktop_dir()
       .ok_or(anyhow!("找不到桌面路径。"))?
@@ -132,7 +133,7 @@ mod shortcut {
     Ok(())
   }
 
-  #[cfg(not(target_os = "windows"))]
+  #[cfg(not(windows))]
   pub fn create(_args: &TaskArgs) -> Result<()> {
     Err(anyhow!("不支持在此操作系统上创建快捷方式。"))
   }
@@ -251,7 +252,8 @@ pub fn list(mut args: TaskInitArgs) -> Vec<(&'static str, Box<dyn Fn() -> Result
     (dotvscode::c_cpp_properties_json, _ => true),
     (test::generate, a => a.test_file.is_some()),
     (shortcut::create, a => a.desktop_shortcut),
-    (vscode::open, a => a.open_vscode)
+    (vscode::open, a => a.open_vscode),
+    (statistics::send, a => a.collect_data)
   ]
   .into_iter()
   .filter(|t| (t.validator)(&args))

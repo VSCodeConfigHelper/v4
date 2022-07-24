@@ -17,6 +17,7 @@
 
 use anyhow::Result;
 use fern::colors::ColoredLevelConfig;
+use log::info;
 
 use std::fs;
 
@@ -53,5 +54,9 @@ pub fn setup(verbose: bool) -> Result<()> {
         .chain(std::io::stdout()),
     )
     .apply()?;
+  
+  info!("版本 v{}", env!("CARGO_PKG_VERSION"));
+  info!("操作系统 {}", os_info::get());
+  info!("处理器 {}", std::env::consts::ARCH);
   Ok(())
 }

@@ -16,12 +16,12 @@
 // along with vscch4.  If not, see <http://www.gnu.org/licenses/>.
 
 use std::{process::Command, path::Path};
-#[cfg(target_os = "windows")]
+#[cfg(windows)]
 use std::os::windows::process::CommandExt;
 
 use log::debug;
 
-#[cfg(target_os = "windows")]
+#[cfg(windows)]
 use crate::utils::winapi::CREATE_NO_WINDOW;
 use super::{Compiler, CompilerSetup};
 
@@ -37,10 +37,8 @@ pub fn test_compiler(path: &str, name: Option<&'static str>, setup: &'static Com
 
   let mut cmd = Command::new(compiler);
 
-  #[cfg(target_os = "windows")]
-  {
-    cmd.creation_flags(CREATE_NO_WINDOW);
-  }
+  #[cfg(windows)]
+  cmd.creation_flags(CREATE_NO_WINDOW);
 
   let output = cmd.arg("--version")
     .output()

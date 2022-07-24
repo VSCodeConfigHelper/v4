@@ -16,7 +16,7 @@
 // along with vscch4.  If not, see <http://www.gnu.org/licenses/>.
 
 use serde::Deserialize;
-#[cfg(target_os = "windows")]
+#[cfg(windows)]
 use crate::utils::winapi::get_acp;
 
 #[derive(Deserialize, Debug)]
@@ -45,12 +45,12 @@ pub fn pedantic_enabled(setup: &str) -> bool {
   setup != "msvc"
 }
 
-#[cfg(target_os = "windows")]
+#[cfg(windows)]
 pub fn acp_output_enabled(setup: &str) -> bool {
   ["gcc-mingw", "msvc"].contains(&setup) && get_acp() == 936
 }
 
-#[cfg(not(target_os = "windows"))]
+#[cfg(not(windows))]
 pub fn acp_output_enabled(_setup: &str) -> bool {
   false
 }
@@ -63,13 +63,6 @@ pub fn add_to_path_enabled(setup: &str) -> bool {
   ["gcc-mingw", "llvm-mingw"].contains(&setup)
 }
 
-#[cfg(target_os = "windows")]
 pub fn desktop_shortcut_enabled(_setup: &str) -> bool {
-  true
+  cfg!(windows)
 }
-
-#[cfg(not(target_os = "windows"))]
-pub fn desktop_shortcut_enabled(_setup: &str) -> bool {
-  false
-}
-

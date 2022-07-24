@@ -17,7 +17,7 @@
 
 use std::fs;
 use std::io::BufReader;
-#[cfg(not(target_os = "windows"))]
+#[cfg(not(windows))]
 use std::os::unix::prelude::PermissionsExt;
 use std::path::PathBuf;
 
@@ -26,42 +26,39 @@ use log::{debug, trace, warn};
 use serde_json::json;
 
 use super::TaskArgs;
-
-#[cfg(target_os = "windows")]
-mod scripts {
-  pub static PAUSE_CONSOLE_SCRIPT_NAME: &str = "pause-console.ps1";
-  pub static PAUSE_CONSOLE_SCRIPT: &str = include_str!("../scripts/pause-console.ps1");
-
-  pub static CHECK_ASCII_SCRIPT_NAME: &str = "check-ascii.ps1";
-  pub static CHECK_ASCII_SCRIPT: &str = include_str!("../scripts/check-ascii.ps1");
+pub struct Script {
+  pub filename: &'static str,
+  pub content: &'static str,
 }
 
-#[cfg(target_os = "macos")]
-mod scripts {
-  pub static PAUSE_CONSOLE_SCRIPT_NAME: &str = "pause-console.rb";
-  pub static PAUSE_CONSOLE_SCRIPT: &str = include_str!("../scripts/pause-console.rb");
-
-  pub static PAUSE_CONSOLE_LAUNCHER_SCRIPT_NAME: &str = "pause-console-launcher.sh";
-  pub static PAUSE_CONSOLE_LAUNCHER_SCRIPT: &str =
-    include_str!("../scripts/pause-console-launcher.sh");
+macro_rules! generate_script_name {
+  ($os: expr, $name: expr) => {
+    generate_script_name!($os, $name, PAUSE_CONSOLE);
+  };
+  ($os: expr, $filename: expr, $id: ident) => {
+    #[cfg(target_os = $os)]
+    pub const $id: Script = Script {
+      filename: $filename,
+      content: include_str!(concat!("../scripts/", $filename)),
+    };
+  };
 }
 
-#[cfg(target_os = "linux")]
-mod scripts {
-  pub static PAUSE_CONSOLE_SCRIPT_NAME: &str = "pause-console.sh";
-  pub static PAUSE_CONSOLE_SCRIPT: &str = include_str!("../scripts/pause-console.sh");
-}
-pub use scripts::*;
+generate_script_name!("windows", "pause-console.ps1");
+generate_script_name!("macos", "pause-console.rb");
+generate_script_name!("linux", "pause-console.sh");
+generate_script_name!("windows", "check-ascii.ps1", CHECK_ASCII);
+generate_script_name!("macos", "pause-console-launcher.sh", PAUSE_CONSOLE_LAUNCHER);
 
 pub fn script_path() -> Option<PathBuf> {
-  dirs::data_dir().map(|p| p.join("vscch"))
+  Some(dirs::data_dir()?.join("vscch"))
 }
 
-fn save_script(filename: &str, content: &str) -> Result<()> {
+fn save_script(script: &'static Script) -> Result<()> {
   let path = script_path().ok_or(anyhow!("找不到用于存放脚本的路径。"))?;
   fs::create_dir_all(&path)?;
-  let filepath = path.join(filename);
-  fs::write(&filepath, content)?;
+  let filepath = path.join(script.filename);
+  fs::write(&filepath, script.content)?;
   #[cfg(not(target_os = "windows"))]
   {
     fs::set_permissions(&filepath, fs::Permissions::from_mode(0o755))?;
@@ -71,11 +68,8 @@ fn save_script(filename: &str, content: &str) -> Result<()> {
 
 pub fn create_pauser(_: &TaskArgs) -> Result<()> {
   #[cfg(target_os = "macos")]
-  save_script(
-    PAUSE_CONSOLE_LAUNCHER_SCRIPT_NAME,
-    PAUSE_CONSOLE_LAUNCHER_SCRIPT,
-  )?;
-  save_script(PAUSE_CONSOLE_SCRIPT_NAME, PAUSE_CONSOLE_SCRIPT)?;
+  save_script(&PAUSE_CONSOLE_LAUNCHER)?;
+  save_script(&PAUSE_CONSOLE)?;
 
   #[cfg(target_os = "macos")]
   {
@@ -87,7 +81,7 @@ pub fn create_pauser(_: &TaskArgs) -> Result<()> {
 
 #[cfg(target_os = "windows")]
 pub fn create_checker(_: &TaskArgs) -> Result<()> {
-  save_script(CHECK_ASCII_SCRIPT_NAME, CHECK_ASCII_SCRIPT)
+  save_script(&CHECK_ASCII)
 }
 
 #[cfg(not(target_os = "windows"))]

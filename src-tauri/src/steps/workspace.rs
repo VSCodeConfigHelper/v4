@@ -17,21 +17,18 @@
 
 use std::path::Path;
 
-#[cfg(target_os = "windows")]
 pub fn path_available(path: &str) -> Result<(), &'static str> {
-  if path.chars().all(|c| c.is_ascii()) {
-    Ok(())
+  if cfg!(windows) {
+    if path.chars().all(|c| c.is_ascii()) {
+      Ok(())
+    } else {
+      Err("路径应为 ASCII，即不能包含中文或特殊字符等")
+    }
   } else {
-    Err("路径应为 ASCII，即不能包含中文或特殊字符等")
+    Ok(())
   }
-}
-
-#[cfg(not(target_os = "windows"))]
-pub fn path_available(_path: &str) -> Result<(), &'static str> {
-  Ok(())
 }
 
 pub fn exists(path: &str) -> bool {
   Path::new(path).join(".vscode").exists()
 }
-

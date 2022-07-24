@@ -22,7 +22,7 @@ use log::debug;
 use std::path::{Path,PathBuf};
 use crate::utils::ToString;
 
-#[cfg(target_os = "windows")]
+#[cfg(windows)]
 use crate::utils::winreg;
 
 #[cfg(target_os = "windows")]
@@ -69,15 +69,13 @@ pub fn scan() -> Option<String> {
   }
 }
 
-#[cfg(target_os = "windows")]
 pub fn adjust_path(path: &Path) -> PathBuf {
-  let folder = path.parent().unwrap();
-  folder.join("bin").join("code.cmd")
-}
-
-#[cfg(not(target_os = "windows"))]
-pub fn adjust_path(path: &Path) -> PathBuf {
-  path.to_path_buf()
+  if cfg!(windows) {
+    let folder = path.parent().unwrap();
+    folder.join("bin").join("code.cmd")
+  } else {
+    path.to_path_buf()
+  }
 }
 
 pub fn verify(path: &str) -> Result<(), &'static str> {

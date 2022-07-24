@@ -30,7 +30,7 @@ use crate::steps::{vscode, workspace};
 use crate::tasks;
 use crate::tasks::TaskInitArgs;
 
-#[cfg(target_os = "windows")]
+#[cfg(windows)]
 use crate::utils::winapi;
 
 #[derive(Parser)]
@@ -159,7 +159,7 @@ pub fn parse_args() -> Result<()> {
     return gui();
   }
 
-  #[cfg(target_os = "windows")]
+  #[cfg(windows)]
   {
     winapi::attach_console();
   }
@@ -197,10 +197,8 @@ GNU 通用公共许可证修改之，无论是版本 3 许可证，还是（按�
   }
 }
 
-#[allow(unused_mut)]
 fn cli(mut args: CliArgs) -> Result<()> {
-  #[cfg(not(target_os = "windows"))]
-  {
+  if !cfg!(windows) {
     fn nonsupport_check(name: &'static str, flag: &mut bool) {
       if *flag {
         warn!("{} 选项在此操作系统上不支持，已忽略。", name);

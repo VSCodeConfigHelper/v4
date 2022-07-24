@@ -16,7 +16,7 @@
 // along with vscch4.  If not, see <http://www.gnu.org/licenses/>.
 
 use anyhow::{anyhow, Result};
-use log::{info, debug, trace};
+use log::{debug, info, trace};
 use serde::Serialize;
 
 use crate::steps::{
@@ -150,7 +150,7 @@ fn workspace_verify(path: String) -> VerifyResult {
     }
   } else if path.chars().any(|c| c == '&' || c == ' ') {
     VerifyResult::Warn {
-      message: "包含字符 '&' 或空格的路径可能导致问题。建议重命名或更换路径。"
+      message: "包含字符 '&' 或空格的路径可能导致问题。建议重命名或更换路径。",
     }
   } else {
     VerifyResult::Ok { value: () }
@@ -193,10 +193,10 @@ enum TaskFinishResult {
 }
 
 #[tauri::command]
-fn task_init(args: TaskInitArgs, window: tauri::Window) -> usize {
+fn task_init(args: TaskInitArgs, window: tauri::Window) -> Vec<&'static str> {
   trace!("task_init: <- {:?}", args);
   let t = tasks::list(args);
-  let len = t.len();
+  let names = t.iter().map(|t| t.0).collect::<Vec<_>>();
   std::thread::spawn(move || {
     for (name, action) in t {
       info!("正在执行任务 {}...", name);
@@ -216,6 +216,6 @@ fn task_init(args: TaskInitArgs, window: tauri::Window) -> usize {
       }
     }
   });
-  trace!("task_init: -> {}", len);
-  len
+  trace!("task_init: -> {:?}", names);
+  names
 }

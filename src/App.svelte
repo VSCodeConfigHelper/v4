@@ -20,7 +20,10 @@
   import type { Unsubscriber, Writable } from "svelte/store";
   import { onDestroy, onMount } from "svelte";
   import { process } from "@tauri-apps/api";
+  import { getVersion } from "@tauri-apps/api/app";
+  import { open } from "@tauri-apps/api/shell";
   import Icon from "@iconify/svelte";
+  import compareVersions from "compare-versions";
 
   import Begin from "./Begin.svelte";
   import Vscode from "./Vscode.svelte";
@@ -110,7 +113,25 @@
     donateModal.checked = true;
   }
 
-  onMount(() => {
+  let version = "0.0.0";
+  let checkUpdateString = "检查更新";
+  async function checkUpdate() {
+    checkUpdateString = "检查更新中...";
+    const result = await fetch(`https://v4.vscch.tk/api/installer`).then((r) =>
+      r.json()
+    );
+    const latestVersion: string = result.name;
+    if (compareVersions(latestVersion, version) > 0) {
+      if (confirm(`新版本 ${latestVersion} 可用。是否前往下载？`)) {
+        open(`https://v4.vscch.tk`);
+      }
+    } else {
+      alert(`已是最新版本（${latestVersion}）。`);
+    }
+    checkUpdateString = "检查更新";
+  }
+
+  onMount(async () => {
     for (const i in STEPS) {
       const subscribe = STEPS[i].resultWritable?.subscribe((v) => {
         results[i] = v;
@@ -119,6 +140,7 @@
         subscribers.push(subscribe);
       }
     }
+    version = await getVersion();
   });
 
   onDestroy(() => {
@@ -128,6 +150,12 @@
   });
 </script>
 
+<div class="fixed top-4 left-4 z-10">
+  版本 {version}
+  <button class="btn btn-link btn-sm" on:click={checkUpdate}>
+    {checkUpdateString}
+  </button>
+</div>
 <div class="fixed top-4 right-4 z-10 flex flex-row gap-4">
   <button
     class="btn btn-sm glass tooltip tooltip-bottom"
@@ -164,7 +192,7 @@
           class:invisible={step === 0}
           on:click={goBack}
         >
-          {step === LEN - 1 ? '重新开始' : '上一步'}
+          {step === LEN - 1 ? "重新开始" : "上一步"}
         </button>
         <button
           class="btn btn-primary"
@@ -210,12 +238,12 @@
     <div class="py-4 flex flex-row justify-around">
       <img
         class="h-32"
-        src="https://z3.ax1x.com/2021/08/29/hGe1SK.jpg"
+        src="https://s2.loli.net/2022/07/23/V4sKCIwMaBir18e.jpg"
         alt="alipay"
       />
       <img
         class="h-32"
-        src="https://s4.ax1x.com/2021/12/20/TuVLv9.jpg"
+        src="https://s2.loli.net/2022/07/23/WCTq3BgJ81P2xIz.jpg"
         alt="wechat"
       />
     </div>

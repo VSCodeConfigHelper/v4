@@ -6,7 +6,10 @@
     "distDir": "../dist",
     "devPath": "http://localhost:8000",
     "beforeDevCommand": "pnpm dev",
-    "beforeBuildCommand": "pnpm build"
+    "beforeBuildCommand": "pnpm build",
+    "features": [
+      "collect-data"
+    ]
   },
   "tauri": {
     "bundle": {
@@ -64,6 +67,8 @@
         "title": "VS Code Config Helper 4",
         "width": 600,
         "height": 600,
+        "minWidth": 600,
+        "minHeight": 600,
         "resizable": true,
         "fullscreen": false
       }

@@ -35,13 +35,13 @@
   let working = true;
   let success = false;
 
-  let total = 1;
+  let tasklist: string[] = [""];
   let finished = 0;
-  $: percentage = Math.round(finished / total * 100);
+  $: percentage = Math.round(finished / tasklist.length * 100);
 
   $: done.update(() => working ? null : true);
 
-  $: if (finished == total) {
+  $: if (finished == tasklist.length) {
     working = false;
     success = true;
 
@@ -61,7 +61,7 @@
   });
 
   onMount(async () => {
-    const taskNum: number = await invoke("task_init", {
+    tasklist = await invoke("task_init", {
       args: {
         vscode: $vscode,
         compiler: $compiler,
@@ -69,7 +69,6 @@
         options: $options,
       }
     });
-    total = taskNum;
   });
 </script>
 
@@ -78,7 +77,7 @@
     {#if working}
       <div class="flex flex-row items-center">
         <span class="btn btn-ghost btn-circle loading" />
-        <span>正在配置</span>
+        <span>正在配置 {tasklist[finished]}</span>
       </div>
     {:else}
       {#if success}

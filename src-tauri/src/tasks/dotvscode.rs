@@ -26,20 +26,9 @@ use super::run::*;
 use super::TaskArgs;
 use crate::utils::ToString;
 
-#[cfg(target_os = "windows")]
-mod os_spec {
-  pub static EXT: &str = "exe";
-  pub static PATH_SLASH: &str = "\\";
-  pub static PATH_SEPARATOR: &str = ";";
-}
-
-#[cfg(not(target_os = "windows"))]
-mod os_spec {
-  pub static EXT: &str = "out";
-  pub static PATH_SLASH: &str = "/";
-  pub static PATH_SEPARATOR: &str = ":";
-}
-use os_spec::*;
+pub static EXT: &str = if cfg!(windows) { "exe" } else { "out" };
+pub static PATH_SLASH: &str = if cfg!(windows) { "\\" } else { "/" };
+pub static PATH_SEPARATOR: &str = if cfg!(windows) { ";" } else { ":" };
 
 fn single_file_build_task(args: &TaskArgs) -> Result<serde_json::Value> {
   let debug = if args.compiler_setup.id == "msvc" {
@@ -113,7 +102,7 @@ fn pause_task() -> Result<serde_json::Value> {
   };
 
   #[cfg(target_os = "macos")]
-  let command = script_path.join(PAUSE_CONSOLE_LAUNCHER_SCRIPT_NAME);
+  let command = script_path.join(PAUSE_CONSOLE_LAUNCHER.filename);
   #[cfg(target_os = "macos")]
   let process = Process {
     command: command.to_str().unwrap(),
@@ -127,7 +116,7 @@ fn pause_task() -> Result<serde_json::Value> {
   };
 
   #[cfg(not(target_os = "macos"))]
-  let pause_script_path = script_path.join(PAUSE_CONSOLE_SCRIPT_NAME);
+  let pause_script_path = script_path.join(PAUSE_CONSOLE.filename);
   #[cfg(not(target_os = "macos"))]
   process.args.push(pause_script_path.to_str().unwrap());
 
@@ -151,7 +140,7 @@ fn pause_task() -> Result<serde_json::Value> {
   }))
 }
 
-#[cfg(target_os = "windows")]
+#[cfg(windows)]
 fn ascii_check_task(_: &TaskArgs) -> Result<serde_json::Value> {
   Ok(json!({
     "type": "process",
@@ -163,7 +152,7 @@ fn ascii_check_task(_: &TaskArgs) -> Result<serde_json::Value> {
       "ByPass",
       "-NoProfile",
       "-File",
-      script_path().unwrap().join(CHECK_ASCII_SCRIPT_NAME).to_string(),
+      script_path().unwrap().join(CHECK_ASCII.filename).to_string(),
       "${fileDirname}\\${fileBasenameNoExtension}.exe"
     ],
     "presentation": {
@@ -189,8 +178,7 @@ pub fn tasks_json(args: &TaskArgs) -> Result<()> {
   }
   let mut options = json!({});
 
-  #[cfg(target_os = "windows")]
-  {
+  if cfg!(windows) {
     let mut shell_args = vec!["/C".to_string()];
     if args.compiler_setup.id == "msvc" {
       let cl_path = Path::new(&args.compiler_path)
@@ -245,11 +233,7 @@ pub fn launch_json(args: &TaskArgs) -> Result<()> {
     "gdb".into()
   };
 
-  #[cfg(target_os = "windows")]
-  let debugger_ext = ".exe";
-
-  #[cfg(not(target_os = "windows"))]
-  let debugger_ext = "";
+  let debugger_ext = if cfg!(windows) { ".exe" } else { "" };
 
   let debug_type = if super::llvm_setup(args.compiler_setup) {
     "lldb"

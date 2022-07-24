@@ -15,7 +15,7 @@
 // You should have received a copy of the GNU General Public License
 // along with vscch4.  If not, see <http://www.gnu.org/licenses/>.
 
-#![cfg(target_os = "windows")]
+#![cfg(windows)]
 
 use std::collections::HashSet;
 use std::path::Path;

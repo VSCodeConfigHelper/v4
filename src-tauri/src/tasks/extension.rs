@@ -19,14 +19,14 @@ use log::{debug, trace};
 use once_cell::sync::OnceCell;
 use anyhow::Result;
 
-#[cfg(target_os = "windows")]
+#[cfg(windows)]
 use std::os::windows::process::CommandExt;
 use std::path::{Path, PathBuf};
 use std::process::Command;
 use std::sync::Mutex;
 
 use crate::steps::vscode::adjust_path;
-#[cfg(target_os = "windows")]
+#[cfg(windows)]
 use crate::utils::winapi::CREATE_NO_WINDOW;
 
 use super::TaskArgs;
@@ -53,7 +53,7 @@ impl ExtensionManager {
 
   fn run(&self, args: &[&str]) -> Result<String> {
     let mut command = Command::new(&self.path);
-    #[cfg(target_os = "windows")]
+    #[cfg(windows)]
     command.creation_flags(CREATE_NO_WINDOW);
     
     let stdout = command
