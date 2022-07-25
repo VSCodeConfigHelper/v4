@@ -39,8 +39,7 @@ pub fn gui() -> Result<()> {
       options_scan,
       task_init
     ])
-    .run(tauri::generate_context!())
-    .map_err(|t| anyhow!(t.to_string()))?;
+    .run(tauri::generate_context!())?;
   Ok(())
 }
 
@@ -212,7 +211,7 @@ fn task_init(args: TaskInitArgs, window: tauri::Window) -> Vec<&'static str> {
       trace!("task_finish: -> {:?}", payload);
       window.emit("task_finish", payload).unwrap();
       if let Err(e) = res {
-        if let Some(id) = tasks::statistics::send_error(e) {
+        if let Some(id) = tasks::statistics::send_error(&e) {
           window.emit("log_sent", id).unwrap();
         }
         break;

@@ -49,7 +49,7 @@ pub fn send(_: &TaskArgs) -> Result<()> {
 }
 
 /// 如果启用了日志发送，返回日志 ID
-pub fn send_error(e: Error) -> Option<String> {
+pub fn send_error(e: &Error) -> Option<String> {
   error!("错误：{}", e.to_string().as_str());
   error!("{}", e.backtrace().to_string());
   if !*ENABLED.lock().unwrap() {

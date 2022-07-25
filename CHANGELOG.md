@@ -2,8 +2,13 @@
 
 ## \[v4.0.0\]
 
+## v4.0.0-beta.7
+*2022.7.25*
+
+- 优化 CLI 错误提示
+
 ## v4.0.0-beta.6
-*2022.7.13*
+*2022.7.25*
 
 - 升级到 Tauri 正式版
 - 配置成功的统计计数功能（[#2](https://github.com/VSCodeConfigHelper/v4/issues/2)）

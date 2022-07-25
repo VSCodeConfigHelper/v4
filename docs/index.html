@@ -3,6 +3,9 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <!-- https://docs.microsoft.com/en-us/microsoft-edge/web-platform/how-to-detect-win11 -->
+    <meta http-equiv="Accept-CH" content="Sec-CH-UA-Platform-Version" />
+    <meta http-equiv="Critical-CH" content="Sec-CH-UA-Platform-Version" />
     <link
       rel="icon"
       href="https://cdn.jsdelivr.net/gh/VSCodeConfigHelper/v4@main/public/favicon.png"
@@ -392,6 +395,17 @@
         dmg: DEFAULT_LINK,
         macho: DEFAULT_LINK,
       };
+      let lowerThenWindows10 = false;
+      navigator.userAgentData.getHighEntropyValues(["platformVersion"])
+        .then((ua) => {
+          console.log(ua.platform, ua.platformVersion);
+          if (navigator.userAgentData.platform === "Windows") {
+            const majorPlatformVersion = parseInt(ua.platformVersion.split('.')[0]);
+            if (majorPlatformVersion < 13) {
+              lowerThenWindows10 = true;
+            }
+          }
+        });
       function openWithProxy(/** @type {string} */ url) {
         const proxyUrl = new URL("https://v4.vscch.tk/proxy");
         proxyUrl.searchParams.append("target", url);
@@ -402,14 +416,12 @@
         btn.attributes.removeNamedItem("disabled");
         btn.innerHTML = `<i class="bi-download"></i>&nbsp;` + downloadName;
         btn.addEventListener("click", () => {
-          openWithProxy(DOWNLOAD_LINKS[downloadType]);
-        });
-        btn.addEventListener("click", () => {
-          if (os.name === "Windows" && parseInt(os.version) < 11) {
+          if (lowerThenWindows10) {
             const modal = new bootstrap.Modal("#webViewInstallationModal");
             modal.show();
           }
-        })
+          openWithProxy(DOWNLOAD_LINKS[downloadType]);
+        });
       }
       document.querySelectorAll(".dl-btn").forEach((ele) => {
         const downloadType = ele.getAttribute("data-type");

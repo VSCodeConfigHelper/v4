@@ -189,6 +189,7 @@ GNU 通用公共许可证修改之，无论是版本 3 许可证，还是（按�
     );
     return Ok(());
   }
+  tasks::statistics::set(!args.no_stats);
 
   if args.use_gui {
     gui()
@@ -265,7 +266,6 @@ fn cli(mut args: CliArgs) -> Result<()> {
   } else {
     None
   };
-  tasks::statistics::set(args.no_stats);
   
   let task_init_args = TaskInitArgs {
     vscode: vscode,

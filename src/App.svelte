@@ -261,7 +261,7 @@
   <div class="modal-box">
     <h3 class="font-bold text-lg">错误日志已发送</h3>
     <p class="py-4">
-      您可以将此代码 <code title={errorId}>{errorId.substring(0, 6)}</code>
+      您可以将代码 <code title={errorId}>{errorId.substring(0, 6)}</code>
       发送至
       <a href="mailto:guyutongxue@163.com">guyutongxue@163.com</a
       >，开发者会尽快帮您解决问题。
