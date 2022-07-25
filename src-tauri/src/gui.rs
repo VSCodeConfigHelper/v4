@@ -206,12 +206,15 @@ fn task_init(args: TaskInitArgs, window: tauri::Window) -> Vec<&'static str> {
         Ok(_) => TaskFinishResult::Ok { name },
         Err(e) => TaskFinishResult::Err {
           name,
-          message: e.backtrace().to_string() + e.to_string().as_str(),
+          message: e.to_string(),
         },
       };
       trace!("task_finish: -> {:?}", payload);
       window.emit("task_finish", payload).unwrap();
-      if res.is_err() {
+      if let Err(e) = res {
+        if let Some(id) = tasks::statistics::send_error(e) {
+          window.emit("log_sent", id).unwrap();
+        }
         break;
       }
     }

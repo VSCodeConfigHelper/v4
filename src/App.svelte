@@ -22,6 +22,7 @@
   import { process } from "@tauri-apps/api";
   import { getVersion } from "@tauri-apps/api/app";
   import { open } from "@tauri-apps/api/shell";
+  import { listen } from "@tauri-apps/api/event";
   import Icon from "@iconify/svelte";
   import compareVersions from "compare-versions";
 
@@ -130,6 +131,12 @@
     }
     checkUpdateString = "检查更新";
   }
+
+  let errorId = "";
+  listen("log_sent", (r) => {
+    errorId = r.payload as string;
+  });
+
 
   onMount(async () => {
     for (const i in STEPS) {
@@ -249,6 +256,21 @@
     </div>
   </label>
 </label>
+<input type="checkbox" id="log-modal" class="modal-toggle" checked={!!errorId} />
+<div class="modal">
+  <div class="modal-box">
+    <h3 class="font-bold text-lg">错误日志已发送</h3>
+    <p class="py-4">
+      您可以将此代码 <code title={errorId}>{errorId.substring(0, 6)}</code>
+      发送至
+      <a href="mailto:guyutongxue@163.com">guyutongxue@163.com</a
+      >，开发者会尽快帮您解决问题。
+    </p>
+    <div class="modal-action">
+      <label for="log-modal" class="btn">知道了</label>
+    </div>
+  </div>
+</div>
 
 <style>
   main {

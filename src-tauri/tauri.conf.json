@@ -6,10 +6,7 @@
     "distDir": "../dist",
     "devPath": "http://localhost:8000",
     "beforeDevCommand": "pnpm dev",
-    "beforeBuildCommand": "pnpm build",
-    "features": [
-      "collect-data"
-    ]
+    "beforeBuildCommand": "pnpm build"
   },
   "tauri": {
     "bundle": {

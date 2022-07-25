@@ -23,29 +23,33 @@
 
   import { vscode, compiler, workspace, options, done } from "./config_store";
 
-  type TaskResult = {
-    type: "Ok",
-    name: string;
-  } | {
-    type: "Error";
-    name: string;
-    message: string;
-  };
+  type TaskResult =
+    | {
+        type: "Ok";
+        name: string;
+      }
+    | {
+        type: "Error";
+        name: string;
+        message: string;
+      };
 
   let working = true;
   let success = false;
 
   let tasklist: string[] = [""];
   let finished = 0;
-  $: percentage = Math.round(finished / tasklist.length * 100);
+  $: percentage = Math.round((finished / tasklist.length) * 100);
 
-  $: done.update(() => working ? null : true);
+  $: done.update(() => (working ? null : true));
 
   $: if (finished == tasklist.length) {
     working = false;
     success = true;
 
-    const donateModal = document.getElementById("donate-modal") as HTMLInputElement;
+    const donateModal = document.getElementById(
+      "donate-modal"
+    ) as HTMLInputElement;
     donateModal.checked = true;
   }
 
@@ -54,7 +58,7 @@
     console.log(p);
     if (p.type === "Ok") {
       finished++;
-    } else {
+    } else if (working) {
       alert(p.message);
       working = false;
     }
@@ -67,7 +71,7 @@
         compiler: $compiler,
         workspace: $workspace,
         options: $options,
-      }
+      },
     });
   });
 </script>
@@ -77,14 +81,12 @@
     {#if working}
       <div class="flex flex-row items-center">
         <span class="btn btn-ghost btn-circle loading" />
-        <span>正在配置 {tasklist[finished]}</span>
+        <span>正在配置 <code>{tasklist[finished]}</code></span>
       </div>
+    {:else if success}
+      配置完成！
     {:else}
-      {#if success}
-        配置完成！
-      {:else}
-        配置失败。
-      {/if}
+      配置失败。
     {/if}
   </h3>
   <div class="flex flex-row justify-center">

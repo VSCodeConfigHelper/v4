@@ -3587,6 +3587,7 @@ dependencies = [
  "open 2.1.3",
  "os_info",
  "plist",
+ "rand 0.8.5",
  "regex",
  "reqwest",
  "serde",

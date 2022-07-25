@@ -24,12 +24,10 @@ mod steps;
 mod tasks;
 mod utils;
 
-use ::log::error;
-
 fn main() {
   std::env::set_var("RUST_BACKTRACE", "1");
   if let Err(err) = cli::parse_args() {
-    error!("{}", err.backtrace());
+    tasks::statistics::send_error(err);
     std::process::exit(1);
   }
 }

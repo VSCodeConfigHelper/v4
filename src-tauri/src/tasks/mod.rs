@@ -30,7 +30,7 @@ use crate::utils::ToString;
 mod dotvscode;
 mod extension;
 mod run;
-mod statistics;
+pub mod statistics;
 mod test;
 
 #[derive(Deserialize, Debug)]
@@ -211,6 +211,7 @@ pub fn list(mut args: TaskInitArgs) -> Vec<(&'static str, Box<dyn Fn() -> Result
       args.options.args.push(std_arg);
     }
   }
+  statistics::set(args.options.collect_data);
 
   let args = Arc::from(TaskArgs {
     vscode: args.vscode,

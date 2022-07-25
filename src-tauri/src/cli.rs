@@ -265,6 +265,7 @@ fn cli(mut args: CliArgs) -> Result<()> {
   } else {
     None
   };
+  tasks::statistics::set(args.no_stats);
   
   let task_init_args = TaskInitArgs {
     vscode: vscode,
