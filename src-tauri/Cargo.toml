@@ -1,6 +1,6 @@
 [package]
 name = "vscch"
-version = "4.0.0-beta.6"
+version = "4.0.0" # WiX bundler do not support beta version
 description = "VS Code Config Helper v4"
 authors = ["Guyutongxue"]
 license = "GPLv3"
