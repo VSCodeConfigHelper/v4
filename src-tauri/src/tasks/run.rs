@@ -102,9 +102,9 @@ pub fn create_keybinding(_: &TaskArgs) -> Result<()> {
   fs::create_dir_all(filepath.parent().unwrap())?;
   let mut result = vec![];
   if filepath.exists() {
-    let file = fs::File::open(&filepath)?;
-    let reader = BufReader::new(file);
-    let content: Vec<serde_json::Value> = serde_json::from_reader(reader)?;
+    let content = fs::read_to_string(&filepath)?;
+    // JSON5 是 vscode JSON with comment 的超集。直接用 serde_json 可能出错
+    let content: Vec<serde_json::Value> = json5::from_str(&content)?;
     for i in &content {
       let this_key = i["key"].as_str().ok_or(anyhow!(
         "keybindings.json 中的 \"key\" 字段应为 string 类型。"
