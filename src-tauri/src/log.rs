@@ -18,8 +18,15 @@
 use anyhow::Result;
 use fern::colors::ColoredLevelConfig;
 use log::info;
-
+use once_cell::sync::Lazy;
 use std::fs;
+use std::path::PathBuf;
+
+pub static LOG_PATH: Lazy<PathBuf> = Lazy::new(|| {
+  dirs::data_dir()
+    .unwrap_or(PathBuf::from(""))
+    .join(format!("vscch/vscch_{}.log", chrono::Local::now()))
+});
 
 pub fn setup(verbose: bool) -> Result<()> {
   fern::Dispatch::new()
@@ -35,7 +42,7 @@ pub fn setup(verbose: bool) -> Result<()> {
             message
           ))
         })
-        .chain(fs::File::create("vscch.log")?),
+        .chain(fs::File::create(LOG_PATH.as_path())?),
     )
     .chain(
       fern::Dispatch::new()
@@ -54,7 +61,7 @@ pub fn setup(verbose: bool) -> Result<()> {
         .chain(std::io::stdout()),
     )
     .apply()?;
-  
+
   info!("版本 v{}", env!("CARGO_PKG_VERSION"));
   info!("操作系统 {}", os_info::get());
   info!("处理器 {}", std::env::consts::ARCH);

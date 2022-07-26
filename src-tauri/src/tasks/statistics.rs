@@ -24,6 +24,8 @@ use reqwest::header::CONTENT_TYPE;
 use std::fs;
 use std::sync::Mutex;
 
+use crate::log::LOG_PATH;
+
 use super::TaskArgs;
 
 #[cfg(target_os = "windows")]
@@ -70,7 +72,7 @@ pub fn send_error(e: &Error) -> Option<String> {
         id
       ))
       .header(CONTENT_TYPE, "text/plain")
-      .body(fs::read_to_string("vscch.log")?)
+      .body(fs::read_to_string(LOG_PATH.as_path())?)
       .send()?
       .json()?;
     // if let serde_json::Value::Object(m) = result && let Some((_, v)) = m.get_key_value("success") && v == &serde_json::Value::Bool(true) {
