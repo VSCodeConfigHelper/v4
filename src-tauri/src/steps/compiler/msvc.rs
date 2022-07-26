@@ -127,7 +127,7 @@ fn scan() -> Vec<Compiler> {
 }
 
 fn install() -> Result<()> {
-  open::that("https://aka.ms/vs/17/release/vs_BuildTools.exe");
+  open::that("https://aka.ms/vs/17/release/vs_BuildTools.exe")?;
   Ok(())
 }
 

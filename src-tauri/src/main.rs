@@ -17,6 +17,8 @@
 
 #![windows_subsystem = "windows"]
 
+use anyhow::Error;
+
 mod cli;
 mod gui;
 mod log;
@@ -24,9 +26,8 @@ mod steps;
 mod tasks;
 mod utils;
 
-fn main() {
-  std::env::set_var("RUST_BACKTRACE", "1");
-  if let Err(e) = cli::parse_args() {
+fn handle_error(e: Error) -> ! {
+  if log::is_enabled() {
     if let Some(id) = tasks::statistics::send_error(&e) {
       native_dialog::MessageDialog::new()
         .set_title("程序已报告错误")
@@ -34,6 +35,15 @@ fn main() {
         .show_alert()
         .unwrap();
     }
-    std::process::exit(1);
+  } else {
+    eprintln!("日志未就绪前出现错误：{:?}", e);
+  }
+  std::process::exit(1);
+}
+
+fn main() {
+  std::env::set_var("RUST_BACKTRACE", "1");
+  if let Err(e) = cli::parse_args() {
+    handle_error(e);
   }
 }

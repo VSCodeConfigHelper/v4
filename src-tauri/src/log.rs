@@ -21,12 +21,19 @@ use log::info;
 use once_cell::sync::Lazy;
 use std::fs;
 use std::path::PathBuf;
+use std::sync::Mutex;
 
 pub static LOG_PATH: Lazy<PathBuf> = Lazy::new(|| {
   dirs::data_dir()
     .unwrap_or(PathBuf::from(""))
-    .join(format!("vscch/vscch_{}.log", chrono::Local::now()))
+    .join(format!("vscch/vscch_{}.log", chrono::Local::now().format("%Y%m%d%H%M%S")))
 });
+
+static ENABLED: Lazy<Mutex<bool>> = Lazy::new(|| Mutex::new(false));
+
+pub fn is_enabled() -> bool {
+  return *ENABLED.lock().unwrap();
+}
 
 pub fn setup(verbose: bool) -> Result<()> {
   fern::Dispatch::new()
@@ -65,5 +72,6 @@ pub fn setup(verbose: bool) -> Result<()> {
   info!("版本 v{}", env!("CARGO_PKG_VERSION"));
   info!("操作系统 {}", os_info::get());
   info!("处理器 {}", std::env::consts::ARCH);
+  *ENABLED.lock().unwrap() = true;
   Ok(())
 }
