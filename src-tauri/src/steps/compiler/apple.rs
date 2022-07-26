@@ -1,9 +1,8 @@
 #![cfg(target_os = "macos")]
 
 use std::{path::Path, process::Command};
-
+use anyhow::Result;
 use crate::utils::ToString;
-
 use super::{CompilerSetup, Compiler, common::test_compiler, verparse};
 
 fn scan() -> Vec<Compiler> {
@@ -17,8 +16,9 @@ fn scan() -> Vec<Compiler> {
   vec![]
 }
 
-fn install() -> bool {
-  Command::new("xcode-select --install").spawn().is_ok()
+fn install() -> Result<()> {
+  Command::new("xcode-select --install").spawn()?;
+  Ok(())
 }
 
 pub static ID: &'static str = "apple";

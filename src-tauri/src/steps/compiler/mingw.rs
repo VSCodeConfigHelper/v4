@@ -21,6 +21,7 @@ use std::collections::HashSet;
 use std::path::Path;
 use std::path::PathBuf;
 
+use anyhow::Result;
 use log::debug;
 
 use super::verparse;
@@ -81,12 +82,14 @@ fn verify(path: &str, name: &'static str, setup: &'static CompilerSetup) -> Resu
     .and_then(|p| test_compiler(&p, Some(name), setup).ok_or("无法解析编译器版本"))
 }
 
-fn install_gcc() -> bool {
-  open::that("https://gytx.lanzoui.com/iy906s48llc").is_ok()
+fn install_gcc() -> Result<()> {
+  open::that("https://gytx.lanzouy.com/iPdVt04l873e")?;
+  Ok(())
 }
 
-fn install_clang() -> bool {
-  open::that("https://github.com/mstorsjo/llvm-mingw/releases").is_ok()
+fn install_clang() -> Result<()> {
+  open::that("https://github.com/mstorsjo/llvm-mingw/releases")?;
+  Ok(())
 }
 
 fn join(path: &str, name: &str) -> PathBuf {

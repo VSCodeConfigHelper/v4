@@ -89,9 +89,12 @@
   }
 
   async function install() {
-    await invoke("compiler_install", {
+    const result: VerifyResult = await invoke("compiler_install", {
       setup: setups[setupNo].id,
     });
+    if (result.type !== "Ok") {
+      alert(`安装失败：${result.message}`);
+    }
   }
 
   async function scan() {

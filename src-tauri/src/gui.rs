@@ -126,15 +126,31 @@ fn compiler_verify(setup: String, path: String) -> VerifyResult<Compiler> {
   result
 }
 
+#[derive(Serialize, Clone, Debug)]
+#[serde(tag = "type")]
+enum CompilerInstallResult {
+  Ok,
+  Err { message: String },
+}
+
 #[tauri::command]
-fn compiler_install(setup: String) -> bool {
+fn compiler_install(setup: String) -> CompilerInstallResult {
   trace!("compiler_install: <- {}", setup);
   let result = if let Some(install) = get_setup(&setup).install {
-    install()
+    match install() {
+      Ok(_) => return CompilerInstallResult::Ok,
+      Err(e) => {
+        return CompilerInstallResult::Err {
+          message: e.to_string(),
+        }
+      }
+    }
   } else {
-    false
+    CompilerInstallResult::Err {
+      message: "该编译器没有安装方法".into(),
+    }
   };
-  trace!("compiler_install: -> {}", result);
+  trace!("compiler_install: -> {:?}", result);
   result
 }
 

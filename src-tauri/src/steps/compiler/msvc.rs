@@ -22,6 +22,7 @@ use std::path::{Path, PathBuf};
 use std::process::Command;
 use std::{fs, str};
 
+use anyhow::Result;
 use serde::Deserialize;
 use serde_json;
 
@@ -125,8 +126,9 @@ fn scan() -> Vec<Compiler> {
     .collect()
 }
 
-fn install() -> bool {
-  open::that("https://aka.ms/vs/17/release/vs_BuildTools.exe").is_ok()
+fn install() -> Result<()> {
+  open::that("https://aka.ms/vs/17/release/vs_BuildTools.exe");
+  Ok(())
 }
 
 fn path_to_cl(path: &str, _: bool) -> PathBuf {

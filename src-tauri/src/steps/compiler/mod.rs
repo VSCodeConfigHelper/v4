@@ -17,6 +17,7 @@
 
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
+use anyhow::Result;
 
 pub mod verparse;
 pub mod stdchoose;
@@ -58,7 +59,7 @@ pub struct CompilerSetup {
 
   pub scan: fn() -> Vec<Compiler>,
   pub verify: Option<fn(&str) -> Result<Compiler, &'static str>>,
-  pub install: Option<fn() -> bool>,
+  pub install: Option<fn() -> Result<()>>,
 
   pub verparser: verparse::Parser,
   pub path_to_exe: fn(path: &str, is_c: bool) -> PathBuf,
