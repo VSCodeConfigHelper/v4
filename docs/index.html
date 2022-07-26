@@ -272,9 +272,11 @@
                 <button class="dl-btn btn btn-primary" data-type="exe">
                   单文件(.exe)
                 </button>
+                <small class="text-muted">需要 WebView2 运行时</small>
                 <button class="dl-btn btn btn-secondary" data-type="msi">
                   安装器(.msi)
                 </button>
+                <small class="text-muted">需以管理员身份运行</small>
               </div>
             </div>
             <div class="os-img">
@@ -283,6 +285,7 @@
                 <button class="dl-btn btn btn-primary" data-type="appImage">
                   单文件(.AppImage)
                 </button>
+                <small class="text-muted">不支持 WSL</small>
                 <button class="dl-btn btn btn-secondary" data-type="elf">
                   可执行文件
                 </button>
@@ -295,8 +298,9 @@
                   镜像(.dmg)
                 </button>
                 <button class="dl-btn btn btn-secondary" data-type="macho">
-                  单文件
+                  可执行文件
                 </button>
+                <small class="text-muted">需要在安全设置中允许运行</small>
               </div>
             </div>
           </div>
@@ -396,16 +400,18 @@
         macho: DEFAULT_LINK,
       };
       let lowerThenWindows10 = false;
-      navigator.userAgentData.getHighEntropyValues(["platformVersion"])
-        .then((ua) => {
-          console.log(ua.platform, ua.platformVersion);
-          if (navigator.userAgentData.platform === "Windows") {
-            const majorPlatformVersion = parseInt(ua.platformVersion.split('.')[0]);
-            if (majorPlatformVersion < 13) {
-              lowerThenWindows10 = true;
+      if ("userAgentData" in navigator && "getHighEntropyValues" in navigator.userAgentData) {
+        navigator.userAgentData.getHighEntropyValues(["platformVersion"])
+          .then((ua) => {
+            console.log(ua.platform, ua.platformVersion);
+            if (navigator.userAgentData.platform === "Windows") {
+              const majorPlatformVersion = parseInt(ua.platformVersion.split('.')[0]);
+              if (majorPlatformVersion < 13) {
+                lowerThenWindows10 = true;
+              }
             }
-          }
-        });
+          });
+      }
       function openWithProxy(/** @type {string} */ url) {
         const proxyUrl = new URL("https://v4.vscch.tk/proxy");
         proxyUrl.searchParams.append("target", url);

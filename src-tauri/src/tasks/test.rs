@@ -96,9 +96,9 @@ pub fn generate(args: &TaskArgs) -> Result<()> {
         args.file_ext
       ),
       "",
-      cmt!("按下 {} 编译运行", run_key),
+      cmt!("按下 {} 编译运行。", run_key),
       cmt!("按下 F5 编译调试。"),
-      cmt!("按下 {}{}{}{}B 编译", CTRL_CMD, SEP, SHIFT, SEP),
+      cmt!("按下 {}{}{}{}B 编译。", CTRL_CMD, SEP, SHIFT, SEP),
       helloworld,
       cmt!("此文件编译运行将输出 \"Hello, world!\"。"),
       cmt!("按下 {} 后，你将在弹出的终端窗口中看到这一行字。", run_key),

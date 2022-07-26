@@ -5,6 +5,3 @@ WixTools
 
 # Should ignore icons, but tauricon is not published now.
 # /icons/
-
-# 用于收集数据的 SMTP 密码不应公开
-src/tasks/smtp_key.txt
