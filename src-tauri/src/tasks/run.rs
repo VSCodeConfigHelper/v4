@@ -31,9 +31,9 @@ pub struct Script {
   pub content: &'static str,
 }
 
-macro_rules! generate_script_name {
+macro_rules! generate_script {
   ($os: expr, $name: expr) => {
-    generate_script_name!($os, $name, PAUSE_CONSOLE);
+    generate_script!($os, $name, PAUSE_CONSOLE);
   };
   ($os: expr, $filename: expr, $id: ident) => {
     #[cfg(target_os = $os)]
@@ -44,11 +44,11 @@ macro_rules! generate_script_name {
   };
 }
 
-generate_script_name!("windows", "pause-console.ps1");
-generate_script_name!("macos", "pause-console.rb");
-generate_script_name!("linux", "pause-console.sh");
-generate_script_name!("windows", "check-ascii.ps1", CHECK_ASCII);
-generate_script_name!("macos", "pause-console-launcher.sh", PAUSE_CONSOLE_LAUNCHER);
+generate_script!("windows", "pause-console.ps1");
+generate_script!("macos", "pause-console.rb");
+generate_script!("linux", "pause-console.sh");
+generate_script!("windows", "check-ascii.ps1", CHECK_ASCII);
+generate_script!("macos", "pause-console-launcher.sh", PAUSE_CONSOLE_LAUNCHER);
 
 pub fn script_path() -> Option<PathBuf> {
   Some(dirs::data_dir()?.join("vscch"))

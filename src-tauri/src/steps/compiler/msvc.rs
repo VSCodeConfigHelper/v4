@@ -22,6 +22,7 @@ use std::path::{Path, PathBuf};
 use std::process::Command;
 use std::{fs, str};
 
+use log::{warn, error, debug};
 use anyhow::Result;
 use serde::Deserialize;
 use serde_json;
@@ -38,7 +39,7 @@ use windows::Win32::UI::Shell::{
 
 static POWERSHELL: &str = "C:\\Windows\\system32\\WindowsPowerShell\\v1.0\\powershell.exe";
 static VSWHERE_DOWNLOAD_LINK: &str =
-  "https://guyutongxue.oss-cn-beijing.aliyuncs.com/vswhere/vswhere.exe";
+  "http://v4.vscch.tk/proxy/?target=https%3A%2F%2Fgithub.com%2Fmicrosoft%2Fvswhere%2Freleases%2Fdownload%2F3.0.3%2Fvswhere.exe";
 
 fn get_vswhere() -> Option<PathBuf> {
   let choco_path = get_known_folder_path(&FOLDERID_ProgramData)
@@ -48,13 +49,14 @@ fn get_vswhere() -> Option<PathBuf> {
   if choco_path.is_some() {
     return choco_path;
   }
-  let vs_path = get_known_folder_path(&FOLDERID_ProgramFilesX86)
-    .ok()
-    .map(|p| Path::new(&p).join(r"Microsoft Visual Studio\Installer\vswhere.exe"))
-    .filter(|p| p.exists());
-  if vs_path.is_some() {
-    return vs_path;
-  }
+  // 受 https://github.com/microsoft/vswhere/issues/262 影响，不使用 VS 2022 的 vswhere 
+  // let vs_path = get_known_folder_path(&FOLDERID_ProgramFilesX86)
+  //   .ok()
+  //   .map(|p| Path::new(&p).join(r"Microsoft Visual Studio\Installer\vswhere.exe"))
+  //   .filter(|p| p.exists());
+  // if vs_path.is_some() {
+  //   return vs_path;
+  // }
   let tmp_path = get_known_folder_path(&FOLDERID_LocalAppData)
     .ok()
     .map(|p| Path::new(&p).join(r"Temp\vswhere.exe"))?;
@@ -79,7 +81,7 @@ fn get_vswhere() -> Option<PathBuf> {
 fn scan() -> Vec<Compiler> {
   let vswhere = get_vswhere();
   if vswhere.is_none() {
-    println!("Failed to find vswhere.exe");
+    warn!("找不到 vswhere.exe。");
     return vec![];
   }
   let vswhere = vswhere.unwrap();
@@ -108,10 +110,13 @@ fn scan() -> Vec<Compiler> {
     .and_then(|o| {
       str::from_utf8(&o.stdout)
         .ok()
-        .and_then(|s| serde_json::from_str(&s).ok())
+        .and_then(|s| {
+          debug!("vswhere.exe output: {}", s);
+          serde_json::from_str(&s).ok()
+        })
     });
   if list.is_none() {
-    println!("Failed to parse vswhere.exe output");
+    error!("vswhere.exe 运行失败或无法解析其输出。");
     return vec![];
   }
   list
