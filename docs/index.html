@@ -129,7 +129,7 @@
         align-items: center;
         width: 150px;
       }
-      .os-img button {
+      .os-img a {
         margin-top: 1rem;
         width: 100%;
       }
@@ -173,14 +173,15 @@
               </div>
             </div>
             <div class="d-flex flex-row gap-4 flex-wrap">
-              <button
-                type="button"
+              <a
+                href="https://github.com/VSCodeConfigHelper/v4/releases"
+                target="_blank"
                 class="btn btn-lg btn-primary"
                 id="downloadBtn"
-                disabled
               >
-                不支持此操作系统
-              </button>
+                <i class="bi-download"></i>
+                &nbsp;下载
+            </a>
               <a
                 type="button"
                 class="btn btn-lg btn-light"
@@ -269,35 +270,35 @@
             <div class="os-img">
               <img src="assets/windows.png" />
               <div>
-                <button class="dl-btn btn btn-primary" data-type="exe">
+                <a target="_blank" class="dl-btn btn btn-primary" data-type="exe">
                   单文件(.exe)
-                </button>
+                </a>
                 <small class="text-muted">需要 WebView2 运行时</small>
-                <button class="dl-btn btn btn-secondary" data-type="msi">
+                <a target="_blank" class="dl-btn btn btn-secondary" data-type="msi">
                   安装器(.msi)
-                </button>
+                </a>
               </div>
             </div>
             <div class="os-img">
               <img src="assets/linux.png" />
               <div>
-                <button class="dl-btn btn btn-primary" data-type="appImage">
+                <a target="_blank" class="dl-btn btn btn-primary" data-type="appImage">
                   单文件(.AppImage)
-                </button>
-                <button class="dl-btn btn btn-secondary" data-type="elf">
+                </a>
+                <a target="_blank" class="dl-btn btn btn-secondary" data-type="elf">
                   可执行文件
-                </button>
+                </a>
               </div>
             </div>
             <div class="os-img">
               <img src="assets/apple.png" />
               <div>
-                <button class="dl-btn btn btn-primary" data-type="dmg">
+                <a target="_blank" class="dl-btn btn btn-primary" data-type="dmg">
                   镜像(.dmg)
-                </button>
-                <button class="dl-btn btn btn-secondary" data-type="macho">
+                </a>
+                <a target="_blank" class="dl-btn btn btn-secondary" data-type="macho">
                   可执行文件
-                </button>
+                </a>
                 <small class="text-muted">需要在安全设置中允许运行</small>
               </div>
             </div>
@@ -388,15 +389,6 @@
         downloadName = "Linux 版下载";
         downloadType = "appImage";
       }
-      const DEFAULT_LINK = `https://github.com/VSCodeConfigHelper/v4/releases`;
-      const DOWNLOAD_LINKS = {
-        msi: DEFAULT_LINK,
-        exe: DEFAULT_LINK,
-        appImage: DEFAULT_LINK,
-        elf: DEFAULT_LINK,
-        dmg: DEFAULT_LINK,
-        macho: DEFAULT_LINK,
-      };
       let lowerThenWindows10 = false;
       if ("userAgentData" in navigator && "getHighEntropyValues" in navigator.userAgentData) {
         navigator.userAgentData.getHighEntropyValues(["platformVersion"])
@@ -410,30 +402,13 @@
             }
           });
       }
-      function openWithProxy(/** @type {string} */ url) {
+      function withProxy(/** @type {string} */ url) {
         const proxyUrl = new URL("https://v4.vscch.tk/proxy");
         proxyUrl.searchParams.append("target", url);
-        window.open(proxyUrl.href);
+        return proxyUrl.href;
       }
-      if (downloadName !== null) {
-        const btn = document.querySelector("#downloadBtn");
-        btn.attributes.removeNamedItem("disabled");
-        btn.innerHTML = `<i class="bi-download"></i>&nbsp;` + downloadName;
-        btn.addEventListener("click", () => {
-          if (lowerThenWindows10) {
-            const modal = new bootstrap.Modal("#webViewInstallationModal");
-            modal.show();
-          }
-          openWithProxy(DOWNLOAD_LINKS[downloadType]);
-        });
-      }
-      document.querySelectorAll(".dl-btn").forEach((ele) => {
-        const downloadType = ele.getAttribute("data-type");
-        ele.addEventListener("click", () => {
-          openWithProxy(DOWNLOAD_LINKS[downloadType]);
-        });
-      });
-      Promise.all(
+      const DOWNLOAD_LINKS = {};
+      await Promise.all(
         [
           `//v4.vscch.tk/api/installer`,
           `//v4.vscch.tk/api/portable`,
@@ -445,6 +420,25 @@
         DOWNLOAD_LINKS.elf = p.platforms.linux.url;
         DOWNLOAD_LINKS.dmg = i.platforms.darwin.url;
         DOWNLOAD_LINKS.macho = p.platforms.darwin.url;
+      });
+      /** @type {HTMLAnchorElement} */
+      const btn = document.querySelector("#downloadBtn");
+      if (downloadName !== null) {
+        btn.innerHTML = `<i class="bi-download"></i>&nbsp;` + downloadName;
+        if (lowerThenWindows10) {
+          btn.addEventListener("click", () => {
+              const modal = new bootstrap.Modal("#webViewInstallationModal");
+              modal.show();
+          });
+        }
+        btn.href = withProxy(DOWNLOAD_LINKS[downloadType]);
+      } else {
+        btn.classList.add("disabled");
+        btn.innerHTML = `不支持此操作系统`;
+      }
+      document.querySelectorAll(".dl-btn").forEach((/** @type {HTMLAnchorElement} */ ele) => {
+        const downloadType = ele.getAttribute("data-type");
+        ele.href = withProxy(DOWNLOAD_LINKS[downloadType]);
       });
     </script>
   </body>
