@@ -326,7 +326,7 @@ pub fn c_cpp_properties_json(args: &TaskArgs) -> Result<()> {
           "${{workspaceFolder}}/**"
         ],
         "compilerPath": args.compiler_path.to_string(),
-        standard_key: args.standard,
+        standard_key: args.standard.to_ascii_lowercase(),
         "intelliSenseMode": intellisense_mode,
       }
     ]
