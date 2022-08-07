@@ -25,8 +25,13 @@ use std::sync::Mutex;
 
 pub static LOG_PATH: Lazy<PathBuf> = Lazy::new(|| {
   dirs::data_dir()
+    .map(|s| s.join("vscch"))
+    .and_then(|s| {
+      fs::create_dir_all(&s).ok()?;
+      Some(s)
+    })
     .unwrap_or(PathBuf::from(""))
-    .join(format!("vscch/vscch_{}.log", chrono::Local::now().format("%Y%m%d%H%M%S")))
+    .join(format!("vscch_{}.log", chrono::Local::now().format("%Y%m%d%H%M%S")))
 });
 
 static ENABLED: Lazy<Mutex<bool>> = Lazy::new(|| Mutex::new(false));

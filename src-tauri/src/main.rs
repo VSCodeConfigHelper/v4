@@ -36,7 +36,15 @@ fn handle_error(e: Error) -> ! {
         .unwrap();
     }
   } else {
-    eprintln!("日志未就绪前出现错误：{:?}", e);
+    if std::env::args().len() <= 1 {
+      native_dialog::MessageDialog::new()
+        .set_title("日志未就绪前出现错误")
+        .set_text(&format!("{:?}", e))
+        .show_alert()
+        .unwrap();
+    } else {
+      eprintln!("日志未就绪前出现错误：{:?}", e);
+    }
   }
   std::process::exit(1);
 }
