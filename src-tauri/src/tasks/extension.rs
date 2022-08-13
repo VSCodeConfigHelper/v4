@@ -18,7 +18,9 @@
 use log::{warn, debug, trace};
 use once_cell::sync::OnceCell;
 use anyhow::Result;
+use anyhow::{Result, anyhow};
 use once_cell::sync::Lazy;
+
 #[cfg(windows)]
 use std::os::windows::process::CommandExt;
 use std::path::{Path, PathBuf};
@@ -74,7 +76,11 @@ impl ExtensionManager {
       .stdout;
     let stdout = String::from_utf8(stdout)?;
     trace!("Run code with args {:?}, got output: {:?}", args, stdout);
-    Ok(stdout)
+    if command.status()?.code() != Some(0) {
+      Err(anyhow!("安装扩展出现错误：{}", stdout))
+    } else {
+      Ok(stdout)
+    }
   }
 
   fn update(&mut self) -> Result<()> {
@@ -111,6 +117,12 @@ impl ExtensionManager {
 
 static C_CPP_ID: &str = "ms-vscode.cpptools";
 static CODE_LLDB_ID: &str = "vadimcn.vscode-lldb";
+static PAUSER_ID: &str = "Guyutongxue.pause-console";
+
+pub fn install_pauser(args: &TaskArgs) -> Result<()> {
+  let mut m = ExtensionManager::get(args).lock().unwrap();
+  m.install(PAUSER_ID)
+}
 
 pub fn install_c_cpp(args: &TaskArgs) -> Result<()> {
   let mut m = ExtensionManager::get(args).lock().unwrap();

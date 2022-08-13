@@ -18,75 +18,33 @@
 use std::fs;
 use std::io::BufReader;
 #[cfg(not(windows))]
-use std::os::unix::prelude::PermissionsExt;
 use std::path::PathBuf;
 
 use anyhow::{anyhow, Result};
 use log::{debug, trace, warn};
 use serde_json::json;
 
-use super::TaskArgs;
-pub struct Script {
-  pub filename: &'static str,
-  pub content: &'static str,
-}
+use super::{TaskArgs, extension};
 
-macro_rules! generate_script {
-  ($os: expr, $name: expr) => {
-    generate_script!($os, $name, PAUSE_CONSOLE);
-  };
-  ($os: expr, $filename: expr, $id: ident) => {
-    #[cfg(target_os = $os)]
-    pub const $id: Script = Script {
-      filename: $filename,
-      content: include_str!(concat!("../scripts/", $filename)),
-    };
-  };
-}
-
-generate_script!("windows", "pause-console.ps1");
-generate_script!("macos", "pause-console.rb");
-generate_script!("linux", "pause-console.sh");
-generate_script!("windows", "check-ascii.ps1", CHECK_ASCII);
-generate_script!("macos", "pause-console-launcher.sh", PAUSE_CONSOLE_LAUNCHER);
-
-pub fn script_path() -> Option<PathBuf> {
-  Some(dirs::data_dir()?.join("vscch"))
-}
-
-fn save_script(script: &'static Script) -> Result<()> {
-  let path = script_path().ok_or(anyhow!("找不到用于存放脚本的路径。"))?;
-  fs::create_dir_all(&path)?;
-  let filepath = path.join(script.filename);
-  fs::write(&filepath, script.content)?;
-  #[cfg(not(target_os = "windows"))]
-  {
-    fs::set_permissions(&filepath, fs::Permissions::from_mode(0o755))?;
-  }
-  Ok(())
-}
-
-pub fn create_pauser(_: &TaskArgs) -> Result<()> {
-  #[cfg(target_os = "macos")]
-  save_script(&PAUSE_CONSOLE_LAUNCHER)?;
-  save_script(&PAUSE_CONSOLE)?;
-
+pub fn create_pauser(args: &TaskArgs) -> Result<()> {
+  extension::install_pauser(args)?;
   #[cfg(target_os = "macos")]
   {
     set_terminal_preferences()?;
   }
-
   Ok(())
 }
 
-#[cfg(target_os = "windows")]
 pub fn create_checker(_: &TaskArgs) -> Result<()> {
-  save_script(&CHECK_ASCII)
+  let path = dirs::data_dir().ok_or(anyhow!("找不到用于存放脚本的路径。"))?.join("vscch/check-ascii.ps1");
+  fs::create_dir_all(&path)?;
+  let filepath = path.join("check-ascii.ps1");
+  fs::write(&filepath, include_str!("../scripts/check-ascii.ps1"))?;
+  Ok(())
 }
 
-#[cfg(not(target_os = "windows"))]
-pub fn create_checker(_: &TaskArgs) -> Result<()> {
-  panic!("Not supported on this platform")
+pub fn checker_path() -> Result<PathBuf> {
+  Ok(dirs::data_dir().ok_or(anyhow!("找不到用于存放脚本的路径。"))?.join("vscch/check-ascii.ps1"))
 }
 
 pub fn create_keybinding(_: &TaskArgs) -> Result<()> {
