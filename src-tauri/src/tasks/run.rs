@@ -17,7 +17,6 @@
 
 use std::fs;
 use std::io::BufReader;
-#[cfg(not(windows))]
 use std::path::PathBuf;
 
 use anyhow::{anyhow, Result};
