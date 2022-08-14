@@ -214,6 +214,11 @@
       staticStd,
       customArgs,
     } = profile);
+    useGnu &&= useGnuEnabled;
+    pedantic &&= pedanticEnabled;
+    acpOutput &&= acpOutputEnabled;
+    asciiCheck &&= asciiCheckEnabled;
+    addToPath &&= addToPathEnabled;
   }
   let lastProfileAvailable = true;
   async function readLastProfile() {
@@ -277,16 +282,11 @@
       desktopShortcutEnabled,
     } = await invoke("options_scan", { setup }));
     console.log(useGnuEnabled, pedanticEnabled, acpOutputEnabled, asciiCheckEnabled, addToPathEnabled, desktopShortcutEnabled);
-    useGnu &&= useGnuEnabled;
-    pedantic &&= pedanticEnabled;
-    acpOutput &&= acpOutputEnabled;
-    asciiCheck &&= asciiCheckEnabled;
-    addToPath &&= addToPathEnabled;
   }
 
   onMount(async () => {
-    await readLastProfile();
     await scan($compiler?.setup);
+    await readLastProfile();
   });
 </script>
 
