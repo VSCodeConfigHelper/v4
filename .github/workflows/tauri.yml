@@ -49,6 +49,10 @@ jobs:
           pnpm install
       - name: Tauri build
         run: pnpm tauri build
+      - name: Upload artifact
+        uses: actions/upload-artifact@v3
+        with:
+          path: src-tauri/target/release/${{ matrix.exe }}
       - name: Pack executable
         if: ${{ github.ref_type == 'tag' }}
         run: |
