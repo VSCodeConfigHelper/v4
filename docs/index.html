@@ -259,10 +259,13 @@
           </div>
         </div>
       </section>
-      <!-- <section>
-        <h3 class="mb-3">用户评价</h3>
-
-      </section> -->
+      <section>
+        <h3 class="mb-3">统计数据</h3>
+          <p>
+            此工具已成功配置 <span class="h3" id="v4Count">0</span> 次（第 4 版）。
+            <span class="text-muted">第 2、3 版已成功配置 <span id="v3Count">0</span> 次。</span>
+          </p>
+      </section>
       <section>
         <h3 class="mb-3" id="download">下载</h3>
         <div class="row justify-content-center">
@@ -440,6 +443,18 @@
         const downloadType = ele.getAttribute("data-type");
         ele.href = withProxy(DOWNLOAD_LINKS[downloadType]);
       });
+
+      Promise.all([
+        "https://api.countapi.xyz/get/v4.vscch.tk/linux",
+        "https://api.countapi.xyz/get/v4.vscch.tk/macos",
+        "https://api.countapi.xyz/get/v4.vscch.tk/windows",
+      ].map(s => fetch(s).then(r => r.json()))).then(([l, m, w]) => {
+        console.log({ l, m, w });
+        document.querySelector("#v4Count").innerHTML = `${l.value + m.value + w.value}`;
+      });
+      fetch("https://api.countapi.xyz/get/guyutongxue.github.io/b54f2252-e54a-4bd0-b4c2-33b47db6aa98").then(r => r.json()).then(v => {
+        document.querySelector("#v3Count").innerHTML = `${v.value}`;
+      })
     </script>
   </body>
 </html>

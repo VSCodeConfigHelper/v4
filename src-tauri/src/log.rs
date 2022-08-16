@@ -23,7 +23,7 @@ use std::fs;
 use std::path::PathBuf;
 use std::sync::Mutex;
 
-pub static LOG_PATH: Lazy<PathBuf> = Lazy::new(|| {
+static DEFAULT_LOG_PATH: Lazy<PathBuf> = Lazy::new(|| {
   dirs::data_dir()
     .map(|s| s.join("vscch"))
     .and_then(|s| {
@@ -33,6 +33,15 @@ pub static LOG_PATH: Lazy<PathBuf> = Lazy::new(|| {
     .unwrap_or(PathBuf::from(""))
     .join(format!("vscch_{}.log", chrono::Local::now().format("%Y%m%d%H%M%S")))
 });
+static LOG_PATH: Lazy<Mutex<Option<PathBuf>>> = Lazy::new(|| Default::default());
+
+pub fn get_log_path() -> PathBuf {
+  if let Some(p) = LOG_PATH.lock().unwrap().as_ref() {
+    p.clone()
+  } else {
+    DEFAULT_LOG_PATH.clone()
+  }
+}
 
 static ENABLED: Lazy<Mutex<bool>> = Lazy::new(|| Mutex::new(false));
 
@@ -40,7 +49,8 @@ pub fn is_enabled() -> bool {
   return *ENABLED.lock().unwrap();
 }
 
-pub fn setup(verbose: bool) -> Result<()> {
+pub fn setup(path: Option<&String>, verbose: bool) -> Result<()> {
+  *LOG_PATH.lock().unwrap() = path.map(|s| PathBuf::from(s));
   fern::Dispatch::new()
     .chain(
       fern::Dispatch::new()
@@ -54,7 +64,7 @@ pub fn setup(verbose: bool) -> Result<()> {
             message
           ))
         })
-        .chain(fs::File::create(LOG_PATH.as_path())?),
+        .chain(fs::File::create(get_log_path())?),
     )
     .chain(
       fern::Dispatch::new()

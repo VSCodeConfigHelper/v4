@@ -52,6 +52,10 @@ struct CliArgs {
   #[clap(short, long)]
   verbose: bool,
 
+  /// 日志路径
+  #[clap(long)]
+  log_path: Option<String>,
+
   /// 关闭命令行交互操作，总是假设选择“是”
   #[clap(short = 'y', long)]
   assume_yes: bool,
@@ -155,7 +159,7 @@ fn print_setup_help() {
 
 pub fn parse_args() -> Result<()> {
   if std::env::args().len() <= 1 {
-    log::setup(false)?;
+    log::setup(None, false)?;
     return gui();
   }
 
@@ -172,7 +176,7 @@ pub fn parse_args() -> Result<()> {
     Ok(args) => args,
   };
 
-  log::setup(args.verbose)?;
+  log::setup(args.log_path.as_ref(), args.verbose)?;
 
   if args.help {
     CliArgs::command().print_help().unwrap();

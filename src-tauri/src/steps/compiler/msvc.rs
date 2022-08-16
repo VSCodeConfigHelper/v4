@@ -49,14 +49,13 @@ fn get_vswhere() -> Option<PathBuf> {
   if choco_path.is_some() {
     return choco_path;
   }
-  // 受 https://github.com/microsoft/vswhere/issues/262 影响，不使用 VS 2022 的 vswhere 
-  // let vs_path = get_known_folder_path(&FOLDERID_ProgramFilesX86)
-  //   .ok()
-  //   .map(|p| Path::new(&p).join(r"Microsoft Visual Studio\Installer\vswhere.exe"))
-  //   .filter(|p| p.exists());
-  // if vs_path.is_some() {
-  //   return vs_path;
-  // }
+  let vs_path = get_known_folder_path(&FOLDERID_ProgramFilesX86)
+    .ok()
+    .map(|p| Path::new(&p).join(r"Microsoft Visual Studio\Installer\vswhere.exe"))
+    .filter(|p| p.exists());
+  if vs_path.is_some() {
+    return vs_path;
+  }
   let tmp_path = get_known_folder_path(&FOLDERID_LocalAppData)
     .ok()
     .map(|p| Path::new(&p).join(r"Temp\vswhere.exe"))?;
@@ -85,6 +84,7 @@ fn scan() -> Vec<Compiler> {
     return vec![];
   }
   let vswhere = vswhere.unwrap();
+  debug!("vswhere.exe is {:?}", vswhere);
 
   #[derive(Deserialize)]
   #[serde(rename_all = "camelCase")]
@@ -108,12 +108,11 @@ fn scan() -> Vec<Compiler> {
     .output()
     .ok()
     .and_then(|o| {
-      str::from_utf8(&o.stdout)
-        .ok()
-        .and_then(|s| {
-          debug!("vswhere.exe output: {}", s);
-          serde_json::from_str(&s).ok()
-        })
+      // 受 https://github.com/microsoft/vswhere/issues/262 影响，某些 vswhere 可能存在编码错误
+      let s = String::from_utf8_lossy(&o.stdout)
+        .into_owned();
+      debug!("vswhere.exe output: {}", s);
+      serde_json::from_str(&s).ok()
     });
   if list.is_none() {
     error!("vswhere.exe 运行失败或无法解析其输出。");
