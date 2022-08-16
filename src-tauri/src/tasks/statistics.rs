@@ -44,9 +44,15 @@ pub fn set(value: bool) {
 }
 
 pub fn send(_: &TaskArgs) -> Result<()> {
-  debug!("发送到 Count API {} ...", COUNT_API_URL);
-  let body = reqwest::blocking::get(COUNT_API_URL)?.text()?;
-  trace!("body: {}", body);
+  fn do_send() -> Result<()> {
+    debug!("发送到 Count API {} ...", COUNT_API_URL);
+    let body = reqwest::blocking::get(COUNT_API_URL)?.text()?;
+    trace!("body: {}", body);
+    Ok(())
+  }
+  if let Err(e) = do_send() {
+    warn!("发送到 Count API 时出错：{}", e);
+  }
   Ok(())
 }
 
