@@ -32,6 +32,7 @@ fn handle_error(e: Error) -> ! {
       native_dialog::MessageDialog::new()
         .set_title("程序已报告错误")
         .set_text(&format!("{}\n您可以将代码 “{}” 发送至 guyutongxue@163.com，开发者会尽快帮您解决问题。\n（使用 --no-stats 选项以关闭此弹窗。）", e.to_string(), &id[0..6]))
+        .set_type(native_dialog::MessageType::Error)
         .show_alert()
         .unwrap();
     }
@@ -40,6 +41,7 @@ fn handle_error(e: Error) -> ! {
       native_dialog::MessageDialog::new()
         .set_title("日志未就绪前出现错误")
         .set_text(&format!("{:?}", e))
+        .set_type(native_dialog::MessageType::Error)
         .show_alert()
         .unwrap();
     } else {

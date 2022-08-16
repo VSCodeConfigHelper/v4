@@ -16,7 +16,7 @@
 // along with vscch4.  If not, see <http://www.gnu.org/licenses/>.
 
 use anyhow::{anyhow, Result};
-use log::{debug, info, trace};
+use log::{debug, info, trace, warn};
 use serde::Serialize;
 
 use crate::steps::{
@@ -25,7 +25,43 @@ use crate::steps::{
 use crate::tasks;
 use crate::tasks::TaskInitArgs;
 
+#[cfg(windows)]
+fn has_webview2_installed() -> bool {
+  use crate::utils::winreg;
+  if let Some(v) = winreg::get(
+    winreg::HKEY_LOCAL_MACHINE,
+    r#"SOFTWARE\WOW6432Node\Microsoft\EdgeUpdate\Clients\{F3017226-FE2A-4295-8BDF-00C3A9A7E4C5}"#,
+    "pv",
+  ) {
+    if v != "" && v != "0.0.0.0" { return true; }
+  }
+  if let Some(v) = winreg::get(
+    winreg::HKEY_CURRENT_USER,
+    r#"Software\Microsoft\EdgeUpdate\Clients\{F3017226-FE2A-4295-8BDF-00C3A9A7E4C5}"#,
+    "pv",
+  ) {
+    if v != "" && v != "0.0.0.0" { return true; }
+  }
+  return false;
+}
+
 pub fn gui() -> Result<()> {
+  #[cfg(windows)]
+  {
+    if !has_webview2_installed() {
+      debug!("WebView 2 未安装");
+      let download = native_dialog::MessageDialog::new()
+        .set_title("WebView 2 未安装")
+        .set_type(native_dialog::MessageType::Warning)
+        .set_text("您的系统可能尚未安装 WebView 2。这表明您可能无法正常运行图形界面。\n  点击“确认”以前往 WebView 2 下载页面，并退出程序；\n  点击“取消”以继续尝试运行本程序。")
+        .show_confirm()?;
+      if download {
+        open::that("https://go.microsoft.com/fwlink/p/?LinkId=2124703")?;
+        std::process::exit(1);
+      }
+      warn!("用户执意执行 GUI。");
+    }
+  }
   debug!("即将启动 tauri GUI。");
   tauri::Builder::default()
     .invoke_handler(tauri::generate_handler![

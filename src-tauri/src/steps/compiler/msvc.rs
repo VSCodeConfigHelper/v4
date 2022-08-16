@@ -84,7 +84,7 @@ fn scan() -> Vec<Compiler> {
     return vec![];
   }
   let vswhere = vswhere.unwrap();
-  debug!("vswhere.exe is {:?}", vswhere);
+  debug!("vswhere.exe 路径：{:?}", vswhere);
 
   #[derive(Deserialize)]
   #[serde(rename_all = "camelCase")]
@@ -111,7 +111,7 @@ fn scan() -> Vec<Compiler> {
       // 受 https://github.com/microsoft/vswhere/issues/262 影响，某些 vswhere 可能存在编码错误
       let s = String::from_utf8_lossy(&o.stdout)
         .into_owned();
-      debug!("vswhere.exe output: {}", s);
+      debug!("vswhere.exe 输出：{}", s);
       serde_json::from_str(&s).ok()
     });
   if list.is_none() {
