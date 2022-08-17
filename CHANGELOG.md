@@ -4,11 +4,12 @@
 - 使用 Console Pauser 代替自定义脚本（`vscext` 分支）
 - 修复了 MSVC 不能生成 64 位可执行文件的问题（`vscext` 分支）
 - 修复了 MSVC 的错误的问题匹配设置（`vscext` 分支）
-- CLI 增加了日志路径选项
+- 对于非 MSVC 的构建任务，改用 `"type": "process"`（`vscext` 分支）
 
 ## v4.0.0-beta.11
 *2022.8.16*
 - Windows 下检测 WebView 2 安装
+- CLI 增加了日志路径选项
 
 ## v4.0.0-beta.10
 *2022.8.14*
