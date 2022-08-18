@@ -43,13 +43,7 @@ pub fn get_log_path() -> PathBuf {
   }
 }
 
-static ENABLED: Lazy<Mutex<bool>> = Lazy::new(|| Mutex::new(false));
-
-pub fn is_enabled() -> bool {
-  return *ENABLED.lock().unwrap();
-}
-
-pub fn setup(path: Option<&String>, verbose: bool) -> Result<()> {
+pub fn setup(path: Option<&String>, log_level: log::LevelFilter) -> Result<()> {
   *LOG_PATH.lock().unwrap() = path.map(|s| PathBuf::from(s));
   fern::Dispatch::new()
     .chain(
@@ -68,11 +62,7 @@ pub fn setup(path: Option<&String>, verbose: bool) -> Result<()> {
     )
     .chain(
       fern::Dispatch::new()
-        .level(if verbose {
-          log::LevelFilter::Info
-        } else {
-          log::LevelFilter::Warn
-        })
+        .level(log_level)
         .format(|out, message, record| {
           out.finish(format_args!(
             "[{}] {}",
@@ -87,6 +77,5 @@ pub fn setup(path: Option<&String>, verbose: bool) -> Result<()> {
   info!("版本 v{}", env!("CARGO_PKG_VERSION"));
   info!("操作系统 {}", os_info::get());
   info!("处理器 {}", std::env::consts::ARCH);
-  *ENABLED.lock().unwrap() = true;
   Ok(())
 }

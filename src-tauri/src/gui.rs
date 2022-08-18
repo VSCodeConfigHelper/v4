@@ -61,6 +61,7 @@ pub fn gui() -> Result<()> {
       }
       warn!("用户执意执行 GUI。");
     }
+    crate::utils::winapi::free_console();
   }
   debug!("即将启动 tauri GUI。");
   tauri::Builder::default()

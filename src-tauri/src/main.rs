@@ -15,10 +15,6 @@
 // You should have received a copy of the GNU General Public License
 // along with vscch4.  If not, see <http://www.gnu.org/licenses/>.
 
-#![windows_subsystem = "windows"]
-
-use anyhow::Error;
-
 mod cli;
 mod gui;
 mod log;
@@ -26,8 +22,9 @@ mod steps;
 mod tasks;
 mod utils;
 
-fn handle_error(e: Error) -> ! {
-  if log::is_enabled() {
+fn main() {
+  std::env::set_var("RUST_BACKTRACE", "1");
+  if let Err(e) = cli::run() {
     if let Some(id) = tasks::statistics::send_error(&e) {
       native_dialog::MessageDialog::new()
         .set_title("程序已报告错误")
@@ -36,24 +33,5 @@ fn handle_error(e: Error) -> ! {
         .show_alert()
         .unwrap();
     }
-  } else {
-    if std::env::args().len() <= 1 {
-      native_dialog::MessageDialog::new()
-        .set_title("日志未就绪前出现错误")
-        .set_text(&format!("{:?}", e))
-        .set_type(native_dialog::MessageType::Error)
-        .show_alert()
-        .unwrap();
-    } else {
-      eprintln!("日志未就绪前出现错误：{:?}", e);
-    }
-  }
-  std::process::exit(1);
-}
-
-fn main() {
-  std::env::set_var("RUST_BACKTRACE", "1");
-  if let Err(e) = cli::parse_args() {
-    handle_error(e);
   }
 }

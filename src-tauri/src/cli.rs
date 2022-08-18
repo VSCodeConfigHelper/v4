@@ -28,7 +28,6 @@ use crate::steps::compiler::{CompilerSetup, ENABLED_SETUPS};
 use crate::steps::options::Options;
 use crate::steps::{vscode, workspace};
 use crate::tasks;
-use crate::tasks::TaskInitArgs;
 
 #[cfg(windows)]
 use crate::utils::winapi;
@@ -48,9 +47,8 @@ struct CliArgs {
   #[clap(short = 'V', long)]
   version: bool,
 
-  /// 显示详细的输出信息
-  #[clap(short, long)]
-  verbose: bool,
+  #[clap(flatten)]
+  verbose: clap_verbosity_flag::Verbosity,
 
   /// 日志路径
   #[clap(long)]
@@ -62,7 +60,7 @@ struct CliArgs {
 
   /// 使用 GUI 进行配置。当不提供任何命令行参数时，此选项将被默认使用
   #[clap(short = 'g', long)]
-  use_gui: bool,
+  gui: bool,
 
   /// 指定 VS Code 安装路径。若不提供，则尝试自动检测
   #[clap(long)]
@@ -157,27 +155,40 @@ fn print_setup_help() {
   }
 }
 
-pub fn parse_args() -> Result<()> {
-  if std::env::args().len() <= 1 {
-    log::setup(None, false)?;
-    return gui();
+fn parse_args() -> CliArgs {
+  fn do_parse() -> Result<CliArgs> {
+    let args = match CliArgs::try_parse() {
+      Err(e) => {
+        println!("{}", e);
+        return Err(anyhow!("命令行解析错误。"));
+      }
+      Ok(args) => CliArgs {
+        gui: if std::env::args().len() <= 1 {
+          true
+        } else {
+          args.gui
+        },
+        ..args
+      },
+    };
+    log::setup(args.log_path.as_ref(), args.verbose.log_level_filter())?;
+    tasks::statistics::set(!args.no_stats);
+    Ok(args)
   }
-
-  #[cfg(windows)]
-  {
-    winapi::attach_console();
-  }
-
-  let args = match CliArgs::try_parse() {
-    Err(e) => {
-      println!("{}", e);
-      return Err(anyhow!("命令行解析错误。"));
-    }
+  match do_parse() {
     Ok(args) => args,
-  };
+    Err(e) => {
+      eprintln!("早期错误：{:?}", e);
+      if std::env::args().len() <= 1 {
+        // TODO: system("pause")
+      }
+      std::process::exit(1);
+    }
+  }
+}
 
-  log::setup(args.log_path.as_ref(), args.verbose)?;
-
+pub fn run() -> Result<()> {
+  let args = parse_args();
   if args.help {
     CliArgs::command().print_help().unwrap();
     print_setup_help();
@@ -193,9 +204,8 @@ GNU 通用公共许可证修改之，无论是版本 3 许可证，还是（按�
     );
     return Ok(());
   }
-  tasks::statistics::set(!args.no_stats);
 
-  if args.use_gui {
+  if args.gui {
     gui()
   } else {
     cli(args)
@@ -270,8 +280,8 @@ fn cli(mut args: CliArgs) -> Result<()> {
   } else {
     None
   };
-  
-  let task_init_args = TaskInitArgs {
+
+  let task_init_args = tasks::TaskInitArgs {
     vscode: vscode,
     workspace: workspace,
     compiler: compiler,
