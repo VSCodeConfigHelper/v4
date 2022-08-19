@@ -31,6 +31,7 @@ use windows::Win32::Globalization::GetACP;
 use windows::Win32::System::Com::{
   CoCreateInstance, CoInitialize, CoTaskMemFree, CoUninitialize, IPersistFile, CLSCTX_INPROC_SERVER,
 };
+use windows::Win32::System::Console;
 use windows::Win32::System::Environment::ExpandEnvironmentStringsW;
 use windows::Win32::UI::Shell::{IShellLinkW, SHGetKnownFolderPath, ShellLink};
 
@@ -101,9 +102,23 @@ pub fn create_lnk(lnk: &str, target: &str, desc: &str, args: &str) -> Result<()>
   Ok(())
 }
 
-pub fn free_console() -> bool {
-  use windows::Win32::System::Console;
-  unsafe { Console::FreeConsole().as_bool() }
+pub fn attach_console() -> bool {
+  unsafe {
+    Console::FreeConsole().as_bool()
+      && Console::AttachConsole(Console::ATTACH_PARENT_PROCESS).as_bool()
+  }
+}
+
+pub fn alloc_console() -> bool {
+  unsafe { Console::FreeConsole().as_bool() && Console::AllocConsole().as_bool() }
+}
+
+extern "C" {
+  fn _getch() -> i32;
+}
+
+pub fn getch() {
+  unsafe { _getch(); }
 }
 
 #[cfg(test)]

@@ -18,7 +18,7 @@
 use std::str::FromStr;
 
 #[allow(unused_imports)]
-use ::log::{debug, info, warn};
+use ::log::{debug, info, warn, error};
 use anyhow::{anyhow, Result};
 use clap::{AppSettings, ArgEnum, CommandFactory, Parser};
 
@@ -58,9 +58,13 @@ struct CliArgs {
   #[clap(short = 'y', long)]
   assume_yes: bool,
 
-  /// 使用 GUI 进行配置。当不提供任何命令行参数时，此选项将被默认使用
+  /// 使用图形界面。当不提供任何命令行参数时，将优先运行 GUI
   #[clap(short = 'g', long)]
   gui: bool,
+
+  /// 使用命令行界面（此选项没有其它作用）
+  #[clap(long)]
+  cli: bool,
 
   /// 指定 VS Code 安装路径。若不提供，则尝试自动检测
   #[clap(long)]
@@ -155,46 +159,72 @@ fn print_setup_help() {
   }
 }
 
-fn parse_args() -> CliArgs {
-  fn do_parse() -> Result<CliArgs> {
-    let args = match CliArgs::try_parse() {
-      Err(e) => {
-        println!("{}", e);
-        return Err(anyhow!("命令行解析错误。"));
-      }
-      Ok(args) => CliArgs {
-        gui: if std::env::args().len() <= 1 {
-          true
-        } else {
-          args.gui
-        },
-        ..args
-      },
-    };
-    log::setup(args.log_path.as_ref(), args.verbose.log_level_filter())?;
-    tasks::statistics::set(!args.no_stats);
-    Ok(args)
-  }
-  match do_parse() {
-    Ok(args) => args,
-    Err(e) => {
-      eprintln!("早期错误：{:?}", e);
-      if std::env::args().len() <= 1 {
-        // TODO: system("pause")
-      }
-      std::process::exit(1);
-    }
-  }
+fn parse_args() -> Result<CliArgs> {
+  let args = CliArgs::try_parse()?;
+  log::setup(args.log_path.as_ref(), args.verbose.log_level_filter())?;
+  tasks::statistics::set(!args.no_stats);
+  Ok(args)
 }
 
-pub fn run() -> Result<()> {
-  let args = parse_args();
+#[cfg(windows)]
+fn has_webview2_installed() -> bool {
+  use crate::utils::winreg;
+  if let Some(v) = winreg::get(
+    winreg::HKEY_LOCAL_MACHINE,
+    r#"SOFTWARE\WOW6432Node\Microsoft\EdgeUpdate\Clients\{F3017226-FE2A-4295-8BDF-00C3A9A7E4C5}"#,
+    "pv",
+  ) {
+    if v != "" && v != "0.0.0.0" { return true; }
+  }
+  if let Some(v) = winreg::get(
+    winreg::HKEY_CURRENT_USER,
+    r#"Software\Microsoft\EdgeUpdate\Clients\{F3017226-FE2A-4295-8BDF-00C3A9A7E4C5}"#,
+    "pv",
+  ) {
+    if v != "" && v != "0.0.0.0" { return true; }
+  }
+  return false;
+}
+
+pub fn run() {
+  let no_args = std::env::args().len() <= 1;
+
+  let args = match parse_args() {
+    Ok(args) => args,
+    Err(e) => {
+      if no_args {
+        native_dialog::MessageDialog::new()
+          .set_title("早期错误")
+          .set_text(&format!("{:?}", e))
+          .show_alert()
+          .unwrap();
+      } else {
+        println!("[\x1b[31mERROR\x1b[0m] 早期错误：{:?}", e);
+      }
+      std::process::exit(1)
+    }
+  };
+
+  if no_args {
+    #[cfg(windows)]
+    if !has_webview2_installed() {
+      warn!("WebView 2 未安装。退化到命令行界面。");
+      winapi::alloc_console();
+      println!("[OUT] 检测到您的计算机上尚未安装 WebView 2；将使用命令行界面替代。建议您前往 https://go.microsoft.com/fwlink/p/?LinkId=2124703 下载 WebView 2 以获得更好体验。");
+      cli_handled(args);
+      println!("[OUT] 按任意键退出...");
+      winapi::getch();
+      return;
+    }
+    gui_handled();
+    return;
+  }
+
   if args.help {
     CliArgs::command().print_help().unwrap();
     print_setup_help();
-    return Ok(());
-  }
-  if args.version {
+    return;
+  } else if args.version {
     print!("{}", CliArgs::command().render_version());
     println!(
       r"Copyright (C) 2022 Guyutongxue
@@ -202,13 +232,40 @@ pub fn run() -> Result<()> {
 GNU 通用公共许可证修改之，无论是版本 3 许可证，还是（按你的决定）
 任何以后版都可以。本程序不含任何保障。"
     );
-    return Ok(());
+    return;
   }
 
   if args.gui {
-    gui()
+    gui_handled()
   } else {
-    cli(args)
+    cli_handled(args)
+  }
+}
+
+fn cli_handled(args: CliArgs) {
+  match cli(args) {
+    Ok(_) => (),
+    Err(e) => {
+      if let Some(id) = tasks::statistics::send_error(&e) {
+        println!("[OUT] 上述错误已报告。您可以将代码 “{}” 发送至 guyutongxue@163.com，开发者会尽快帮您解决问题。", &id[0..6]);
+      }
+    }
+  }
+}
+
+fn gui_handled() {
+  match gui() {
+    Ok(_) => (),
+    Err(e) => {
+      if let Some(id) = tasks::statistics::send_error(&e) {
+        native_dialog::MessageDialog::new()
+          .set_title("程序已报告错误")
+          .set_text(&format!("{}\n您可以将代码 “{}” 发送至 guyutongxue@163.com，开发者会尽快帮您解决问题。", e.to_string(), &id[0..6]))
+          .set_type(native_dialog::MessageType::Error)
+          .show_alert()
+          .unwrap();
+      }
+    }
   }
 }
 
