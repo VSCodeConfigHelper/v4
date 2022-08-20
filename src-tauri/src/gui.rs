@@ -216,7 +216,6 @@ fn task_init(args: TaskInitArgs, window: tauri::Window) -> Vec<&'static str> {
     for (name, action) in t {
       info!("正在执行任务 {}...", name);
       let res = action();
-      info!("任务 {} 执行完毕。", name);
       let payload = match &res {
         Ok(_) => TaskFinishResult::Ok { name },
         Err(e) => TaskFinishResult::Err {
@@ -231,6 +230,8 @@ fn task_init(args: TaskInitArgs, window: tauri::Window) -> Vec<&'static str> {
           window.emit("log_sent", id).unwrap();
         }
         break;
+      } else {
+        info!("任务 {} 执行成功。", name);
       }
     }
   });

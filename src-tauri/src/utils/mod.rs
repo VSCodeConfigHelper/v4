@@ -24,11 +24,11 @@ pub trait ToString {
 
 impl ToString for std::path::Path {
   fn to_string(&self) -> String {
-    self.to_str().unwrap().to_string()
+    self.to_string_lossy().to_string()
   }
 }
 impl ToString for std::path::PathBuf {
   fn to_string(&self) -> String {
-    self.to_str().unwrap().to_string()
+    self.to_string_lossy().to_string()
   }
 }

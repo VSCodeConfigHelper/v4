@@ -25,8 +25,10 @@ mod tasks;
 mod utils;
 
 fn main() {
-  #![cfg(windows)]
-  utils::winapi::attach_console();
-  std::env::set_var("RUST_BACKTRACE", "1");
+  #[cfg(windows)]
+  {
+    utils::winapi::alloc_console();
+    utils::winapi::enable_virtual_terminal();
+  }
   cli::run();
 }

@@ -102,15 +102,28 @@ pub fn create_lnk(lnk: &str, target: &str, desc: &str, args: &str) -> Result<()>
   Ok(())
 }
 
-pub fn attach_console() -> bool {
+pub fn free_console() -> bool {
   unsafe {
     Console::FreeConsole().as_bool()
-      && Console::AttachConsole(Console::ATTACH_PARENT_PROCESS).as_bool()
   }
 }
 
 pub fn alloc_console() -> bool {
-  unsafe { Console::FreeConsole().as_bool() && Console::AllocConsole().as_bool() }
+  free_console() && unsafe { Console::AllocConsole().as_bool() }
+}
+
+pub fn enable_virtual_terminal() -> bool {
+  unsafe {
+    let handle = Console::GetStdHandle(Console::STD_OUTPUT_HANDLE);
+    let mut mode = Console::CONSOLE_MODE(0);
+    if !Console::GetConsoleMode(handle, &mut mode).as_bool() {
+      return false;
+    }
+    if !Console::SetConsoleMode(handle, mode | Console::ENABLE_VIRTUAL_TERMINAL_PROCESSING).as_bool() {
+      return false;
+    }
+  }
+  return true;
 }
 
 extern "C" {

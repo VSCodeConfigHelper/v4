@@ -83,7 +83,7 @@ fn verify(path: &str, name: &'static str, setup: &'static CompilerSetup) -> Resu
 }
 
 fn install_gcc() -> Result<()> {
-  open::that("https://gytx.lanzouy.com/iPdVt04l873e")?;
+  open::that("https://v4.vscch.tk/api/mingw")?;
   Ok(())
 }
 

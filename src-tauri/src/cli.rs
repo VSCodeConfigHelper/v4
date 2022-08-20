@@ -18,9 +18,10 @@
 use std::str::FromStr;
 
 #[allow(unused_imports)]
-use ::log::{debug, info, warn, error};
+use ::log::{debug, error, info, warn};
 use anyhow::{anyhow, Result};
 use clap::{AppSettings, ArgEnum, CommandFactory, Parser};
+use std::io::Write;
 
 use crate::gui::gui;
 use crate::log;
@@ -31,6 +32,7 @@ use crate::tasks;
 
 #[cfg(windows)]
 use crate::utils::winapi;
+use crate::utils::ToString;
 
 #[derive(Parser)]
 #[clap(
@@ -40,11 +42,11 @@ use crate::utils::winapi;
 )]
 struct CliArgs {
   /// 显示此帮助信息并退出
-  #[clap(short, long)]
+  #[clap(short, long, exclusive = true)]
   help: bool,
 
   /// 显示程序版本信息并退出
-  #[clap(short = 'V', long)]
+  #[clap(short = 'V', long, exclusive = true)]
   version: bool,
 
   #[clap(flatten)]
@@ -174,16 +176,27 @@ fn has_webview2_installed() -> bool {
     r#"SOFTWARE\WOW6432Node\Microsoft\EdgeUpdate\Clients\{F3017226-FE2A-4295-8BDF-00C3A9A7E4C5}"#,
     "pv",
   ) {
-    if v != "" && v != "0.0.0.0" { return true; }
+    if v != "" && v != "0.0.0.0" {
+      return true;
+    }
   }
   if let Some(v) = winreg::get(
     winreg::HKEY_CURRENT_USER,
     r#"Software\Microsoft\EdgeUpdate\Clients\{F3017226-FE2A-4295-8BDF-00C3A9A7E4C5}"#,
     "pv",
   ) {
-    if v != "" && v != "0.0.0.0" { return true; }
+    if v != "" && v != "0.0.0.0" {
+      return true;
+    }
   }
   return false;
+}
+
+#[macro_export]
+macro_rules! out {
+  ($pattern:expr $(, $arg:expr)*) => (
+    println!(concat!("\x1b[1m[OUT] ", $pattern, "\x1b[0m") $(, $arg)*)
+  )
 }
 
 pub fn run() {
@@ -209,29 +222,11 @@ pub fn run() {
     #[cfg(windows)]
     if !has_webview2_installed() {
       warn!("WebView 2 未安装。退化到命令行界面。");
-      winapi::alloc_console();
-      println!("[OUT] 检测到您的计算机上尚未安装 WebView 2；将使用命令行界面替代。建议您前往 https://go.microsoft.com/fwlink/p/?LinkId=2124703 下载 WebView 2 以获得更好体验。");
+      out!("检测到您的计算机上尚未安装 WebView 2；将使用命令行界面替代。建议您前往 https://go.microsoft.com/fwlink/p/?LinkId=2124703 下载 WebView 2 以获得更好体验。");
       cli_handled(args);
-      println!("[OUT] 按任意键退出...");
-      winapi::getch();
       return;
     }
     gui_handled();
-    return;
-  }
-
-  if args.help {
-    CliArgs::command().print_help().unwrap();
-    print_setup_help();
-    return;
-  } else if args.version {
-    print!("{}", CliArgs::command().render_version());
-    println!(
-      r"Copyright (C) 2022 Guyutongxue
-本程序是自由软件；你可以再分发之和/或依照由自由软件基金会发布的
-GNU 通用公共许可证修改之，无论是版本 3 许可证，还是（按你的决定）
-任何以后版都可以。本程序不含任何保障。"
-    );
     return;
   }
 
@@ -246,21 +241,34 @@ fn cli_handled(args: CliArgs) {
   match cli(args) {
     Ok(_) => (),
     Err(e) => {
-      if let Some(id) = tasks::statistics::send_error(&e) {
-        println!("[OUT] 上述错误已报告。您可以将代码 “{}” 发送至 guyutongxue@163.com，开发者会尽快帮您解决问题。", &id[0..6]);
-      }
+      error!("{:?}", e);
+      out!(
+        "如果你认为该错误是 bug，请将 {} 文件发送到 guyutongxue@163.com。",
+        log::get_log_path().to_string()
+      )
     }
+  }
+  #[cfg(windows)]
+  {
+    out!("按任意键退出...");
+    winapi::getch();
   }
 }
 
 fn gui_handled() {
+  #[cfg(windows)]
+  winapi::free_console();
   match gui() {
     Ok(_) => (),
     Err(e) => {
       if let Some(id) = tasks::statistics::send_error(&e) {
         native_dialog::MessageDialog::new()
           .set_title("程序已报告错误")
-          .set_text(&format!("{}\n您可以将代码 “{}” 发送至 guyutongxue@163.com，开发者会尽快帮您解决问题。", e.to_string(), &id[0..6]))
+          .set_text(&format!(
+            "{}\n您可以将代码 “{}” 发送至 guyutongxue@163.com，开发者会尽快帮您解决问题。",
+            e.to_string(),
+            &id[0..6]
+          ))
           .set_type(native_dialog::MessageType::Error)
           .show_alert()
           .unwrap();
@@ -270,6 +278,22 @@ fn gui_handled() {
 }
 
 fn cli(mut args: CliArgs) -> Result<()> {
+
+  if args.help {
+    CliArgs::command().print_help().unwrap();
+    print_setup_help();
+    return Ok(());
+  } else if args.version {
+    print!("{}", CliArgs::command().render_version());
+    println!(
+      r"Copyright (C) 2022 Guyutongxue
+本程序是自由软件；你可以再分发之和/或依照由自由软件基金会发布的
+GNU 通用公共许可证修改之，无论是版本 3 许可证，还是（按你的决定）
+任何以后版都可以。本程序不含任何保障。"
+    );
+    return Ok(());
+  }
+
   if !cfg!(windows) {
     fn nonsupport_check(name: &'static str, flag: &mut bool) {
       if *flag {
@@ -283,13 +307,35 @@ fn cli(mut args: CliArgs) -> Result<()> {
   }
 
   info!("验证 VS Code 安装...");
-  let vscode = args
-    .vscode
-    .or_else(|| vscode::scan())
-    .ok_or(anyhow!("No vscode found"))?;
-  if let Err(e) = vscode::verify(&vscode) {
-    return Err(anyhow!("VS Code 验证失败: {}", e));
-  }
+  let vscode = match args.vscode {
+    Some(vscode) => {
+      if let Err(e) = vscode::verify(&vscode) {
+        return Err(anyhow!("VS Code 验证失败：{}", e));
+      }
+      vscode
+    }
+    None => {
+      if args.assume_yes {
+        match vscode::scan() {
+          Some(v) => v,
+          None => return Err(anyhow!("未找到 VS Code 安装。")),
+        }
+      } else {
+        let mut builder = requestty::Question::input("vscode")
+          .message("VS Code 路径：")
+          .validate_on_key(|s, _| vscode::verify(s).is_ok())
+          .validate(|s, _| vscode::verify(s).map_err(|s| format!("验证失败：{}", s)));
+        if let Some(dft) = vscode::scan() {
+          builder = builder.default(dft);
+        }
+        requestty::prompt_one(builder.build())?
+          .as_string()
+          .unwrap()
+          .into()
+      }
+    }
+  };
+
   info!("VS Code 安装在 {}，", vscode);
 
   info!("验证工作区路径...");

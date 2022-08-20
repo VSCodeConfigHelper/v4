@@ -148,6 +148,7 @@ mod vscode {
       vscode_args.push("--goto");
       vscode_args.push(test_file.as_str());
     }
+    trace!("Open command: {} {:?}", args.vscode, vscode_args);
     std::process::Command::new(&args.vscode)
       .args(vscode_args)
       .spawn()?;
