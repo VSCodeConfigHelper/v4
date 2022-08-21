@@ -15,8 +15,8 @@
 // You should have received a copy of the GNU General Public License
 // along with vscch4.  If not, see <http://www.gnu.org/licenses/>.
 
-use anyhow::{anyhow, Result};
-use log::{debug, info, trace, warn};
+use anyhow::Result;
+use log::{debug, info, trace};
 use serde::Serialize;
 
 use crate::steps::{
