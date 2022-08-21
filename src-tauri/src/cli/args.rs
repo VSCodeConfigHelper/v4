@@ -37,7 +37,7 @@ pub struct CliArgs {
   pub gui: bool,
 
   /// 使用命令行界面（此选项没有其它作用）
-  #[clap(long)]
+  #[clap(long, conflicts_with = "gui")]
   cli: bool,
 
   /// 指定 VS Code 安装路径。若不提供，则尝试自动检测
@@ -103,6 +103,10 @@ pub struct CliArgs {
   /// 不发送统计数据
   #[clap(long)]
   pub no_stats: bool,
+
+  /// 跳过扩展管理步骤。仅当扩展管理无法正确运行时使用此选项
+  #[clap(long)]
+  pub skip_ext_manage: bool,
 }
 
 #[derive(Clone, PartialEq, ArgEnum)]
@@ -128,10 +132,11 @@ fn print_setup_help() {
   println!("\n\x1b[33mSETUPS:\x1b[0m");
   for (i, setup) in ENABLED_SETUPS.iter().enumerate() {
     println!(
-      "    \x1b[32m{:10}\x1b[0m - {} {}",
+      "    \x1b[32m{:10}\x1b[0m - {}{} \x1b[38;5;242m[{}]\x1b[0m",
       setup.id,
       setup.name,
-      if i == 0 { "(默认)" } else { "" }
+      if i == 0 { " (默认)" } else { "" },
+      setup.description,
     );
   }
 }
@@ -140,6 +145,9 @@ pub fn parse() -> Result<CliArgs> {
   let args = CliArgs::try_parse()?;
   log::setup(args.log_path.as_ref(), args.verbose.log_level_filter())?;
   tasks::statistics::set(!args.no_stats);
+  if args.skip_ext_manage {
+    tasks::extension::disable();
+  }
   Ok(args)
 }
 

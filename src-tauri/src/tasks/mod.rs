@@ -27,11 +27,11 @@ use crate::steps::compiler::{get_setup, stdchoose, CompilerSetup};
 use crate::steps::{compiler::Compiler, options::Options};
 use crate::utils::ToString;
 
-mod dotvscode;
-mod extension;
-mod run;
+pub mod dotvscode;
+pub mod extension;
+pub mod run;
 pub mod statistics;
-mod test;
+pub mod test;
 
 #[derive(Deserialize, Debug)]
 pub struct TaskInitArgs {

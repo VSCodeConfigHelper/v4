@@ -44,8 +44,12 @@ pub fn setup(arg: Option<&'static CompilerSetup>, y: bool) -> Result<&'static Co
     }
   } else {
     let q = Question::select("setup")
-      .message("选择编译器类型")
-      .choices(ENABLED_SETUPS.iter().map(|s| s.name))
+      .message("编译器类型：")
+      .choices(
+        ENABLED_SETUPS
+          .iter()
+          .map(|s| format!("{} \x1b[38;5;242m({})\x1b[0m", s.name, s.description)),
+      )
       .build();
     let i = prompt_one(q)?.as_list_item().unwrap().index;
     Ok(ENABLED_SETUPS[i])
@@ -83,7 +87,7 @@ pub fn compiler(setup: &'static CompilerSetup, arg: Option<String>, y: bool) -> 
         let mut rescan_idx = 0;
 
         match compilers.len() {
-          0 => builder = builder.message("未检测到可用的编译器。您打算…"),
+          0 => builder = builder.message("未检测到可用的编译器。您打算..."),
           1 => {
             return Ok(compilers.swap_remove(0));
           }
@@ -162,7 +166,6 @@ pub fn workspace(arg: Option<String>, y: bool) -> Result<String> {
   } else if y {
     Err(anyhow!("由于未从命令行指定工作文件夹，且用户输入被禁用；程序无法继续。请指定 -w 选项，或者关闭 -y 开关。"))
   } else {
-
     let question = Question::input("vscode")
       .message("工作文件夹路径：")
       .validate_on_key(|s, _| workspace::path_available(s).is_ok())

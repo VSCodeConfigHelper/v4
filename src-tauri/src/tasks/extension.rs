@@ -15,10 +15,10 @@
 // You should have received a copy of the GNU General Public License
 // along with vscch4.  If not, see <http://www.gnu.org/licenses/>.
 
-use log::{debug, trace};
+use log::{warn, debug, trace};
 use once_cell::sync::OnceCell;
 use anyhow::Result;
-
+use once_cell::sync::Lazy;
 #[cfg(windows)]
 use std::os::windows::process::CommandExt;
 use std::path::{Path, PathBuf};
@@ -28,21 +28,28 @@ use std::sync::Mutex;
 use crate::steps::vscode::adjust_path;
 #[cfg(windows)]
 use crate::utils::winapi::CREATE_NO_WINDOW;
-
 use super::TaskArgs;
 
+static ENABLED: Lazy<Mutex<bool>> = Lazy::new(|| Mutex::new(true));
+
+pub fn disable() {
+  *ENABLED.lock().unwrap() = false;
+}
+
 struct ExtensionManager {
+  enabled: bool,
   path: PathBuf,
   installed: Vec<String>,
 }
 
 impl ExtensionManager {
-  pub fn get(args: &TaskArgs) -> &Mutex<Self> {
+  fn get(args: &TaskArgs) -> &Mutex<Self> {
     static INSTANCE: OnceCell<Mutex<ExtensionManager>> = OnceCell::new();
     INSTANCE.get_or_init(|| {
       let path = adjust_path(Path::new(&args.vscode));
       debug!("初始化扩展管理器，路径：{:?}", &path);
       let mut instance = ExtensionManager {
+        enabled: *ENABLED.lock().unwrap(),
         path: path,
         installed: vec![],
       };
@@ -52,6 +59,11 @@ impl ExtensionManager {
   }
 
   fn run(&self, args: &[&str]) -> Result<String> {
+    if !self.enabled {
+      warn!("由于启用了 --skip-ext-manage，扩展管理命令 {:?} 被跳过。请手动管理扩展以保证配置结果正确。", args);
+      return Ok("".into());
+    }
+    
     let mut command = Command::new(&self.path);
     #[cfg(windows)]
     command.creation_flags(CREATE_NO_WINDOW);
