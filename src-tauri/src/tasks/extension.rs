@@ -69,16 +69,15 @@ impl ExtensionManager {
     #[cfg(windows)]
     command.creation_flags(CREATE_NO_WINDOW);
     
-    let stdout = command
+    let output = command
       .args(args)
-      .output()?
-      .stdout;
-    let stdout = String::from_utf8(stdout)?;
+      .output()?;
+    let stdout = String::from_utf8(output.stdout)?;
     trace!("Run code with args {:?}, got output: {:?}", args, stdout);
-    if command.status()?.code() != Some(0) {
-      Err(anyhow!("安装扩展出现错误：{}", stdout))
-    } else {
+    if output.status.success(){
       Ok(stdout)
+    } else {
+      Err(anyhow!("安装扩展出现错误：{}", stdout))
     }
   }
 
