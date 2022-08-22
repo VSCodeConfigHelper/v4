@@ -6,6 +6,11 @@
 - 修复了 MSVC 的错误的问题匹配设置（`vscext` 分支）
 - 对于非 MSVC 的构建任务，改用 `"type": "process"`（`vscext` 分支）
 
+## v4.0.0-beta.14
+*2022.8.22*
+- 修复了奇怪的无法在 Windows GUI 下启动 VS Code 的错误
+- 修复了 CLI 参数存在错误时，Windows 下观察不到输出的问题
+
 ## v4.0.0-beta.13
 *2022.8.22*
 - 增加了 `--skip-ext-manage` 开关（GUI/CLI 皆有效），用于跳过可能导致错误的扩展管理步骤

@@ -1,0 +1,16 @@
+{
+  "configurations": [
+  {
+    "type": "lldb",
+    "request": "launch",
+    "name": "Cargo launch",
+    "cargo": {
+      "args": [
+        "build"
+      ]
+    },
+    "program": "${cargo:program}",
+    "args": []
+  }
+  ]
+}

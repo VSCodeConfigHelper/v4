@@ -17,45 +17,54 @@
 
 #![cfg(windows)]
 
-use std::alloc::{alloc, dealloc, Layout};
-use std::ffi::{c_void, OsStr, OsString};
+use std::ffi::{c_void, OsString};
 use std::os::windows::prelude::*;
 use std::ptr;
 use std::slice;
 
 use anyhow::{anyhow, Result};
 
-use windows::core::{Interface, GUID};
-use windows::Win32::Foundation::PWSTR;
+use windows::core::{Interface, GUID, PCWSTR, PWSTR};
 use windows::Win32::Globalization::GetACP;
 use windows::Win32::System::Com::{
   CoCreateInstance, CoInitialize, CoTaskMemFree, CoUninitialize, IPersistFile, CLSCTX_INPROC_SERVER,
 };
 use windows::Win32::System::Console;
 use windows::Win32::System::Environment::ExpandEnvironmentStringsW;
+use windows::Win32::System::Threading::{
+  CreateProcessW, PROCESS_CREATION_FLAGS, PROCESS_INFORMATION, STARTUPINFOW,
+};
 use windows::Win32::UI::Shell::{IShellLinkW, SHGetKnownFolderPath, ShellLink};
 
 pub static CREATE_NO_WINDOW: u32 = windows::Win32::System::Threading::CREATE_NO_WINDOW.0;
 
+fn to_vec(s: &str) -> Vec<u16> {
+  s.encode_utf16().chain(std::iter::once(0)).collect()
+}
+
+macro_rules! pcwstr {
+  ( $( let $id:ident; )* ) => {
+    $(
+      let vec = to_vec($id);
+      let $id = PCWSTR(vec.as_ptr());
+    )*
+  }
+}
+
 pub fn expand_environment_strings(src: &str) -> Result<String> {
-  let src = OsStr::new(src);
+  pcwstr! {let src;}
 
   // Get buffer size
-  let size = unsafe { ExpandEnvironmentStringsW(src, PWSTR(ptr::null_mut()), 0) };
-  let layout = Layout::array::<u16>(size as usize)
-    .map_err(|_| anyhow!("Overflow during calculate alloc layout",))?;
-  let result: String;
+  let size = unsafe { ExpandEnvironmentStringsW(src, &mut []) };
+  let mut result: String;
 
   unsafe {
-    let buf = alloc(layout) as *mut u16;
-    let len = match ExpandEnvironmentStringsW(src, PWSTR(buf), size) {
-      0 => return Err(std::io::Error::last_os_error())?,
-      x => x,
+    let mut buf = vec![0; size as usize];
+    if ExpandEnvironmentStringsW(src, &mut buf) == 0 {
+      return Err(std::io::Error::last_os_error())?;
     };
-    result = OsString::from_wide(slice::from_raw_parts(buf, (len - 1) as usize))
-      .into_string()
-      .unwrap();
-    dealloc(buf as *mut u8, layout);
+    result = OsString::from_wide(&buf).into_string().unwrap();
+    result.pop();
   }
   Ok(result)
 }
@@ -85,10 +94,12 @@ pub fn get_acp() -> u32 {
 }
 
 pub fn create_lnk(lnk: &str, target: &str, desc: &str, args: &str) -> Result<()> {
-  let lnk = OsStr::new(lnk);
-  let target = OsStr::new(target);
-  let desc = OsStr::new(desc);
-  let args = OsStr::new(args);
+  pcwstr! {
+    let lnk;
+    let target;
+    let desc;
+    let args;
+  }
   unsafe {
     CoInitialize(ptr::null())?;
     let shell_link: IShellLinkW = CoCreateInstance(&ShellLink, None, CLSCTX_INPROC_SERVER)?;
@@ -103,9 +114,7 @@ pub fn create_lnk(lnk: &str, target: &str, desc: &str, args: &str) -> Result<()>
 }
 
 pub fn free_console() -> bool {
-  unsafe {
-    Console::FreeConsole().as_bool()
-  }
+  unsafe { Console::FreeConsole().as_bool() }
 }
 
 pub fn alloc_console() -> bool {
@@ -114,12 +123,14 @@ pub fn alloc_console() -> bool {
 
 pub fn enable_virtual_terminal() -> bool {
   unsafe {
-    let handle = Console::GetStdHandle(Console::STD_OUTPUT_HANDLE);
+    let handle = Console::GetStdHandle(Console::STD_OUTPUT_HANDLE).unwrap();
     let mut mode = Console::CONSOLE_MODE(0);
     if !Console::GetConsoleMode(handle, &mut mode).as_bool() {
       return false;
     }
-    if !Console::SetConsoleMode(handle, mode | Console::ENABLE_VIRTUAL_TERMINAL_PROCESSING).as_bool() {
+    if !Console::SetConsoleMode(handle, mode | Console::ENABLE_VIRTUAL_TERMINAL_PROCESSING)
+      .as_bool()
+    {
       return false;
     }
   }
@@ -131,7 +142,43 @@ extern "C" {
 }
 
 pub fn getch() {
-  unsafe { _getch(); }
+  unsafe {
+    _getch();
+  }
+}
+pub fn create_process(exe: &str, args: Vec<&str>) -> Result<()> {
+  let args = exe.to_string()
+    + " "
+    + &args
+      .iter()
+      .map(|s| format!("\"{}\"", s))
+      .collect::<Vec<_>>()
+      .join(" ");
+  let mut args: Vec<_> = to_vec(&args);
+  let mut si: STARTUPINFOW = Default::default();
+  si.cb = std::mem::size_of::<STARTUPINFOW>() as u32;
+  let mut pi: PROCESS_INFORMATION = Default::default();
+
+  let r;
+  unsafe {
+    r = CreateProcessW(
+      PCWSTR(std::ptr::null()),
+      PWSTR(args.as_mut_ptr()),
+      std::ptr::null(),
+      std::ptr::null(),
+      false,
+      PROCESS_CREATION_FLAGS(0),
+      std::ptr::null(),
+      PCWSTR(std::ptr::null()),
+      &si,
+      &mut pi,
+    );
+  }
+  if r.as_bool() {
+    return Ok(());
+  } else {
+    return Err(std::io::Error::last_os_error())?;
+  }
 }
 
 #[cfg(test)]
@@ -158,5 +205,10 @@ mod tests {
       get_known_folder_path(&FOLDERID_ProgramFilesX86).unwrap(),
       "C:\\Program Files (x86)".to_string()
     );
+  }
+
+  #[test]
+  fn test_create_process() {
+    create_process(r"cmd.exe", vec!["/K", "echo", "hello"]).unwrap();
   }
 }

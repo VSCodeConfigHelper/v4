@@ -77,6 +77,11 @@ pub fn run() {
           .unwrap();
       } else {
         println!("[\x1b[31mERROR\x1b[0m] 早期错误：{:?}", e);
+        #[cfg(windows)]
+        {
+          out!("按任意键退出...");
+          winapi::getch();
+        }
       }
       std::process::exit(1)
     }
