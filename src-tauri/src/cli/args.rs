@@ -68,6 +68,10 @@ pub struct CliArgs {
   #[clap(short, long)]
   pub args: Vec<String>,
 
+  /// 指定运行快捷键
+  #[clap(long, default_value = "f6")]
+  pub run_hotkey: String,
+
   /// 启用兼容模式
   #[clap(long)]
   pub compat: bool,

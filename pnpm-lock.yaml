@@ -9,6 +9,7 @@ specifiers:
   autoprefixer: ^10.4.2
   compare-versions: ^4.1.3
   daisyui: ^2.6.3
+  mitt: ^3.0.0
   postcss: ^8.4.5
   postcss-load-config: ^3.1.1
   svelte: ^3.0.0
@@ -23,6 +24,7 @@ dependencies:
   '@tauri-apps/api': 1.0.2
   compare-versions: 4.1.3
   daisyui: 2.6.3_qm7bagfnbv4vjkuayu3hle4sne
+  mitt: 3.0.0
 
 devDependencies:
   '@iconify/svelte': 2.1.2
@@ -892,6 +894,10 @@ packages:
 
   /minimist/1.2.5:
     resolution: {integrity: sha512-FM9nNUYrRBAELZQT3xeZQ7fmMOBg6nWNmJKTcgsJeaLstP/UODVpGsr5OhXhhXg6f+qtJ8uiZ+PUxkDWcgIXLw==}
+
+  /mitt/3.0.0:
+    resolution: {integrity: sha512-7dX2/10ITVyqh4aOSVI9gdape+t9l2/8QxHrFmUXu4EEUpdlxl6RudZUPZoc+zuY2hk1j7XxVroIVIan/pD/SQ==}
+    dev: false
 
   /mkdirp/0.5.5:
     resolution: {integrity: sha512-NKmAlESf6jMGym1++R0Ra7wvhV+wFW63FaSOFPwRahvea0gMUcGUhVeAg/0BC0wiv9ih5NYPB1Wn1UEI1/L+xQ==}

@@ -25,7 +25,8 @@
     writeFile,
   } from "@tauri-apps/api/fs";
   import { invoke } from "@tauri-apps/api/tauri";
-  import { onMount } from "svelte";
+  import { onDestroy, onMount } from "svelte";
+  import { emitter } from "./save_profile";
 
   import {
     compiler,
@@ -193,8 +194,10 @@
 
   // PAGE 0 通用
   let compatibleMode = false;
+  let runHotkey = "f6";
   function readProfile(profile: OptionsProfile) {
     ({
+      runHotkey,
       compatibleMode,
       activeLanguage,
       activeStandard,
@@ -216,6 +219,7 @@
     } = profile);
     useGnu &&= useGnuEnabled;
     pedantic &&= pedanticEnabled;
+    desktopShortcut &&= desktopShortcutEnabled;
     acpOutput &&= acpOutputEnabled;
     asciiCheck &&= asciiCheckEnabled;
     addToPath &&= addToPathEnabled;
@@ -227,37 +231,41 @@
         dir: BaseDirectory.App,
       });
       const profile: OptionsProfile = JSON.parse(text);
-      readProfile(profile);
+      readProfile({ ...DEFAULT_PROFILE, ...profile });
     } catch {
       readProfile(DEFAULT_PROFILE);
       lastProfileAvailable = false;
     }
   }
-  $: {
-    let profile: OptionsProfile = {
-      compatibleMode,
-      activeLanguage,
-      activeStandard,
-      asciiCheck,
-      removeExtensions,
-      addToPath,
-      openVscode,
-      desktopShortcut,
-      test,
-      collectData,
-      useGnu,
-      pedantic,
-      activeWarning,
-      activeOptLevel,
-      werror,
-      acpOutput,
-      staticStd,
-      customArgs,
-    };
-    options.update(() => ({
-      ...profile,
-      args: [...generatedArgs, ...customArgs],
-    }));
+
+  $: profile = {
+    runHotkey,
+    compatibleMode,
+    activeLanguage,
+    activeStandard,
+    asciiCheck,
+    removeExtensions,
+    addToPath,
+    openVscode,
+    desktopShortcut,
+    test,
+    collectData,
+    useGnu,
+    pedantic,
+    activeWarning,
+    activeOptLevel,
+    werror,
+    acpOutput,
+    staticStd,
+    customArgs,
+  } as OptionsProfile;
+
+  $: options.update(() => ({
+    ...profile,
+    args: [...generatedArgs, ...customArgs],
+  }));
+
+  function writeProfile() {
     createDir("", { dir: BaseDirectory.App, recursive: true }).then(() =>
       writeFile(
         {
@@ -272,7 +280,7 @@
   }
 
   async function scan(setup?: string) {
-    if (setup === void 0) return;
+    if (typeof setup === "undefined") return;
     ({
       useGnuEnabled,
       pedanticEnabled,
@@ -281,12 +289,16 @@
       addToPathEnabled,
       desktopShortcutEnabled,
     } = await invoke("options_scan", { setup }));
-    console.log(useGnuEnabled, pedanticEnabled, acpOutputEnabled, asciiCheckEnabled, addToPathEnabled, desktopShortcutEnabled);
   }
 
   onMount(async () => {
     await scan($compiler?.setup);
     await readLastProfile();
+    emitter.on("save_profile", writeProfile);
+  });
+
+  onDestroy(() => {
+    emitter.off("save_profile", writeProfile);
   });
 </script>
 
@@ -368,6 +380,15 @@
             type="checkbox"
             class="toggle toggle-lg toggle-primary"
             bind:checked={compatibleMode}
+          />
+        </div>
+        <div class="flex flex-row items-center">
+          <span class="font-bold mr-3">运行快捷键</span>
+          <input
+            type="text"
+            class="flex-grow input input-sm w-16"
+            bind:value={runHotkey}
+            disabled={compatibleMode}
           />
         </div>
       </div>
@@ -577,8 +598,6 @@
         />
       </div>
     </div>
-  {:else if activeTab === 4}
-    <div />
   {/if}
 </div>
 

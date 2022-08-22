@@ -24,6 +24,7 @@ export type Compiler = {
   packageString: string;
 };
 export type OptionsBase = {
+  runHotkey: string;
   compatibleMode: boolean;
   activeLanguage: string;
   activeStandard: string | null;
@@ -52,6 +53,7 @@ export type Options = OptionsBase & {
 }
 
 export const DEFAULT_PROFILE: OptionsProfile = {
+  runHotkey: "f6",
   compatibleMode: false,
   activeLanguage: "C++",
   activeStandard: null,
@@ -73,6 +75,7 @@ export const DEFAULT_PROFILE: OptionsProfile = {
 };
 
 export const NEWBIE_PROFILE: OptionsProfile = {
+  runHotkey: "f6",
   compatibleMode: false,
   activeLanguage: "C++",
   activeStandard: null,

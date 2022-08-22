@@ -22,6 +22,7 @@ use crate::utils::winapi::get_acp;
 #[derive(Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct Options {
+  pub run_hotkey: String,
   pub compatible_mode: bool,
   #[serde(rename = "activeLanguage")]
   pub language: String,

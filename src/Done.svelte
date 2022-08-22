@@ -22,6 +22,7 @@
   import { onMount } from "svelte";
 
   import { vscode, compiler, workspace, options, done } from "./config_store";
+import { emitter } from "./save_profile";
 
   type TaskResult =
     | {
@@ -73,6 +74,7 @@
         options: $options,
       },
     });
+    emitter.emit("save_profile");
   });
 </script>
 

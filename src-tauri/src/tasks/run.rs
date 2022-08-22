@@ -89,8 +89,8 @@ pub fn create_checker(_: &TaskArgs) -> Result<()> {
   panic!("Not supported on this platform")
 }
 
-pub fn create_keybinding(_: &TaskArgs) -> Result<()> {
-  let key = "f6";
+pub fn create_keybinding(args: &TaskArgs) -> Result<()> {
+  let key = &args.run_hotkey;
   let command = "workbench.action.tasks.runTask";
   let args = "run and pause";
 

@@ -194,6 +194,7 @@ fn cli(mut args: CliArgs) -> Result<()> {
       language: language.into(),
       args: args.args,
       standard: args.standard,
+      run_hotkey: args.run_hotkey,
       compatible_mode: args.compat,
       remove_extensions: args.remove_extensions,
       ascii_check: args.ascii_check,
