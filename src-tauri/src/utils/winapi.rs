@@ -25,15 +25,13 @@ use std::slice;
 use anyhow::{anyhow, Result};
 
 use windows::core::{Interface, GUID, PCWSTR, PWSTR};
+use windows::Win32::Foundation::HANDLE;
 use windows::Win32::Globalization::GetACP;
 use windows::Win32::System::Com::{
   CoCreateInstance, CoInitialize, CoTaskMemFree, CoUninitialize, IPersistFile, CLSCTX_INPROC_SERVER,
 };
 use windows::Win32::System::Console;
 use windows::Win32::System::Environment::ExpandEnvironmentStringsW;
-use windows::Win32::System::Threading::{
-  CreateProcessW, PROCESS_CREATION_FLAGS, PROCESS_INFORMATION, STARTUPINFOW,
-};
 use windows::Win32::UI::Shell::{IShellLinkW, SHGetKnownFolderPath, ShellLink};
 
 pub static CREATE_NO_WINDOW: u32 = windows::Win32::System::Threading::CREATE_NO_WINDOW.0;
@@ -114,11 +112,17 @@ pub fn create_lnk(lnk: &str, target: &str, desc: &str, args: &str) -> Result<()>
 }
 
 pub fn free_console() -> bool {
-  unsafe { Console::FreeConsole().as_bool() }
+  // https://github.com/rust-lang/rust/issues/100884
+  unsafe {
+    Console::SetStdHandle(Console::STD_INPUT_HANDLE, HANDLE(0)).as_bool()
+      && Console::SetStdHandle(Console::STD_OUTPUT_HANDLE, HANDLE(0)).as_bool()
+      && Console::SetStdHandle(Console::STD_ERROR_HANDLE, HANDLE(0)).as_bool()
+      && Console::FreeConsole().as_bool()
+  }
 }
 
 pub fn alloc_console() -> bool {
-  free_console() && unsafe { Console::AllocConsole().as_bool() }
+  unsafe { Console::FreeConsole().as_bool() && Console::AllocConsole().as_bool() }
 }
 
 pub fn enable_virtual_terminal() -> bool {
@@ -146,40 +150,6 @@ pub fn getch() {
     _getch();
   }
 }
-pub fn create_process(exe: &str, args: Vec<&str>) -> Result<()> {
-  let args = exe.to_string()
-    + " "
-    + &args
-      .iter()
-      .map(|s| format!("\"{}\"", s))
-      .collect::<Vec<_>>()
-      .join(" ");
-  let mut args: Vec<_> = to_vec(&args);
-  let mut si: STARTUPINFOW = Default::default();
-  si.cb = std::mem::size_of::<STARTUPINFOW>() as u32;
-  let mut pi: PROCESS_INFORMATION = Default::default();
-
-  let r;
-  unsafe {
-    r = CreateProcessW(
-      PCWSTR(std::ptr::null()),
-      PWSTR(args.as_mut_ptr()),
-      std::ptr::null(),
-      std::ptr::null(),
-      false,
-      PROCESS_CREATION_FLAGS(0),
-      std::ptr::null(),
-      PCWSTR(std::ptr::null()),
-      &si,
-      &mut pi,
-    );
-  }
-  if r.as_bool() {
-    return Ok(());
-  } else {
-    return Err(std::io::Error::last_os_error())?;
-  }
-}
 
 #[cfg(test)]
 mod tests {
@@ -205,10 +175,5 @@ mod tests {
       get_known_folder_path(&FOLDERID_ProgramFilesX86).unwrap(),
       "C:\\Program Files (x86)".to_string()
     );
-  }
-
-  #[test]
-  fn test_create_process() {
-    create_process(r"cmd.exe", vec!["/K", "echo", "hello"]).unwrap();
   }
 }
