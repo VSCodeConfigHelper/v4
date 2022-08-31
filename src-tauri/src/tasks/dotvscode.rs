@@ -22,7 +22,7 @@ use anyhow::Result;
 use log::debug;
 use serde_json::json;
 
-use super::run::*;
+use super::run;
 use super::TaskArgs;
 use crate::utils::ToString;
 
@@ -52,7 +52,7 @@ fn single_file_build_task(args: &TaskArgs) -> Result<serde_json::Value> {
   ];
   if args.compiler_setup.id == "msvc" {
     c_args.push("/EHsc".to_string());
-    c_args.push("/source-charset:utf-8".to_string());
+    c_args.push("/utf-8".to_string());
   }
   c_args.extend(args.args.clone());
 
@@ -62,7 +62,7 @@ fn single_file_build_task(args: &TaskArgs) -> Result<serde_json::Value> {
   }
 
   Ok(json!({
-    "type": "shell",
+    "type": if args.compiler_setup.id == "msvc" { "shell" } else { "process" },
     "label": "single file build",
     "command": compiler_cmd,
     "args": c_args,
@@ -78,56 +78,17 @@ fn single_file_build_task(args: &TaskArgs) -> Result<serde_json::Value> {
       "panel": "shared",
       "clear": true
     },
-    "problemMatcher": "$gcc"
+    "problemMatcher": if args.compiler_setup.id == "msvc" { "$msCompile" } else { "$gcc" }
   }))
 }
 
 fn pause_task() -> Result<serde_json::Value> {
-  let script_path = script_path().unwrap();
-  struct Process<'a> {
-    command: &'a str,
-    args: Vec<&'a str>,
-  }
-
-  #[cfg(target_os = "windows")]
-  let mut process = Process {
-    command: "START",
-    args: vec![
-      "C:\\Windows\\system32\\WindowsPowerShell\\v1.0\\powershell.exe",
-      "-ExecutionPolicy",
-      "ByPass",
-      "-NoProfile",
-      "-File",
-    ],
-  };
-
-  #[cfg(target_os = "macos")]
-  let command = script_path.join(PAUSE_CONSOLE_LAUNCHER.filename);
-  #[cfg(target_os = "macos")]
-  let process = Process {
-    command: command.to_str().unwrap(),
-    args: vec![],
-  };
-
-  #[cfg(target_os = "linux")]
-  let mut process = Process {
-    command: "x-terminal-emulator",
-    args: vec!["-e"],
-  };
-
-  #[cfg(not(target_os = "macos"))]
-  let pause_script_path = script_path.join(PAUSE_CONSOLE.filename);
-  #[cfg(not(target_os = "macos"))]
-  process.args.push(pause_script_path.to_str().unwrap());
-
   Ok(json!({
-    "type": "shell",
+    "type": "pause-console",
     "label": "run and pause",
-    "command": process.command,
+    "command": format!("${{fileDirname}}{}${{fileBasenameNoExtension}}.{}", PATH_SLASH, EXT),
     "dependsOn": "single file build",
-    "args": process.args.into_iter().map(serde_json::Value::from).chain(vec![
-      serde_json::Value::from(format!("${{fileDirname}}{}${{fileBasenameNoExtension}}.{}", PATH_SLASH, EXT)),
-    ]).collect::<Vec<_>>(),
+    "args": [],
     "presentation": {
       "reveal": "never",
       "focus": false,
@@ -140,7 +101,6 @@ fn pause_task() -> Result<serde_json::Value> {
   }))
 }
 
-#[cfg(windows)]
 fn ascii_check_task(_: &TaskArgs) -> Result<serde_json::Value> {
   Ok(json!({
     "type": "process",
@@ -152,7 +112,7 @@ fn ascii_check_task(_: &TaskArgs) -> Result<serde_json::Value> {
       "ByPass",
       "-NoProfile",
       "-File",
-      script_path().unwrap().join(CHECK_ASCII.filename).to_string(),
+      run::checker_path()?.to_string(),
       "${fileDirname}\\${fileBasenameNoExtension}.exe"
     ],
     "presentation": {
@@ -172,42 +132,35 @@ pub fn tasks_json(args: &TaskArgs) -> Result<()> {
   if !args.compatible_mode {
     task_list.push(pause_task()?);
   }
-  #[cfg(target_os = "windows")]
   if args.ascii_check {
     task_list.push(ascii_check_task(args)?);
   }
   let mut options = json!({});
 
   if cfg!(windows) {
-    let mut shell_args = vec!["/C".to_string()];
     if args.compiler_setup.id == "msvc" {
-      let cl_path = Path::new(&args.compiler_path)
-        .join("..\\..\\..\\..\\..\\..\\..\\..\\Common7\\Tools\\VsDevCmd.bat");
-      shell_args.push(format!("\"{}\"", cl_path.to_string()));
-      shell_args.push("&&".to_string());
-    }
+      let vcvars = Path::new(&args.compiler_path)
+        .join("..\\..\\..\\..\\..\\..\\..\\Auxiliary\\Build\\vcvars64.bat");
+      let vcvars = format!("\"{}\"", vcvars.to_string());
 
-    options.as_object_mut().unwrap().append(
-      json!({
+      options = json!({
         "shell": {
           "executable": "C:\\Windows\\System32\\cmd.exe",
-          "args": shell_args
+          "args": [
+            "/C",
+            vcvars,
+            "&&"
+          ]
         }
-      })
-      .as_object_mut()
-      .unwrap(),
-    );
+      });
+    }
     if super::mingw_setup(args.compiler_setup) {
       let path = args.compiler_path.parent().unwrap().to_string();
-      options.as_object_mut().unwrap().append(
-        json!({
-          "env": {
-            "Path": format!("{}{}${{env:Path}}", path, PATH_SEPARATOR)
-          }
-        })
-        .as_object_mut()
-        .unwrap(),
-      );
+      options = json!({
+        "env": {
+          "Path": format!("{}{}${{env:Path}}", path, PATH_SEPARATOR)
+        }
+      });
     }
   }
 
