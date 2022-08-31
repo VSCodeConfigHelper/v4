@@ -20,7 +20,9 @@ use log::{debug, info, trace};
 use serde::Serialize;
 
 use crate::steps::{
-  compiler::get_setup, compiler::Compiler, compiler::ENABLED_SETUPS, options::*, vscode, workspace,
+  compiler::{Id, Compiler, ENABLED_SETUPS, CompilerSetup},
+  options::*,
+  vscode, workspace,
 };
 use crate::tasks;
 use crate::tasks::TaskInitArgs;
@@ -73,7 +75,7 @@ fn vscode_scan() -> Option<String> {
 #[derive(Serialize, Debug)]
 #[serde(rename_all = "camelCase")]
 struct CompilerSetupListResult {
-  id: &'static str,
+  id: Id,
   name: &'static str,
   description: &'static str,
   how_to_install: &'static str,
@@ -92,7 +94,7 @@ fn compiler_setup_list() -> Vec<CompilerSetupListResult> {
       name: s.name,
       description: s.description,
       how_to_install: s.how_to_install,
-      is_mingw: ["llvm-mingw", "gcc-mingw"].contains(&s.id),
+      is_mingw: s.is_mingw(),
       can_verify: (s.verify).is_some(),
       can_install: (s.install).is_some(),
     })
@@ -102,17 +104,17 @@ fn compiler_setup_list() -> Vec<CompilerSetupListResult> {
 }
 
 #[tauri::command]
-fn compiler_scan(setup: String) -> Vec<Compiler> {
+fn compiler_scan(setup: Id) -> Vec<Compiler> {
   trace!("compiler_scan: <- {}", setup);
-  let result = (get_setup(&setup).scan)();
+  let result = (setup.scan)();
   trace!("compiler_scan: -> {:?}", result);
   result
 }
 
 #[tauri::command]
-fn compiler_verify(setup: String, path: String) -> VerifyResult<Compiler> {
+fn compiler_verify(setup: Id, path: String) -> VerifyResult<Compiler> {
   trace!("compiler_verify: <- {} {}", setup, path);
-  let result = if let Some(verify) = get_setup(&setup).verify {
+  let result = if let Some(verify) = setup.verify {
     match verify(&path) {
       Ok(compiler) => VerifyResult::Ok { value: compiler },
       Err(e) => VerifyResult::Err { message: e },
@@ -134,9 +136,9 @@ enum CompilerInstallResult {
 }
 
 #[tauri::command]
-fn compiler_install(setup: String) -> CompilerInstallResult {
+fn compiler_install(setup: Id) -> CompilerInstallResult {
   trace!("compiler_install: <- {}", setup);
-  let result = if let Some(install) = get_setup(&setup).install {
+  let result = if let Some(install) = setup.install {
     match install() {
       Ok(_) => return CompilerInstallResult::Ok,
       Err(e) => {

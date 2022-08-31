@@ -20,7 +20,7 @@
 use std::path::{Path, PathBuf};
 
 use super::common::test_compiler;
-use super::{verparse, Compiler, CompilerSetup};
+use super::{Compiler, CompilerSetup, CompilerType};
 use crate::utils::ToString;
 
 fn scan() -> Vec<Compiler> {
@@ -50,10 +50,8 @@ fn path_to_exe(path: &str, is_c: bool) -> PathBuf {
   path.parent().unwrap().join(basename)
 }
 
-pub static ID: &'static str = "gcc";
-
 pub static SETUP: CompilerSetup = CompilerSetup {
-  id: ID,
+  id: super::Id::GCC,
   name: "GCC",
   description: "GNU Compiler Collection",
   how_to_install: r"使用包管理器下载 GCC。比如，键入命令 <code>sudo apt install g++</code>。",
@@ -62,6 +60,6 @@ pub static SETUP: CompilerSetup = CompilerSetup {
   verify: Some(verify),
   install: None,
 
-  verparser: verparse::gcc,
+  ty: CompilerType::GCC,
   path_to_exe: path_to_exe,
 };

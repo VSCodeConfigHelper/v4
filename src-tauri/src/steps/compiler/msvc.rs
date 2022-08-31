@@ -22,16 +22,13 @@ use std::path::{Path, PathBuf};
 use std::process::Command;
 use std::{fs, str};
 
-use log::{warn, error, debug};
 use anyhow::Result;
+use log::{debug, error, warn};
 use serde::Deserialize;
 use serde_json;
 
-use super::verparse;
-use super::Compiler;
-use super::CompilerSetup;
-use crate::utils::winapi::get_known_folder_path;
-use crate::utils::winapi::CREATE_NO_WINDOW;
+use super::{Compiler, CompilerSetup, CompilerType};
+use crate::utils::winapi::{get_known_folder_path, CREATE_NO_WINDOW};
 use crate::utils::ToString;
 use windows::Win32::UI::Shell::{
   FOLDERID_LocalAppData, FOLDERID_ProgramData, FOLDERID_ProgramFilesX86,
@@ -109,8 +106,7 @@ fn scan() -> Vec<Compiler> {
     .ok()
     .and_then(|o| {
       // 受 https://github.com/microsoft/vswhere/issues/262 影响，某些 vswhere 可能存在编码错误
-      let s = String::from_utf8_lossy(&o.stdout)
-        .into_owned();
+      let s = String::from_utf8_lossy(&o.stdout).into_owned();
       debug!("vswhere.exe 输出：{}", s);
       serde_json::from_str(&s).ok()
     });
@@ -122,7 +118,7 @@ fn scan() -> Vec<Compiler> {
     .unwrap()
     .into_iter()
     .map(|info| Compiler {
-      setup: "msvc".to_string(),
+      setup: super::Id::MSVC,
       version: info.installation_version,
       path: info.installation_path,
       package_string: info.display_name,
@@ -135,7 +131,7 @@ fn install() -> Result<()> {
   Ok(())
 }
 
-fn path_to_cl(path: &str, _: bool) -> PathBuf {
+pub fn path_to_exe(path: &str, _: bool) -> PathBuf {
   let version_txt =
     Path::new(&path).join("VC\\Auxiliary\\Build\\Microsoft.VCToolsVersion.default.txt");
   let version = fs::read(version_txt).unwrap();
@@ -146,10 +142,8 @@ fn path_to_cl(path: &str, _: bool) -> PathBuf {
     .join("bin\\HostX64\\x64\\cl.exe")
 }
 
-pub static ID: &str = "msvc";
-
 pub static SETUP: CompilerSetup = CompilerSetup {
-  id: ID,
+  id: super::Id::MSVC,
   name: "VC++ 生成工具",
   description: "Microsoft Visual C++",
   how_to_install: r"下载 VC++ 生成工具安装器。运行安装器，按照提示完成安装。",
@@ -158,6 +152,6 @@ pub static SETUP: CompilerSetup = CompilerSetup {
   verify: None,
   install: Some(install),
 
-  verparser: verparse::gcc, // Not used
-  path_to_exe: path_to_cl,
+  ty: CompilerType::MSVC,
+  path_to_exe: path_to_exe,
 };

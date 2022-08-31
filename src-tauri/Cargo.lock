@@ -2901,6 +2901,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "serde_variant"
+version = "0.1.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "5f988d71f968b960b45cf71e3210662f0b23906256c87820077e4f101225c494"
+dependencies = [
+ "serde",
+]
+
+[[package]]
 name = "serde_with"
 version = "1.14.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3833,6 +3842,7 @@ dependencies = [
  "reqwest",
  "serde",
  "serde_json",
+ "serde_variant",
  "sysctl",
  "tauri",
  "tauri-build",

@@ -17,9 +17,10 @@
 
 use anyhow::Result;
 use log::debug;
-
-use super::TaskArgs;
 use std::fs;
+
+use crate::steps::compiler;
+use super::TaskArgs;
 
 fn c_comment(s: &str) -> String {
   format!("/* {} */", s)
@@ -104,7 +105,7 @@ pub fn generate(args: &TaskArgs) -> Result<()> {
       cmt!("按下 {} 后，你将在弹出的终端窗口中看到这一行字。", run_key),
       cmt!(
         "{}",
-        if args.compiler_setup.id == "gcc-mingw" {
+        if args.setup.id == compiler::Id::MinGW {
           "!! 重要提示：请您在编写代码前，确认文件名不含中文或特殊字符。 !!"
         } else {
           ""

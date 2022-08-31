@@ -20,7 +20,7 @@
 use std::path::{Path, PathBuf};
 
 use super::common::test_compiler;
-use super::{verparse, Compiler, CompilerSetup};
+use super::{Compiler, CompilerSetup, CompilerType};
 use crate::utils::ToString;
 
 fn scan() -> Vec<Compiler> {
@@ -52,10 +52,8 @@ pub fn path_to_exe(path: &str, is_c: bool) -> PathBuf {
   path.parent().unwrap().join(basename)
 }
 
-pub static ID: &'static str = "llvm";
-
 pub static SETUP: CompilerSetup = CompilerSetup {
-  id: ID,
+  id: super::Id::LLVM,
   name: "LLVM",
   description: "LLVM Clang compiler",
   how_to_install: r"使用包管理器下载 Clang。比如，键入命令 <code>sudo apt install clang++</code>。",
@@ -64,6 +62,6 @@ pub static SETUP: CompilerSetup = CompilerSetup {
   verify: Some(verify),
   install: None,
 
-  verparser: verparse::clang,
+  ty: CompilerType::LLVM,
   path_to_exe: path_to_exe,
 };

@@ -24,6 +24,8 @@ use serde_json::json;
 
 use super::run;
 use super::TaskArgs;
+use crate::steps::compiler::CompilerType;
+#[cfg(target_os = "macos")]
 use crate::utils::sysctl;
 use crate::utils::ToString;
 
@@ -32,12 +34,12 @@ pub static PATH_SLASH: &str = if cfg!(windows) { "\\" } else { "/" };
 pub static PATH_SEPARATOR: &str = if cfg!(windows) { ";" } else { ":" };
 
 fn single_file_build_task(args: &TaskArgs) -> Result<serde_json::Value> {
-  let debug = if args.compiler_setup.id == "msvc" {
+  let debug = if args.setup.is_msvc() {
     "/Zi"
   } else {
     "-g"
   };
-  let output = if args.compiler_setup.id == "msvc" {
+  let output = if args.setup.is_msvc() {
     "/Fe:"
   } else {
     "-o"
@@ -51,19 +53,19 @@ fn single_file_build_task(args: &TaskArgs) -> Result<serde_json::Value> {
       PATH_SLASH, EXT
     ),
   ];
-  if args.compiler_setup.id == "msvc" {
+  if args.setup.is_msvc() {
     c_args.push("/EHsc".to_string());
     c_args.push("/utf-8".to_string());
   }
   c_args.extend(args.args.clone());
 
   let mut compiler_cmd = args.compiler_path.to_string();
-  if args.compiler_setup.id == "msvc" {
+  if args.setup.is_msvc() {
     compiler_cmd = "cl.exe".to_string();
   }
 
   Ok(json!({
-    "type": if args.compiler_setup.id == "msvc" { "shell" } else { "process" },
+    "type": if args.setup.is_msvc() { "shell" } else { "process" },
     "label": "single file build",
     "command": compiler_cmd,
     "args": c_args,
@@ -79,7 +81,7 @@ fn single_file_build_task(args: &TaskArgs) -> Result<serde_json::Value> {
       "panel": "shared",
       "clear": true
     },
-    "problemMatcher": if args.compiler_setup.id == "msvc" { "$msCompile" } else { "$gcc" }
+    "problemMatcher": if args.setup.is_msvc() { "$msCompile" } else { "$gcc" }
   }))
 }
 
@@ -139,7 +141,7 @@ pub fn tasks_json(args: &TaskArgs) -> Result<()> {
   let mut options = json!({});
 
   if cfg!(windows) {
-    if args.compiler_setup.id == "msvc" {
+    if args.setup.is_msvc() {
       let vcvars = Path::new(&args.compiler_path)
         .join("..\\..\\..\\..\\..\\..\\..\\Auxiliary\\Build\\vcvars64.bat");
       let vcvars = format!("\"{}\"", vcvars.to_string());
@@ -154,8 +156,7 @@ pub fn tasks_json(args: &TaskArgs) -> Result<()> {
           ]
         }
       });
-    }
-    if super::mingw_setup(args.compiler_setup) {
+    } else if args.setup.is_mingw() {
       let path = args.compiler_path.parent().unwrap().to_string();
       options = json!({
         "env": {
@@ -181,20 +182,19 @@ pub fn tasks_json(args: &TaskArgs) -> Result<()> {
 }
 
 pub fn launch_json(args: &TaskArgs) -> Result<()> {
-  let debugger_name: String = if super::llvm_setup(args.compiler_setup) {
-    "lldb".into()
-  } else {
-    "gdb".into()
-  };
+  let debugger_name: String = match args.setup.ty {
+    CompilerType::GCC => "gdb",
+    CompilerType::LLVM => "lldb",
+    CompilerType::MSVC => "",
+  }
+  .into();
 
   let debugger_ext = if cfg!(windows) { ".exe" } else { "" };
 
-  let debug_type = if super::llvm_setup(args.compiler_setup) {
-    "lldb"
-  } else if args.compiler_setup.id == "msvc" {
-    "cppvsdbg"
-  } else {
-    "cppdbg"
+  let debug_type = match args.setup.ty {
+    CompilerType::GCC => "cppdbg",
+    CompilerType::LLVM => "lldb",
+    CompilerType::MSVC => "cppvsdbg",
   };
 
   let bin_path = args.compiler_path.parent().unwrap();
@@ -228,7 +228,7 @@ pub fn launch_json(args: &TaskArgs) -> Result<()> {
             PATH_SEPARATOR)
         },
         console_settings.0: console_settings.1,
-        "MIMode": debugger_name,          // Only used in GDB mode
+        "MIMode": debugger_name,          // Only used in cppdbg (GDB mode)
         "miDebuggerPath": debugger_path,  // ..
         "preLaunchTask": if args.ascii_check { "ascii check" } else { "single file build" },
         "internalConsosleOptions": "neverOpen"
@@ -246,14 +246,10 @@ pub fn launch_json(args: &TaskArgs) -> Result<()> {
 }
 
 pub fn c_cpp_properties_json(args: &TaskArgs) -> Result<()> {
-  let im_compiler = match args.compiler_setup.id {
-    "gcc-mingw" => "gcc",
-    "msvc" => "msvc",
-    "llvm-mingw" => "clang",
-    "gcc" => "gcc",
-    "llvm" => "clang",
-    "apple" => "clang",
-    _ => return Err(anyhow!("unknown compiler setup")),
+  let im_compiler = match args.setup.ty {
+    CompilerType::GCC => "gcc",
+    CompilerType::LLVM => "clang",
+    CompilerType::MSVC => "msvc",
   };
   let im_platform = std::env::consts::OS;
   let name = match im_platform {

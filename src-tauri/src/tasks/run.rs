@@ -28,7 +28,7 @@ use super::TaskArgs;
 pub fn create_checker(_: &TaskArgs) -> Result<()> {
   let path = dirs::data_dir()
     .ok_or(anyhow!("找不到用于存放脚本的路径。"))?
-    .join("vscch/check-ascii.ps1");
+    .join("vscch");
   fs::create_dir_all(&path)?;
   let filepath = path.join("check-ascii.ps1");
   fs::write(&filepath, include_str!("../scripts/check-ascii.ps1"))?;

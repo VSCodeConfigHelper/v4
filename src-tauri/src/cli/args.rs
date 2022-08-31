@@ -1,6 +1,7 @@
 use anyhow::{anyhow, Result};
 use clap::{AppSettings, ArgEnum, CommandFactory, Parser};
 use std::str::FromStr;
+use serde_variant::to_variant_name;
 
 use crate::log;
 use crate::steps::compiler::{CompilerSetup, ENABLED_SETUPS};
@@ -14,7 +15,7 @@ use crate::tasks;
 )]
 pub struct CliArgs {
   /// 显示此帮助信息并退出
-  #[clap(short, long, exclusive = true)]
+  #[clap(short = 'h', long, exclusive = true)]
   pub help: bool,
 
   /// 显示程序版本信息并退出
@@ -25,7 +26,7 @@ pub struct CliArgs {
   pub verbose: clap_verbosity_flag::Verbosity,
 
   /// 日志路径
-  #[clap(long)]
+  #[clap(short = 'L', long)]
   pub log_path: Option<String>,
 
   /// 关闭命令行交互操作，总是假设选择“是”
@@ -45,67 +46,67 @@ pub struct CliArgs {
   pub vscode: Option<String>,
 
   /// 指定编译器类型（见后）
-  #[clap(short, long)]
+  #[clap(short = 's', long)]
   pub setup: Option<&'static CompilerSetup>,
 
   /// 指定编译器路径。若不提供，则尝试寻找已安装的编译器
-  #[clap(short, long)]
+  #[clap(short = 'c', long)]
   pub compiler: Option<String>,
 
   /// 指定工作文件夹路径。使用 CLI 时必须提供
-  #[clap(short, long)]
+  #[clap(short = 'w', long)]
   pub workspace: Option<String>,
 
   /// 指定配置目标语言
-  #[clap(short, long, arg_enum, default_value = "cpp")]
+  #[clap(short = 'l', long, arg_enum, default_value = "cpp")]
   pub language: Language,
 
   /// 指定语言标准。若不提供，则工具根据编译器版本选取
-  #[clap(long, possible_values = ["c++98", "c++11", "c++14", "c++17", "c++20", "c++23", "c89", "c99", "c11", "c17"])]
+  #[clap(short = 'D', long, possible_values = ["c++98", "c++11", "c++14", "c++17", "c++20", "c++23", "c89", "c99", "c11", "c17"])]
   pub standard: Option<String>,
 
   /// 指定编译选项
-  #[clap(short, long)]
+  #[clap(short = 'a', long)]
   pub args: Vec<String>,
 
   /// 指定运行快捷键
-  #[clap(long, default_value = "f6")]
+  #[clap(short = 'H', long, default_value = "f6")]
   pub run_hotkey: String,
 
   /// 启用兼容模式
-  #[clap(long)]
+  #[clap(short = 'C', long)]
   pub compat: bool,
 
   /// 卸载多余的 VS Code 扩展
-  #[clap(long)]
+  #[clap(short = 'r', long)]
   pub remove_extensions: bool,
 
   /// 在调试前进行文件名中非 ASCII 字符的检查。仅 Windows 可用
-  #[clap(long)]
+  #[clap(short = 'i', long)]
   pub ascii_check: bool,
 
   /// 不将编译器添加到 Path 环境变量。仅 Windows 可用
-  #[clap(long)]
+  #[clap(short = 'E', long)]
   pub no_set_env: bool,
 
   /// 生成指向工作区文件夹的桌面快捷方式。仅 Windows 可用
-  #[clap(long)]
+  #[clap(short = 'd', long)]
   pub desktop_shortcut: bool,
 
   /// 配置完成后打开 VS Code
-  #[clap(short, long)]
+  #[clap(short = 'o', long)]
   pub open_vscode: bool,
 
   /// 强制生成测试文件
-  #[clap(long, conflicts_with = "no-test")]
+  #[clap(short = 't', long, conflicts_with = "no-test")]
   pub test: bool,
 
   /// 不生成测试文件
-  #[clap(long)]
+  #[clap(short = 'T', long)]
   pub no_test: bool,
 
   /// 不发送统计数据
-  #[clap(long)]
+  #[clap(short = 'S', long)]
   pub no_stats: bool,
 
   /// 跳过扩展管理步骤。仅当扩展管理无法正确运行时使用此选项
@@ -126,7 +127,7 @@ impl FromStr for &'static CompilerSetup {
   fn from_str(s: &str) -> Result<Self, Self::Err> {
     ENABLED_SETUPS
       .iter()
-      .find(|setup| setup.id == s)
+      .find(|setup| to_variant_name(&setup.id).unwrap() == s)
       .cloned()
       .ok_or_else(|| anyhow!("Unknown compiler setup: {}", s))
   }
