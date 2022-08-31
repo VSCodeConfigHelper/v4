@@ -15,21 +15,24 @@
 // You should have received a copy of the GNU General Public License
 // along with vscch4.  If not, see <http://www.gnu.org/licenses/>.
 
-pub mod winreg;
-pub mod winapi;
-pub mod sysctl;
+#![cfg(target_os = "macos")]
 
-pub trait ToString { 
-  fn to_string(&self) -> String;
+use anyhow::Result;
+use log::trace;
+use sysctl::Sysctl;
+pub enum Arch {
+  X64,
+  Aarch64
 }
 
-impl ToString for std::path::Path {
-  fn to_string(&self) -> String {
-    self.to_string_lossy().to_string()
-  }
-}
-impl ToString for std::path::PathBuf {
-  fn to_string(&self) -> String {
-    self.to_string_lossy().to_string()
+pub use Arch::*;
+
+pub fn get_arch() -> Result<Arch> {
+  let ctlval = sysctl::Ctl::new("kern.version")?.value()?.to_string();
+  trace!("sysctl by name 'kern.version': {}", ctlval);
+  if ctlval.contains("ARM64") {
+    Ok(Aarch64)
+  } else {
+    Ok(X64)
   }
 }

@@ -23,19 +23,12 @@ use anyhow::{anyhow, Result};
 use log::{debug, trace, warn};
 use serde_json::json;
 
-use super::{TaskArgs, extension};
-
-pub fn create_pauser(args: &TaskArgs) -> Result<()> {
-  extension::install_pauser(args)?;
-  #[cfg(target_os = "macos")]
-  {
-    set_terminal_preferences()?;
-  }
-  Ok(())
-}
+use super::TaskArgs;
 
 pub fn create_checker(_: &TaskArgs) -> Result<()> {
-  let path = dirs::data_dir().ok_or(anyhow!("找不到用于存放脚本的路径。"))?.join("vscch/check-ascii.ps1");
+  let path = dirs::data_dir()
+    .ok_or(anyhow!("找不到用于存放脚本的路径。"))?
+    .join("vscch/check-ascii.ps1");
   fs::create_dir_all(&path)?;
   let filepath = path.join("check-ascii.ps1");
   fs::write(&filepath, include_str!("../scripts/check-ascii.ps1"))?;
@@ -43,7 +36,11 @@ pub fn create_checker(_: &TaskArgs) -> Result<()> {
 }
 
 pub fn checker_path() -> Result<PathBuf> {
-  Ok(dirs::data_dir().ok_or(anyhow!("找不到用于存放脚本的路径。"))?.join("vscch/check-ascii.ps1"))
+  Ok(
+    dirs::data_dir()
+      .ok_or(anyhow!("找不到用于存放脚本的路径。"))?
+      .join("vscch/check-ascii.ps1"),
+  )
 }
 
 pub fn create_keybinding(args: &TaskArgs) -> Result<()> {
@@ -81,33 +78,5 @@ pub fn create_keybinding(args: &TaskArgs) -> Result<()> {
   }));
   let result = serde_json::Value::Array(result);
   fs::write(filepath, serde_json::to_string_pretty(&result)?)?;
-  Ok(())
-}
-
-#[cfg(target_os = "macos")]
-fn set_terminal_preferences() -> Result<()> {
-  debug!("写入设置到 com.apple.Terminal.plist 中...");
-  let preference_path = dirs::home_dir()
-    .ok_or(anyhow!("找不到家目录。"))?
-    .join("Library/Preferences/com.apple.Terminal.plist");
-  let mut preference = plist::Value::from_file(&preference_path)?;
-  trace!("{:?}", preference);
-  let preference = preference
-    .as_dictionary_mut()
-    .ok_or(anyhow!(".plist 不是一个字典。"))?;
-  let default_profile_name = preference
-    .get("Default Window Settings")
-    .and_then(|v| v.as_string())
-    .ok_or(anyhow!("Default Window Settings 字段解析错误。"))?
-    .to_owned();
-  let default_profile = preference
-    .get_mut("Window Settings")
-    .and_then(|v| v.as_dictionary_mut())
-    .and_then(|v| v.get_mut(&default_profile_name))
-    .and_then(|v| v.as_dictionary_mut())
-    .ok_or(anyhow!("Window Settings 字段解析错误。"))?;
-  default_profile.insert("shellExitAction".to_string(), plist::Value::from(0));
-  plist::to_file_binary(preference_path, preference)?;
-  debug!("写入设置完成。");
   Ok(())
 }

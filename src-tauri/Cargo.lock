@@ -2110,7 +2110,7 @@ dependencies = [
 [[package]]
 name = "os_info"
 version = "3.5.0"
-source = "git+https://github.com/Guyutongxue/os_info?branch=win-11#01713bf250b82649bf858c990d0a603cecb6ea19"
+source = "git+https://github.com/stanislav-tkach/os_info#268bb1cad8c3a20a5039676b95b2c498dbeeb16f"
 dependencies = [
  "log",
  "serde",
@@ -3170,6 +3170,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "sysctl"
+version = "0.5.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f99d037b2bef227ab8963f4b0acc33ecbb1f9a2e7365add7789372b387ec19e1"
+dependencies = [
+ "bitflags",
+ "byteorder",
+ "libc",
+ "thiserror",
+ "walkdir",
+]
+
+[[package]]
 name = "system-deps"
 version = "5.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3813,14 +3826,14 @@ dependencies = [
  "native-dialog",
  "once_cell",
  "open 2.1.3",
- "os_info 3.5.0 (git+https://github.com/Guyutongxue/os_info?branch=win-11)",
- "plist",
+ "os_info 3.5.0 (git+https://github.com/stanislav-tkach/os_info)",
  "rand 0.8.5",
  "regex",
  "requestty",
  "reqwest",
  "serde",
  "serde_json",
+ "sysctl",
  "tauri",
  "tauri-build",
  "version-compare 0.1.0",

@@ -246,7 +246,7 @@ pub fn list(mut args: TaskInitArgs) -> Vec<(&'static str, Box<dyn Fn() -> Result
     (extension::remove_unrecommended, a => a.remove_extensions),
     (extension::install_c_cpp, _ => true),
     (extension::install_code_lldb, a => llvm_setup(&a.compiler_setup)),
-    (run::create_pauser, a => !a.compatible_mode),
+    (extension::install_pauser, a => !a.compatible_mode),
     (run::create_keybinding, a => !a.compatible_mode),
     (debug::create_checker, a => a.ascii_check),
     (compiler::add_to_path, a => mingw_setup(&a.compiler_setup) && a.add_to_path),

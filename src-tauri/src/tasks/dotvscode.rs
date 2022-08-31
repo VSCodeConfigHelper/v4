@@ -18,12 +18,13 @@
 use std::fs;
 use std::path::Path;
 
-use anyhow::Result;
+use anyhow::{anyhow, Result};
 use log::debug;
 use serde_json::json;
 
 use super::run;
 use super::TaskArgs;
+use crate::utils::sysctl;
 use crate::utils::ToString;
 
 pub static EXT: &str = if cfg!(windows) { "exe" } else { "out" };
@@ -245,24 +246,31 @@ pub fn launch_json(args: &TaskArgs) -> Result<()> {
 }
 
 pub fn c_cpp_properties_json(args: &TaskArgs) -> Result<()> {
-  let intellisense_mode = match args.compiler_setup.id {
-    "gcc-mingw" => "windows-gcc-x64",
-    "msvc" => "windows-msvc-x64",
-    "llvm-mingw" => "windows-clang-x64",
-    "gcc" => "linux-gcc-x64", // TODO: Should be platform specific
-    "llvm" => "linux-clang-x64",
-    "apple" => "macos-clang-x64",
-    _ => panic!(),
+  let im_compiler = match args.compiler_setup.id {
+    "gcc-mingw" => "gcc",
+    "msvc" => "msvc",
+    "llvm-mingw" => "clang",
+    "gcc" => "gcc",
+    "llvm" => "clang",
+    "apple" => "clang",
+    _ => return Err(anyhow!("unknown compiler setup")),
+  };
+  let im_platform = std::env::consts::OS;
+  let name = match im_platform {
+    "windows" => "Win32",
+    "macos" => "Mac",
+    "linux" => "Linux",
+    _ => return Err(anyhow!("unknown platform")),
   };
 
-  #[cfg(target_os = "windows")]
-  let platform = "Win32";
+  #[cfg(not(target_os = "macos"))]
+  let im_arch = "x64";
 
   #[cfg(target_os = "macos")]
-  let platform = "Mac";
-
-  #[cfg(target_os = "linux")]
-  let platform = "Linux";
+  let im_arch = match sysctl::get_arch()? {
+    sysctl::Aarch64 => "arm64",
+    sysctl::X64 => "x64",
+  };
 
   let standard_key = if args.is_c {
     "cStandard"
@@ -274,13 +282,13 @@ pub fn c_cpp_properties_json(args: &TaskArgs) -> Result<()> {
     "version": 4i32,
     "configurations": [
       {
-        "name": platform,
+        "name": name,
         "includePath": [
           "${{workspaceFolder}}/**"
         ],
         "compilerPath": args.compiler_path.to_string(),
         standard_key: args.standard.to_ascii_lowercase(),
-        "intelliSenseMode": intellisense_mode,
+        "intelliSenseMode": format!("{}-{}-{}", im_platform, im_compiler, im_arch),
       }
     ]
   });

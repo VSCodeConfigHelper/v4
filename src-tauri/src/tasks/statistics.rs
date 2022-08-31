@@ -15,7 +15,7 @@
 // You should have received a copy of the GNU General Public License
 // along with vscch4.  If not, see <http://www.gnu.org/licenses/>.
 
-use anyhow::{anyhow, Error, Result};
+use anyhow::{Error, Result};
 use log::{debug, error, trace, warn};
 use once_cell::sync::Lazy;
 use rand::distributions::Slice;
