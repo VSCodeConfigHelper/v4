@@ -173,9 +173,7 @@ pub fn tasks_json(args: &TaskArgs) -> Result<()> {
 
   debug!("tasks.json: {}", json);
 
-  let path = Path::new(&args.workspace)
-    .join(".vscode")
-    .join("tasks.json");
+  let path = args.workspace.join(".vscode").join("tasks.json");
   fs::write(path, serde_json::to_string_pretty(&json)?)?;
   Ok(())
 }
@@ -238,9 +236,7 @@ pub fn launch_json(args: &TaskArgs) -> Result<()> {
 
   debug!("launch.json: {}", json);
 
-  let path = Path::new(&args.workspace)
-    .join(".vscode")
-    .join("launch.json");
+  let path = args.workspace.join(".vscode").join("launch.json");
   fs::write(path, serde_json::to_string_pretty(&json)?)?;
   Ok(())
 }
@@ -295,15 +291,13 @@ pub fn c_cpp_properties_json(args: &TaskArgs) -> Result<()> {
 
   debug!("c_cpp_properties.json: {}", json);
 
-  let path = Path::new(&args.workspace)
-    .join(".vscode")
-    .join("c_cpp_properties.json");
+  let path = args.workspace.join(".vscode").join("c_cpp_properties.json");
   fs::write(path, serde_json::to_string_pretty(&json)?)?;
   Ok(())
 }
 
 pub fn create_folder(args: &TaskArgs) -> Result<()> {
-  let path = Path::new(&args.workspace).join(".vscode");
+  let path = args.workspace.join(".vscode");
   fs::create_dir_all(&path)?;
   Ok(())
 }

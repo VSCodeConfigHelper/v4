@@ -20,6 +20,7 @@ use derivative::*;
 use log::{debug, info, trace, warn};
 use serde::Deserialize;
 
+use std::fs;
 use std::path::PathBuf;
 use std::{path::Path, sync::Arc};
 
@@ -48,7 +49,7 @@ pub struct TaskArgs {
   #[derivative(Debug = "ignore")]
   pub compiler_setup: &'static CompilerSetup,
   pub compiler_path: PathBuf,
-  pub workspace: String,
+  pub workspace: PathBuf,
   pub run_hotkey: String,
   pub compatible_mode: bool,
   pub is_c: bool,
@@ -128,8 +129,8 @@ mod shortcut {
     create_lnk(
       path.to_str().unwrap(),
       &args.vscode,
-      &format!("Open VS Code at {}", args.workspace),
-      &format!("\"{}\"", args.workspace),
+      &format!("Open VS Code at {}", args.workspace.to_string()),
+      &format!("\"{}\"", args.workspace.to_string()),
     )?;
     Ok(())
   }
@@ -144,7 +145,7 @@ mod vscode {
   use super::*;
 
   pub fn open(args: &TaskArgs) -> Result<()> {
-    let mut vscode_args = vec![args.workspace.as_str()];
+    let mut vscode_args = vec![args.workspace.to_str().expect("to_str err")];
     if let Some(test_file) = &args.test_file {
       vscode_args.push("--goto");
       vscode_args.push(test_file.as_str());
@@ -172,15 +173,17 @@ macro_rules! generate_task {
 pub fn list(mut args: TaskInitArgs) -> Vec<(&'static str, Box<dyn Fn() -> Result<()> + Send>)> {
   let is_c = args.options.language == "C";
   let file_ext = if is_c { "c" } else { "cpp" };
+  let workspace =
+    fs::canonicalize(&args.workspace).unwrap_or_else(|_| PathBuf::from(&args.workspace));
   let test_file = {
-    let mut path = Path::new(&args.workspace).join(format!("helloworld.{}", file_ext));
+    let mut path = workspace.join(format!("helloworld.{}", file_ext));
     if match args.options.test {
       Some(test) => test,
       None => !path.exists(),
     } {
       let mut i = 1;
       while path.exists() {
-        path = Path::new(&args.workspace).join(format!("helloworld({}).{}", i, file_ext));
+        path = workspace.join(format!("helloworld({}).{}", i, file_ext));
         i += 1;
       }
       Some(path.to_string())
@@ -219,7 +222,7 @@ pub fn list(mut args: TaskInitArgs) -> Vec<(&'static str, Box<dyn Fn() -> Result
     vscode: args.vscode,
     compiler_setup: setup,
     compiler_path: (setup.path_to_exe)(&args.compiler.path, is_c),
-    workspace: args.workspace,
+    workspace: workspace,
     run_hotkey: args.options.run_hotkey,
     compatible_mode: args.options.compatible_mode,
     is_c: is_c,

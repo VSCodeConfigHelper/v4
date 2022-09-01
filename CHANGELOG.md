@@ -1,10 +1,12 @@
 # 更新日志
 
-## \[v4.0.0\]
-- 使用 Console Pauser 代替自定义脚本（`vscext` 分支）
-- 修复了 MSVC 不能生成 64 位可执行文件的问题（`vscext` 分支）
-- 修复了 MSVC 的错误的问题匹配设置（`vscext` 分支）
-- 对于非 MSVC 的构建任务，改用 `"type": "process"`（`vscext` 分支）
+## v4.0.0-beta.15
+*2022.9.1*
+- 使用 Console Pauser 代替自定义脚本；增加 Mac 下 iTerm2 的支持
+- 修复了 MSVC 不能生成 64 位可执行文件的问题
+- 修复了 MSVC 的错误的问题匹配设置
+- 对于非 MSVC 的构建任务，改用 `"type": "process"`
+- 增加了更多命令行短选项
 
 ## v4.0.0-beta.14
 *2022.8.22*
