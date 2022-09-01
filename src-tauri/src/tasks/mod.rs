@@ -173,8 +173,14 @@ macro_rules! generate_task {
 pub fn list(mut args: TaskInitArgs) -> Vec<(&'static str, Box<dyn Fn() -> Result<()> + Send>)> {
   let is_c = args.options.language == "C";
   let file_ext = if is_c { "c" } else { "cpp" };
-  let workspace =
-    fs::canonicalize(&args.workspace).unwrap_or_else(|_| PathBuf::from(&args.workspace));
+  let workspace = {
+    let path = Path::new(&args.workspace);
+    if path.is_absolute() {
+      path.to_path_buf()
+    } else {
+      std::env::current_dir().unwrap().join(path)
+    }
+  };
   let test_file = {
     let mut path = workspace.join(format!("helloworld.{}", file_ext));
     if match args.options.test {
