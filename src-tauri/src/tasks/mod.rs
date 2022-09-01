@@ -24,7 +24,7 @@ use std::fs;
 use std::path::PathBuf;
 use std::{path::Path, sync::Arc};
 
-use crate::steps::compiler::{get_setup, stdchoose, CompilerSetup};
+use crate::steps::compiler::{stdchoose, CompilerSetup, CompilerType};
 use crate::steps::{compiler::Compiler, options::Options};
 use crate::utils::ToString;
 
@@ -47,7 +47,7 @@ pub struct TaskInitArgs {
 pub struct TaskArgs {
   pub vscode: String,
   #[derivative(Debug = "ignore")]
-  pub compiler_setup: &'static CompilerSetup,
+  pub setup: &'static CompilerSetup,
   pub compiler_path: PathBuf,
   pub workspace: PathBuf,
   pub run_hotkey: String,
@@ -191,20 +191,17 @@ pub fn list(mut args: TaskInitArgs) -> Vec<(&'static str, Box<dyn Fn() -> Result
       None
     }
   };
-  let setup = get_setup(&args.compiler.setup);
+  let setup = *args.compiler.setup;
   let standard = args.options.standard.as_ref().cloned().unwrap_or_else(|| {
-    let std_p = match setup.id {
-      "gcc-mingw" => stdchoose::gcc,
-      "clang-mingw" => stdchoose::clang,
-      "gcc" => stdchoose::gcc,
-      "llvm" => stdchoose::clang,
-      "apple" => stdchoose::clang,
-      _ => (|_| ("c++20", "c17")) as fn(&str) -> (&'static str, &'static str),
+    let std_p = match setup.ty {
+      CompilerType::GCC => stdchoose::gcc,
+      CompilerType::LLVM => stdchoose::clang,
+      CompilerType::MSVC => (|_| ("c++20", "c17")) as fn(&str) -> (&'static str, &'static str),
     }(&args.compiler.version);
     (if is_c { std_p.1 } else { std_p.0 }).into()
   });
   {
-    let std_arg_prefix = if setup.id == "msvc" { "/std:" } else { "-std=" };
+    let std_arg_prefix = if setup.is_msvc() { "/std:" } else { "-std=" };
     if !args
       .options
       .args
@@ -220,7 +217,7 @@ pub fn list(mut args: TaskInitArgs) -> Vec<(&'static str, Box<dyn Fn() -> Result
 
   let args = Arc::from(TaskArgs {
     vscode: args.vscode,
-    compiler_setup: setup,
+    setup,
     compiler_path: (setup.path_to_exe)(&args.compiler.path, is_c),
     workspace: workspace,
     run_hotkey: args.options.run_hotkey,
@@ -248,11 +245,11 @@ pub fn list(mut args: TaskInitArgs) -> Vec<(&'static str, Box<dyn Fn() -> Result
   generate_task![
     (extension::remove_unrecommended, a => a.remove_extensions),
     (extension::install_c_cpp, _ => true),
-    (extension::install_code_lldb, a => llvm_setup(&a.compiler_setup)),
+    (extension::install_code_lldb, a => a.setup.ty == CompilerType::LLVM),
     (extension::install_pauser, a => !a.compatible_mode),
     (run::create_keybinding, a => !a.compatible_mode),
     (debug::create_checker, a => a.ascii_check),
-    (compiler::add_to_path, a => mingw_setup(&a.compiler_setup) && a.add_to_path),
+    (compiler::add_to_path, a => a.setup.is_mingw() && a.add_to_path),
     (dotvscode::create_folder, _ => true),
     (dotvscode::tasks_json, _ => true),
     (dotvscode::launch_json, _ => true),
@@ -266,12 +263,4 @@ pub fn list(mut args: TaskInitArgs) -> Vec<(&'static str, Box<dyn Fn() -> Result
   .filter(|t| (t.validator)(&args))
   .map(mapper)
   .collect()
-}
-
-fn llvm_setup(setup: &CompilerSetup) -> bool {
-  ["llvm-mingw", "llvm", "apple"].contains(&setup.id)
-}
-
-fn mingw_setup(setup: &CompilerSetup) -> bool {
-  ["gcc-mingw", "llvm-mingw"].contains(&setup.id)
 }

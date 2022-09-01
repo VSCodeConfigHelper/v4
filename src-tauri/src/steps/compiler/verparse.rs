@@ -18,9 +18,7 @@
 use anyhow::{anyhow, Result};
 use regex::Regex;
 
-pub type Parser = fn(&str) -> Result<(&str, &str)>;
-
-pub fn gcc(version_text: &str) ->Result<(&str, &str)>{
+pub fn gcc(version_text: &str) -> Result<(&str, &str)> {
   let re = Regex::new(r"^\S*g(cc|\+\+)\S* \((.*)\) (.+)$").unwrap();
   match re.captures(version_text) {
     Some(caps) => Ok((caps.get(3).unwrap().as_str(), caps.get(2).unwrap().as_str())),
@@ -31,7 +29,10 @@ pub fn gcc(version_text: &str) ->Result<(&str, &str)>{
 pub fn clang(version_text: &str) -> Result<(&str, &str)> {
   let re = Regex::new(r"(.* )?clang version (.+?)( \(.*\))?$").unwrap();
   match re.captures(version_text) {
-    Some(caps) => Ok((caps.get(2).unwrap().as_str(), caps.get(3).map(|m| m.as_str()).unwrap_or(""))),
+    Some(caps) => Ok((
+      caps.get(2).unwrap().as_str(),
+      caps.get(3).map(|m| m.as_str()).unwrap_or(""),
+    )),
     None => Err(anyhow!("clang version parse error"))?,
   }
 }

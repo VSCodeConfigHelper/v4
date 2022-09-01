@@ -18,6 +18,7 @@ tauri-build = { version = "1.0.0-rc.7", features = [] }
 anyhow = { version = "1.0.55", features = ["backtrace"] }
 chrono = "0.4.19"
 clap = { version = "3.1.6", features = ["derive"] }
+clap-verbosity-flag = "1.0.1"
 derivative = "2.2.0"
 dirs = "4.0.0"
 fern = { version = "0.6.0", features = ["colored"] }
@@ -31,12 +32,12 @@ rand = "0.8.5"
 regex = "1.5.4"
 requestty = { git = "https://github.com/Lutetium-Vanadium/requestty" }
 reqwest = { version = "0.11", features = ["blocking", "json"] }
-serde_json = "1.0"
+serde_json = "1.0.85"
+serde_variant = "0.1.1"
 serde = { version = "1.0", features = ["derive"] }
 tauri = { version = "1.0.0", features = ["api-all"] }
 version-compare = "0.1.0"
 which = "4.2.4"
-clap-verbosity-flag = "1.0.1"
 
 [target.'cfg(windows)'.dependencies]
 winreg = "0.10.1"

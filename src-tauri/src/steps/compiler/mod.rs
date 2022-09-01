@@ -15,24 +15,27 @@
 // You should have received a copy of the GNU General Public License
 // along with vscch4.  If not, see <http://www.gnu.org/licenses/>.
 
-use serde::{Deserialize, Serialize};
-use std::path::PathBuf;
 use anyhow::Result;
+use serde::{Deserialize, Serialize};
+use serde_variant::to_variant_name;
+use std::ops::Deref;
+use std::path::PathBuf;
+use std::fmt;
 
-pub mod verparse;
 pub mod stdchoose;
+mod verparse;
 
+pub mod apple;
 mod common;
-pub mod mingw;
-pub mod msvc;
 pub mod gcc;
 pub mod llvm;
-pub mod apple;
+pub mod mingw;
+pub mod msvc;
 
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct Compiler {
-  pub setup: String,
+  pub setup: Id,
   pub path: String,
   pub version: String,
   package_string: String,
@@ -40,9 +43,13 @@ pub struct Compiler {
 
 impl Compiler {
   pub fn new(setup: &CompilerSetup, path: &str, version_text: &str) -> Option<Compiler> {
-    let (version, package_string) = (setup.verparser)(version_text).ok()?;
+    let (version, package_string) = match setup.ty {
+      CompilerType::GCC => verparse::gcc(version_text).ok()?,
+      CompilerType::LLVM => verparse::clang(version_text).ok()?,
+      CompilerType::MSVC => return None,
+    };
     let compiler = Compiler {
-      setup: setup.id.to_string(),
+      setup: setup.id,
       path: path.to_string(),
       version: version.to_string(),
       package_string: package_string.to_string(),
@@ -51,8 +58,44 @@ impl Compiler {
   }
 }
 
+#[derive(Serialize, Deserialize, PartialEq, Debug, Clone, Copy)]
+pub enum Id {
+  #[serde(rename = "msvc")]
+  MSVC,
+  #[serde(rename = "gcc-mingw")]
+  MinGW,
+  #[serde(rename = "llvm-mingw")]
+  LLVMMinGW,
+  #[serde(rename = "gcc")]
+  GCC,
+  #[serde(rename = "llvm")]
+  LLVM,
+  #[serde(rename = "apple")]
+  Apple,
+}
+
+impl fmt::Display for Id {
+  fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    write!(f, "{}", to_variant_name(self).unwrap())
+  }
+}
+
+impl Deref for Id {
+  type Target = &'static CompilerSetup;
+  fn deref(&self) -> &&'static CompilerSetup {
+    ENABLED_SETUPS.iter().find(|s| s.id == *self).unwrap()
+  }
+}
+
+#[derive(PartialEq)]
+pub enum CompilerType {
+  GCC,
+  LLVM,
+  MSVC,
+}
+
 pub struct CompilerSetup {
-  pub id: &'static str,
+  pub id: Id,
   pub name: &'static str,
   pub description: &'static str,
   pub how_to_install: &'static str,
@@ -61,8 +104,18 @@ pub struct CompilerSetup {
   pub verify: Option<fn(&str) -> Result<Compiler, &'static str>>,
   pub install: Option<fn() -> Result<()>>,
 
-  pub verparser: verparse::Parser,
+  pub ty: CompilerType,
   pub path_to_exe: fn(path: &str, is_c: bool) -> PathBuf,
+}
+
+impl CompilerSetup {
+  pub fn is_mingw(&self) -> bool {
+    self.id == Id::MinGW || self.id == Id::LLVMMinGW
+  }
+
+  pub fn is_msvc(&self) -> bool {
+    self.id == Id::MSVC
+  }
 }
 
 #[cfg(target_os = "windows")]
@@ -74,7 +127,3 @@ pub static ENABLED_SETUPS: &[&CompilerSetup] = &[&apple::SETUP];
 
 #[cfg(target_os = "linux")]
 pub static ENABLED_SETUPS: &[&CompilerSetup] = &[&gcc::SETUP, &llvm::SETUP];
-
-pub fn get_setup(id: &str) -> &'static CompilerSetup {
-  ENABLED_SETUPS.iter().find(|s| s.id == id).unwrap()
-}
