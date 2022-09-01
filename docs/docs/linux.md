@@ -79,10 +79,14 @@ chmod +x ./vscch_blah_blah_blah.AppImage
 
 如果配置选项中勾选了“配置完成后自动启动 VS Code”，且未禁用“生成测试文件”，则工具将自动为你打开工作文件夹，并显示工具生成的测试代码。
 
+如果你第一次使用 LLVM/Clang 编译器，CodeLLDB 扩展会启动并下载必要组件。请耐心等待其完成。如无法下载，可尝试切换网络环境。
+
 ![1661774628024](image/linux/1661774628024.png)
 
 在该页面按下运行快捷键（默认为 <kbd>F6</kbd>），即可编译并运行该代码。
 
 ![1661774925069](image/linux/1661774925069.png)
+
+> 此时优先弹出注册在 X 窗口系统中的终端模拟器（`x-terminal-emulator`）。在 WSL 下，还会尝试使用宿主系统弹窗。如果运行失败，你可以将具体问题反馈到 [pause-console 仓库](https://github.com/VSCodeConfigHelper/pause-console/issues)。
 
 在该页面按下调试快捷键（默认为 <kbd>F5</kbd>），即可调试该代码。调试前建议打断点。
