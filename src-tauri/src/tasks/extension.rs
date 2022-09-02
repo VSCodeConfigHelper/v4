@@ -15,10 +15,10 @@
 // You should have received a copy of the GNU General Public License
 // along with vscch4.  If not, see <http://www.gnu.org/licenses/>.
 
-use log::{warn, debug, trace};
-use once_cell::sync::OnceCell;
-use anyhow::{Result, anyhow};
+use anyhow::{anyhow, Result};
+use log::{debug, trace, warn};
 use once_cell::sync::Lazy;
+use once_cell::sync::OnceCell;
 
 #[cfg(windows)]
 use std::os::windows::process::CommandExt;
@@ -26,10 +26,10 @@ use std::path::{Path, PathBuf};
 use std::process::Command;
 use std::sync::Mutex;
 
+use super::TaskArgs;
 use crate::steps::vscode::adjust_path;
 #[cfg(windows)]
 use crate::utils::winapi::CREATE_NO_WINDOW;
-use super::TaskArgs;
 
 static ENABLED: Lazy<Mutex<bool>> = Lazy::new(|| Mutex::new(true));
 
@@ -60,29 +60,35 @@ impl ExtensionManager {
   }
 
   fn run(&self, args: &[&str]) -> Result<String> {
-    if !self.enabled {
-      warn!("由于启用了 --skip-ext-manage，扩展管理命令 {:?} 被跳过。请手动管理扩展以保证配置结果正确。", args);
-      return Ok("".into());
-    }
-    
-    let mut command = Command::new(&self.path);
-    #[cfg(windows)]
-    command.creation_flags(CREATE_NO_WINDOW);
-    
-    let output = command
-      .args(args)
-      .output()?;
-    let stdout = String::from_utf8(output.stdout)?;
-    trace!("Run code with args {:?}, got output: {:?}", args, stdout);
-    if output.status.success(){
-      Ok(stdout)
+    let (suc, output) = self.run_lossy(args)?;
+    if suc {
+      Ok(output)
     } else {
-      Err(anyhow!("安装扩展出现错误：{}", stdout))
+      Err(anyhow!("安装扩展出现错误：{}", output))
     }
   }
 
+  /// 返回：(是否成功, stdout)
+  fn run_lossy(&self, args: &[&str]) -> Result<(bool, String)> {
+    if !self.enabled {
+      warn!("由于启用了 --skip-ext-manage，扩展管理命令 {:?} 被跳过。请手动管理扩展以保证配置结果正确。", args);
+      return Ok((true, "".into()));
+    }
+
+    let mut command = Command::new(&self.path);
+    #[cfg(windows)]
+    command.creation_flags(CREATE_NO_WINDOW);
+
+    let output = command.args(args).output()?;
+    let stdout = String::from_utf8(output.stdout)?;
+    trace!("Run code with args {:?}, got output: {:?}", args, stdout);
+    let suc = output.status.success();
+    Ok((suc, stdout))
+  }
+
   fn update(&mut self) -> Result<()> {
-    let output = self.run(&["--list-extensions"])?;
+    // 有时这个命令的返回值不是 0，不知道为什么，总之先忽略它的返回值
+    let (_, output) = self.run_lossy(&["--list-extensions"])?;
     self.installed = output.lines().map(|line| line.to_string()).collect();
     debug!("已安装的扩展有：{:?}", &self.installed);
     Ok(())
