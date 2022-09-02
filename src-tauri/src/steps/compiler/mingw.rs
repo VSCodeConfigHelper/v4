@@ -96,7 +96,7 @@ fn install_gcc() -> Result<()> {
 }
 
 fn install_clang() -> Result<()> {
-  open::that("https://github.com/mstorsjo/llvm-mingw/releases")?;
+  open::that("https://v4.vscch.tk/api/llvm-mingw")?;
   Ok(())
 }
 
