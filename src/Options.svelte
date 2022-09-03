@@ -288,7 +288,7 @@
       asciiCheckEnabled,
       addToPathEnabled,
       desktopShortcutEnabled,
-    } = await invoke("options_scan", { setup }));
+    } = await invoke<any>("options_scan", { setup }));
   }
 
   onMount(async () => {

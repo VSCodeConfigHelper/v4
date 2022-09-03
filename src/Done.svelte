@@ -83,7 +83,7 @@ import { emitter } from "./save_profile";
     {#if working}
       <div class="flex flex-row items-center">
         <span class="btn btn-ghost btn-circle loading" />
-        <span>正在配置 <code>{tasklist[finished]}</code></span>
+        <span>配置中...</span>
       </div>
     {:else if success}
       配置完成！
@@ -91,9 +91,14 @@ import { emitter } from "./save_profile";
       配置失败。
     {/if}
   </h3>
-  <div class="flex flex-row justify-center">
+  <div class="flex flex-col items-center">
     <div class="radial-progress text-primary" style={`--value:${percentage};`}>
       {percentage}%
     </div>
+    {#if working}
+      <div>
+        正在执行 <code>{tasklist[finished]}</code>
+      </div>
+    {/if}
   </div>
 </div>
