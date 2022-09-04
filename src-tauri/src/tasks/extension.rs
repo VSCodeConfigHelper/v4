@@ -59,6 +59,7 @@ impl ExtensionManager {
     })
   }
 
+  #[allow(unused)]
   fn run(&self, args: &[&str]) -> Result<String> {
     let (suc, output) = self.run_lossy(args)?;
     if suc {
@@ -69,6 +70,7 @@ impl ExtensionManager {
   }
 
   /// 返回：(是否成功, stdout)
+  /// 因为有时这个命令的返回值不是 0，不知道为什么，总之目前先忽略它的返回值
   fn run_lossy(&self, args: &[&str]) -> Result<(bool, String)> {
     if !self.enabled {
       warn!("由于启用了 --skip-ext-manage，扩展管理命令 {:?} 被跳过。请手动管理扩展以保证配置结果正确。", args);
@@ -87,7 +89,6 @@ impl ExtensionManager {
   }
 
   fn update(&mut self) -> Result<()> {
-    // 有时这个命令的返回值不是 0，不知道为什么，总之先忽略它的返回值
     let (_, output) = self.run_lossy(&["--list-extensions"])?;
     self.installed = output.lines().map(|line| line.to_string()).collect();
     debug!("已安装的扩展有：{:?}", &self.installed);
@@ -100,7 +101,7 @@ impl ExtensionManager {
       debug!("扩展 {} 已经安装，跳过。", id);
       return Ok(());
     }
-    self.run(&["--install-extension", id])?;
+    self.run_lossy(&["--install-extension", id])?;
     self.installed.push(id.to_string());
     debug!("扩展 {} 安装成功。", id);
     Ok(())
@@ -112,7 +113,7 @@ impl ExtensionManager {
       debug!("扩展 {} 未安装，跳过。", id);
       return Ok(());
     }
-    self.run(&["--uninstall-extension", id])?;
+    self.run_lossy(&["--uninstall-extension", id])?;
     self.installed.retain(|installed| installed != id);
     debug!("扩展 {} 卸载成功。", id);
     Ok(())

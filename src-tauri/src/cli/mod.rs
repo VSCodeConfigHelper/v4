@@ -22,7 +22,6 @@ use crate::cli::args::Language;
 use crate::gui::gui;
 use crate::log;
 use crate::steps::options::Options;
-use crate::steps::{vscode, workspace};
 use crate::tasks;
 #[cfg(windows)]
 use crate::utils::winapi;

@@ -18,9 +18,9 @@
 ## 本软件会修改的全局设置/配置
 
 本软件会酌情安装/卸载 VS Code 扩展。
-- 本软件总会安装微软开发的 [C/C++]() 扩展，以提供智能提示功能。如果你使用 GCC 或 MSVC 编译器，该扩展也将提供调试适配器功能。
-- 如果你使用基于 LLVM 的编译器，本软件会安装 [CodeLLDB]() 扩展，以提供调试适配器功能。
-- 如果你未使用兼容模式，本软件会安装 [Console Pauser]() 扩展，以提供外部弹窗运行功能。
+- 本软件总会安装微软开发的 [C/C++](https://marketplace.visualstudio.com/items?itemName=ms-vscode.cpptools) 扩展，以提供智能提示功能。如果你使用 GCC 或 MSVC 编译器，该扩展也将提供调试适配器功能。
+- 如果你使用基于 LLVM 的编译器，本软件会安装 [CodeLLDB](https://marketplace.visualstudio.com/items?itemName=vadimcn.vscode-lldb) 扩展，以提供调试适配器功能。
+- 如果你未使用兼容模式，本软件会安装 [Console Pauser](https://marketplace.visualstudio.com/items?itemName=Guyutongxue.pause-console) 扩展，以提供外部弹窗运行功能。
 - 如果你勾选了“卸载多余扩展”选项，本软件会**卸载**以下扩展：
   - \[TODO\]
 

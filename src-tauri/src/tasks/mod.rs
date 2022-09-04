@@ -20,7 +20,6 @@ use derivative::*;
 use log::{debug, info, trace, warn};
 use serde::Deserialize;
 
-use std::fs;
 use std::path::PathBuf;
 use std::{path::Path, sync::Arc};
 

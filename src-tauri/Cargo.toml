@@ -1,6 +1,6 @@
 [package]
 name = "vscch"
-version = "4.0.0" # WiX bundler do not support beta version
+version = "4.0.1"
 description = "VS Code Config Helper v4"
 authors = ["Guyutongxue"]
 license = "GPLv3"
@@ -8,8 +8,6 @@ repository = ""
 default-run = "vscch"
 edition = "2018"
 build = "src/build.rs"
-
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [build-dependencies]
 tauri-build = { version = "1.0.0-rc.7", features = [] }
