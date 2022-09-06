@@ -47,8 +47,8 @@ impl ExtensionManager {
   fn get(args: &TaskArgs) -> &Mutex<Self> {
     static INSTANCE: OnceCell<Mutex<ExtensionManager>> = OnceCell::new();
     INSTANCE.get_or_init(|| {
-      let path = adjust_path(Path::new(&args.vscode));
-      debug!("初始化扩展管理器，路径：{:?}", &path);
+      let path = args.vscode.clone();
+      debug!("初始化扩展管理器，路径：{:?}", path);
       let mut instance = ExtensionManager {
         enabled: *ENABLED.lock().unwrap(),
         path: path,

@@ -18,8 +18,9 @@
 #![allow(unused_imports)]
 
 use log::debug;
+use std::ffi::OsStr;
+use std::path::{Path, PathBuf};
 
-use std::path::{Path,PathBuf};
 use crate::utils::ToString;
 
 #[cfg(windows)]
@@ -27,7 +28,11 @@ use crate::utils::winreg;
 
 #[cfg(target_os = "windows")]
 pub fn scan() -> Option<String> {
-  let cmd = winreg::get(winreg::HKEY_CLASSES_ROOT, "vscode\\shell\\open\\command", "")?;
+  let cmd = winreg::get(
+    winreg::HKEY_CLASSES_ROOT,
+    "vscode\\shell\\open\\command",
+    "",
+  )?;
   debug!("vscode:// 的注册表项：{}", &cmd);
   // The value should be like:
   // "C:\Program Files\Microsoft VS Code\Code.exe" --open-url -- "%1"
@@ -48,7 +53,7 @@ pub fn scan() -> Option<String> {
         Ok(_) => Some(path),
         Err(_) => None,
       }
-    },
+    }
     Err(_) => None,
   }
 }
@@ -61,7 +66,7 @@ pub fn scan() -> Option<String> {
       return Some(path);
     }
   }
-  let common_installation = "/Applications/Visual Studio Code.app/Contents/Resources/app/bin/code";
+  let common_installation = "/Applications/Visual Studio Code.app";
   if Path::new(common_installation).exists() {
     Some(common_installation.to_string())
   } else {
@@ -70,9 +75,11 @@ pub fn scan() -> Option<String> {
 }
 
 pub fn adjust_path(path: &Path) -> PathBuf {
-  if cfg!(windows) {
+  if cfg!(target_os = "windows") {
     let folder = path.parent().unwrap();
-    folder.join("bin").join("code.cmd")
+    folder.join("bin\\code.cmd")
+  } else if cfg!(target_os = "macos") && matches!(path.extension(), Some(x) if x == "app") {
+    path.join("Contents/Resources/app/bin/code")
   } else {
     path.to_path_buf()
   }
@@ -80,12 +87,16 @@ pub fn adjust_path(path: &Path) -> PathBuf {
 
 pub fn verify(path: &str) -> Result<(), &'static str> {
   let path = Path::new(path);
-  if !path.is_file() {
+  if !path.exists() {
     return Err("路径不存在");
   }
-  if adjust_path(path).exists() {
+  if adjust_path(path).is_file() {
     Ok(())
   } else {
-    Err("找不到 code.cmd")
+    Err(if cfg!(windows) {
+      "找不到 code.cmd"
+    } else {
+      "找不到 .app 内的 code 可执行文件"
+    })
   }
 }

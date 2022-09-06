@@ -24,6 +24,7 @@ use std::path::PathBuf;
 use std::{path::Path, sync::Arc};
 
 use crate::steps::compiler::{stdchoose, CompilerSetup, CompilerType};
+use crate::steps::vscode::adjust_path as adjust_vscode;
 use crate::steps::{compiler::Compiler, options::Options};
 use crate::utils::ToString;
 
@@ -44,7 +45,7 @@ pub struct TaskInitArgs {
 #[derive(Derivative)]
 #[derivative(Debug)]
 pub struct TaskArgs {
-  pub vscode: String,
+  pub vscode: PathBuf,
   #[derivative(Debug = "ignore")]
   pub setup: &'static CompilerSetup,
   pub compiler_path: PathBuf,
@@ -127,7 +128,7 @@ mod shortcut {
     }
     create_lnk(
       path.to_str().unwrap(),
-      &args.vscode,
+      args.vscode.to_str().unwrap(),
       &format!("Open VS Code at {}", args.workspace.to_string()),
       &format!("\"{}\"", args.workspace.to_string()),
     )?;
@@ -149,7 +150,7 @@ mod vscode {
       vscode_args.push("--goto");
       vscode_args.push(test_file.as_str());
     }
-    trace!("Open command: {} {:?}", args.vscode, vscode_args);
+    trace!("Open command: {:?} {:?}", args.vscode, vscode_args);
     std::process::Command::new(&args.vscode)
       .args(vscode_args)
       .spawn()?;
@@ -172,6 +173,7 @@ macro_rules! generate_task {
 pub fn list(mut args: TaskInitArgs) -> Vec<(&'static str, Box<dyn Fn() -> Result<()> + Send>)> {
   let is_c = args.options.language == "C";
   let file_ext = if is_c { "c" } else { "cpp" };
+  let vscode = adjust_vscode(Path::new(&args.vscode));
   let workspace = {
     let path = Path::new(&args.workspace);
     if path.is_absolute() {
@@ -221,10 +223,10 @@ pub fn list(mut args: TaskInitArgs) -> Vec<(&'static str, Box<dyn Fn() -> Result
   statistics::set(args.options.collect_data);
 
   let args = Arc::from(TaskArgs {
-    vscode: args.vscode,
+    vscode,
     setup,
     compiler_path: (setup.path_to_exe)(&args.compiler.path, is_c),
-    workspace: workspace,
+    workspace,
     run_hotkey: args.options.run_hotkey,
     compatible_mode: args.options.compatible_mode,
     is_c: is_c,
