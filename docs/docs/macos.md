@@ -41,7 +41,7 @@
 
 如果你将 VS Code “安装”在了“应用程序”文件夹中，或者在 VS Code 中执行过“在 PATH 中安装 'code' 命令”，则工具可以自动显示你的 VS Code 安装路径。此时点击下一步即可。如果你不能点击下一步，你需要进行如下操作之一：
 - 在 VS Code 中执行“在 PATH 中安装 'code' 命令”。具体步骤是，打开 VS Code，并按 Command + Shift + P 呼出命令菜单，搜索“Shell 命令：在 PATH 中安装 'code' 命令”并执行。执行完成后，重新运行本工具。
-- 手动输入 VS Code 可执行文件的路径，默认位于 .app 路径下的 `Contents/Resources/app/bin/code`。
+- 手动输入 VS Code 的 .app 路径或二进制文件路径。
 
 ### 编译器选择
 

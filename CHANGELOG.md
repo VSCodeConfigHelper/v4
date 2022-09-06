@@ -1,7 +1,7 @@
 # 更新日志
 
 ## v4.0.2
-
+*2022.9.6*
 - Mac 下现允许使用 .app 路径作为 vscode 路径
 
 ## v4.0.1
@@ -138,8 +138,8 @@
 | GUI                  | Windows Form | Windows Form | Vue.js | Svelte.js |
 | 可脱机运行           | ✔️            | ✔️            | ❌      | ✔️         |
 | 单文件应用           | ❌            | ❌            | ✔️      | ✔️         |
-| 程序体积 （Windows） | 0.4M         | 0.5M         | 4.0M   | 4.5M+     |
-| 代码量（行）         | 600+         | 1600+        | 2000+  | 3300+     |
+| 程序体积 （Windows） | 0.4M         | 0.5M         | 4.0M   | 7.7M     |
+| 代码量（行）         | 600+         | 1600+        | 2000+  | 3800+     |
 
 ## [v3.x](https://github.com/VSCodeConfigHelper/v3/blob/main/CHANGELOG.md)
 

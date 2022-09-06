@@ -126,9 +126,16 @@ mod shortcut {
     if path.exists() {
       warn!("快捷方式 {:?} 已存在，将被覆盖。", path);
     }
+    // Use exe instead of cmd, for showing vscode icon
+    let vscode_exe = Some(&args.vscode)
+      .and_then(|p| p.parent())
+      .and_then(|p| p.parent())
+      .unwrap()
+      .join("Code.exe")
+      .to_string();
     create_lnk(
       path.to_str().unwrap(),
-      args.vscode.to_str().unwrap(),
+      &vscode_exe,
       &format!("Open VS Code at {}", args.workspace.to_string()),
       &format!("\"{}\"", args.workspace.to_string()),
     )?;
@@ -142,7 +149,11 @@ mod shortcut {
 }
 
 mod vscode {
-  use super::*;
+  use std::os::windows::process::CommandExt;
+
+use crate::utils::winapi::CREATE_NO_WINDOW;
+
+use super::*;
 
   pub fn open(args: &TaskArgs) -> Result<()> {
     let mut vscode_args = vec![args.workspace.to_str().expect("to_str err")];
@@ -151,9 +162,11 @@ mod vscode {
       vscode_args.push(test_file.as_str());
     }
     trace!("Open command: {:?} {:?}", args.vscode, vscode_args);
-    std::process::Command::new(&args.vscode)
-      .args(vscode_args)
-      .spawn()?;
+
+    let mut cmd = std::process::Command::new(&args.vscode);
+    #[cfg(windows)]
+    cmd.creation_flags(CREATE_NO_WINDOW);
+    cmd.args(vscode_args).spawn()?;
     Ok(())
   }
 }
