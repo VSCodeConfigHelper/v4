@@ -149,11 +149,12 @@ mod shortcut {
 }
 
 mod vscode {
+  #[cfg(windows)]
   use std::os::windows::process::CommandExt;
+  #[cfg(windows)]
+  use crate::utils::winapi::CREATE_NO_WINDOW;
 
-use crate::utils::winapi::CREATE_NO_WINDOW;
-
-use super::*;
+  use super::*;
 
   pub fn open(args: &TaskArgs) -> Result<()> {
     let mut vscode_args = vec![args.workspace.to_str().expect("to_str err")];
