@@ -94,6 +94,7 @@ fn scan() -> Vec<Compiler> {
   let list: Option<Vec<InstallInfo>> = Command::new(vswhere)
     .creation_flags(CREATE_NO_WINDOW)
     .args(&[
+      "-prerelease",
       "-products",
       "*",
       "-requires",
