@@ -34,16 +34,8 @@ pub static PATH_SLASH: &str = if cfg!(windows) { "\\" } else { "/" };
 pub static PATH_SEPARATOR: &str = if cfg!(windows) { ";" } else { ":" };
 
 fn single_file_build_task(args: &TaskArgs) -> Result<serde_json::Value> {
-  let debug = if args.setup.is_msvc() {
-    "/Zi"
-  } else {
-    "-g"
-  };
-  let output = if args.setup.is_msvc() {
-    "/Fe:"
-  } else {
-    "-o"
-  };
+  let debug = if args.setup.is_msvc() { "/Zi" } else { "-g" };
+  let output = if args.setup.is_msvc() { "/Fe:" } else { "-o" };
   let mut c_args = vec![
     debug.to_string(),
     "${file}".to_string(),
@@ -85,13 +77,19 @@ fn single_file_build_task(args: &TaskArgs) -> Result<serde_json::Value> {
   }))
 }
 
-fn pause_task() -> Result<serde_json::Value> {
+fn pause_task(args: &TaskArgs) -> Result<serde_json::Value> {
+  let mut env = json!({});
+  if args.setup.is_mingw() {
+    let path = args.compiler_path.parent().unwrap().to_string();
+    env = json!({ "Path": format!("{}{}${{env:Path}}", path, PATH_SEPARATOR) });
+  }
   Ok(json!({
     "type": "pause-console",
     "label": "run and pause",
     "command": format!("${{fileDirname}}{}${{fileBasenameNoExtension}}.{}", PATH_SLASH, EXT),
     "dependsOn": "single file build",
     "args": [],
+    "env": env,
     "presentation": {
       "reveal": "never",
       "focus": false,
@@ -133,7 +131,7 @@ fn ascii_check_task(_: &TaskArgs) -> Result<serde_json::Value> {
 pub fn tasks_json(args: &TaskArgs) -> Result<()> {
   let mut task_list = vec![single_file_build_task(args)?];
   if !args.compatible_mode {
-    task_list.push(pause_task()?);
+    task_list.push(pause_task(args)?);
   }
   if args.ascii_check {
     task_list.push(ascii_check_task(args)?);
