@@ -34,23 +34,28 @@ mod prompt;
 #[cfg(windows)]
 fn has_webview2_installed() -> bool {
   use crate::utils::winreg;
+
+  fn correct_version(v: &str) -> bool {
+    if v == "" { return false; }
+    if let Ok(cmp) = version_compare::compare(v, "104.0.0.0") {
+      return cmp != version_compare::Cmp::Lt;
+    }
+    return false;
+  }
+
   if let Some(v) = winreg::get(
     winreg::HKEY_LOCAL_MACHINE,
     r#"SOFTWARE\WOW6432Node\Microsoft\EdgeUpdate\Clients\{F3017226-FE2A-4295-8BDF-00C3A9A7E4C5}"#,
     "pv",
   ) {
-    if v != "" && v != "0.0.0.0" {
-      return true;
-    }
+    return correct_version(&v);
   }
   if let Some(v) = winreg::get(
     winreg::HKEY_CURRENT_USER,
     r#"Software\Microsoft\EdgeUpdate\Clients\{F3017226-FE2A-4295-8BDF-00C3A9A7E4C5}"#,
     "pv",
   ) {
-    if v != "" && v != "0.0.0.0" {
-      return true;
-    }
+    return correct_version(&v);
   }
   return false;
 }
