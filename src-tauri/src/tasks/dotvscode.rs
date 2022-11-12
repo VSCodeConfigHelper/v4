@@ -89,7 +89,9 @@ fn pause_task(args: &TaskArgs) -> Result<serde_json::Value> {
     "command": format!("${{fileDirname}}{}${{fileBasenameNoExtension}}.{}", PATH_SLASH, EXT),
     "dependsOn": "single file build",
     "args": [],
-    "env": env,
+    "options": {
+      "env": env,
+    },
     "presentation": {
       "reveal": "never",
       "focus": false,
