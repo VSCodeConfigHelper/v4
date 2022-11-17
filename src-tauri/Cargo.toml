@@ -1,6 +1,6 @@
 [package]
 name = "vscch"
-version = "4.0.3"
+version = "4.0.4"
 description = "VS Code Config Helper v4"
 authors = ["Guyutongxue"]
 license = "GPLv3"
