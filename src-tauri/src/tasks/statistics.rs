@@ -62,6 +62,8 @@ pub fn send_error(e: &Error) -> Option<String> {
   if !*ENABLED.lock().unwrap() {
     return None;
   }
+  // Disable heroku temporarily.
+  return None;
   match (|| -> Result<String> {
     let id: String = rand::thread_rng()
       .sample_iter(&Slice::new(&[

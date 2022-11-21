@@ -2,23 +2,10 @@
 
 全新版本的 VS Code C++ 配置器，基于 Tauri（Rust）和 Svelte.js。
 
+## 文档
+
+请看[官网](https://v4.vscch.tk/docs)。
+
 ## 开发
 
-安装 Node.js 和 Rust 环境。安装 `pnpm` 作为包管理器。
-
-### Linux dependencies
-
-```sh
-sudo apt install libwebkit2gtk-4.0-dev libssl-dev libgtk-3-dev libappindicator3-dev librsvg2-dev
-```
-
-```sh
-# 安装包依赖
-pnpm i
-
-# 开发（热更新）
-pnpm tauri dev
-
-# 编译
-pnpm tauri build
-```
+请参考 [Tauri 开发环境配置](https://tauri.app/v1/guides/getting-started/prerequisites)。
