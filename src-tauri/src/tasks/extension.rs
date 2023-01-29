@@ -22,12 +22,11 @@ use once_cell::sync::OnceCell;
 
 #[cfg(windows)]
 use std::os::windows::process::CommandExt;
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 use std::process::Command;
 use std::sync::Mutex;
 
 use super::TaskArgs;
-use crate::steps::vscode::adjust_path;
 #[cfg(windows)]
 use crate::utils::winapi::CREATE_NO_WINDOW;
 

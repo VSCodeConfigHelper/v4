@@ -20,7 +20,7 @@ use log::{debug, info, trace};
 use serde::Serialize;
 
 use crate::steps::{
-  compiler::{Id, Compiler, ENABLED_SETUPS, CompilerSetup},
+  compiler::{Id, Compiler, ENABLED_SETUPS},
   options::*,
   vscode, workspace,
 };

@@ -16,7 +16,7 @@
 // along with vscch4.  If not, see <http://www.gnu.org/licenses/>.
 
 use ::log::{debug, error, info, warn};
-use anyhow::{anyhow, Result};
+use anyhow::Result;
 
 use crate::cli::args::Language;
 use crate::gui::gui;
@@ -36,7 +36,9 @@ fn has_webview2_installed() -> bool {
   use crate::utils::winreg;
 
   fn correct_version(v: &str) -> bool {
-    if v == "" { return false; }
+    if v == "" {
+      return false;
+    }
     if let Ok(cmp) = version_compare::compare(v, "104.0.0.0") {
       return cmp != version_compare::Cmp::Lt;
     }

@@ -16,11 +16,10 @@
 // along with vscch4.  If not, see <http://www.gnu.org/licenses/>.
 
 use std::fs;
-use std::io::BufReader;
 use std::path::PathBuf;
 
 use anyhow::{anyhow, Result};
-use log::{debug, trace, warn};
+use log::warn;
 use serde_json::json;
 
 use super::TaskArgs;
