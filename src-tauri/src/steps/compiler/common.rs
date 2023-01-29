@@ -51,6 +51,7 @@ pub fn test_compiler(
       debug!("编译器返回非 UTF-8 输出");
       #[cfg(not(windows))]
       return None;
+      #[cfg(windows)]
       ansi_buffer_to_string(&e.into_bytes()).ok()?
     }
   };
