@@ -22,7 +22,15 @@
 - 如果你使用基于 LLVM 的编译器，本软件会安装 [CodeLLDB](https://marketplace.visualstudio.com/items?itemName=vadimcn.vscode-lldb) 扩展，以提供调试适配器功能。
 - 如果你未使用兼容模式，本软件会安装 [Console Pauser](https://marketplace.visualstudio.com/items?itemName=Guyutongxue.pause-console) 扩展，以提供外部弹窗运行功能。
 - 如果你勾选了“卸载多余扩展”选项，本软件会**卸载**以下扩展：
-  - \[TODO\]
+  - Code Runner `formulahendry.code-runner`
+  - C++ Intellisense `austin.code-gnu-global`
+  - C/C++ Compile Run `danielpinto8zz6.c-cpp-compile-run`
+  - C/C++ Clang Command Adapter `mitaki28.vscode-clang`
+  - C/C++ GNU Global `jaycetyle.vscode-gnu-global`
+  - C/C++ Runner `franneck94.c-cpp-runner`
+  - Include Autocomplete `ajshort.include-autocomplete`
+  - Clang-Format `xaver.clang-format`
+  - C/C++ Advanced Lint `jbenden.c-cpp-flylint`
 
 本软件会修改你的 VS Code 全局快捷键设置。
 - 如果你未使用兼容模式，本软件会将“运行快捷键”（默认为 <kbd>F6</kbd>，可自行调整）绑定到外部弹窗运行任务。若该快捷键已存在内容，则原有设置**会被覆盖**。
