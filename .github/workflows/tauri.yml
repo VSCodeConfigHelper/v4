@@ -29,15 +29,13 @@ jobs:
     runs-on: ${{ matrix.os }}
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - name: Install Node.js
         uses: actions/setup-node@v2
         with:
-          node-version: "16"
+          node-version: "18"
       - name: Install Rust
-        uses: actions-rs/toolchain@v1
-        with:
-          toolchain: stable
+        uses: dtolnay/rust-toolchain@stable
       - name: Install dependencies (Linux)
         if: ${{ matrix.os == 'ubuntu-latest' }}
         run: |
