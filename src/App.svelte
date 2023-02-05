@@ -23,6 +23,7 @@
   import { getVersion } from "@tauri-apps/api/app";
   import { open } from "@tauri-apps/api/shell";
   import { listen } from "@tauri-apps/api/event";
+  import { confirm } from '@tauri-apps/api/dialog';
   import Icon from "@iconify/svelte";
   import compareVersions from "compare-versions";
 
@@ -123,7 +124,7 @@
     );
     const latestVersion: string = result.name;
     if (compareVersions(latestVersion, version) > 0) {
-      if (confirm(`新版本 ${latestVersion} 可用。是否前往下载？`)) {
+      if (await confirm(`新版本 ${latestVersion} 可用。是否前往下载？`)) {
         open(`https://v4.vscch.tk`);
       }
     } else {
