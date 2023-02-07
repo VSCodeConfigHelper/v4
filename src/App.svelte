@@ -133,9 +133,9 @@
     checkUpdateString = "检查更新";
   }
 
-  let errorId = "";
+  let errorId: number | null = null;
   listen("log_sent", (r) => {
-    errorId = r.payload as string;
+    errorId = r.payload as number;
   });
 
 
@@ -257,18 +257,18 @@
     </div>
   </label>
 </label>
-<input type="checkbox" id="log-modal" class="modal-toggle" checked={!!errorId} />
+<input type="checkbox" id="log-modal" class="modal-toggle" checked={errorId !== null} />
 <div class="modal">
   <div class="modal-box">
     <h3 class="font-bold text-lg">错误日志已发送</h3>
     <p class="py-4">
-      您可以将代码 <code title={errorId}>{errorId.substring(0, 6)}</code>
+      您可以将标识码 <code>{errorId}</code>
       发送至
       <a href="mailto:guyutongxue@163.com">guyutongxue@163.com</a
       >，开发者会尽快帮您解决问题。
     </p>
     <div class="modal-action">
-      <label for="log-modal" class="btn">知道了</label>
+      <button class="btn" on:click={() => errorId = null}>知道了</button>
     </div>
   </div>
 </div>

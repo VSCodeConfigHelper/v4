@@ -1302,6 +1302,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "hardware-id"
+version = "0.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d3165b5280ce11f886e353961b966becc45a598a9440707dec3e1cdd8f07cbe7"
+dependencies = [
+ "thiserror",
+ "winreg",
+]
+
+[[package]]
 name = "hashbrown"
 version = "0.12.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3877,6 +3887,7 @@ dependencies = [
  "derivative",
  "dirs",
  "fern",
+ "hardware-id",
  "json5",
  "log",
  "native-dialog",
