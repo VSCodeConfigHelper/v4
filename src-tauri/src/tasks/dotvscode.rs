@@ -178,8 +178,8 @@ pub fn tasks_json(args: &TaskArgs) -> Result<()> {
         "shell": {
           "executable": "C:\\Windows\\System32\\cmd.exe",
           "args": [
-            "/C",
             "/S",
+            "/C",
             vcvars,
             "&&"
           ]
