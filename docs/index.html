@@ -386,19 +386,20 @@
         DOWNLOAD_LINKS.elf = p.platforms.linux.url;
         DOWNLOAD_LINKS.dmg = i.platforms.darwin.url;
         DOWNLOAD_LINKS.macho = p.platforms.darwin.url;
-      });
-      /** @type {HTMLAnchorElement} */
-      const btn = document.querySelector("#downloadBtn");
-      if (downloadName !== null) {
-        btn.innerHTML = `<i class="bi-download"></i>&nbsp;` + downloadName;
-        btn.href = withProxy(DOWNLOAD_LINKS[downloadType]);
-      } else {
-        btn.classList.add("disabled");
-        btn.innerHTML = `不支持此操作系统`;
-      }
-      document.querySelectorAll(".dl-btn").forEach((/** @type {HTMLAnchorElement} */ ele) => {
-        const downloadType = ele.getAttribute("data-type");
-        ele.href = withProxy(DOWNLOAD_LINKS[downloadType]);
+      }).then(() => {
+        /** @type {HTMLAnchorElement} */
+        const btn = document.querySelector("#downloadBtn");
+        if (downloadName !== null) {
+          btn.innerHTML = `<i class="bi-download"></i>&nbsp;` + downloadName;
+          btn.href = withProxy(DOWNLOAD_LINKS[downloadType]);
+        } else {
+          btn.classList.add("disabled");
+          btn.innerHTML = `不支持此操作系统`;
+        }
+        document.querySelectorAll(".dl-btn").forEach((/** @type {HTMLAnchorElement} */ ele) => {
+          const downloadType = ele.getAttribute("data-type");
+          ele.href = withProxy(DOWNLOAD_LINKS[downloadType]);
+        });
       });
 
       Promise.all([
