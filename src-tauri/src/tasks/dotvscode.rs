@@ -50,6 +50,21 @@ fn single_file_build_task(args: &TaskArgs) -> Result<serde_json::Value> {
     c_args.push("/utf-8".to_string());
   }
   c_args.extend(args.args.clone());
+  let task_args = if args.setup.is_msvc() {
+    // 参见 vcvars64.bat 附近的注释
+    // quoting 设置为 escape 对于 cmd.exe 没有效果
+    // https://github.com/microsoft/vscode/blob/0f9d0328ebe1eccd28e4de11ece14f4b0db3e818/src/vs/workbench/contrib/tasks/browser/terminalTaskSystem.ts#L1507
+    let args = c_args
+      .iter()
+      .map(|s| json!(s))
+      .chain(std::iter::once(json!({
+        "value": "\"",
+        "quoting": "escape"
+      })));
+    json!(args.collect::<Vec<_>>())
+  } else {
+    json!(c_args)
+  };
 
   let mut compiler_cmd = args.compiler_path.to_string();
   if args.setup.is_msvc() {
@@ -60,7 +75,7 @@ fn single_file_build_task(args: &TaskArgs) -> Result<serde_json::Value> {
     "type": if args.setup.is_msvc() { "shell" } else { "process" },
     "label": "single file build",
     "command": compiler_cmd,
-    "args": c_args,
+    "args": task_args,
     "group": {
       "kind": "build",
       "isDefault": true
@@ -144,12 +159,26 @@ pub fn tasks_json(args: &TaskArgs) -> Result<()> {
     if args.setup.is_msvc() {
       let vcvars = Path::new(&args.compiler_path)
         .join("..\\..\\..\\..\\..\\..\\..\\Auxiliary\\Build\\vcvars64.bat");
-      let vcvars = format!("\"{}\"", vcvars.to_string());
+      // MSVC 需要一堆环境变量才能正确运行，
+      // 所以加载 vcvars64.bat 到 cmd.exe
+      // 然后将 vscode 的 shell 设置为：
+      // cmd.exe /S /C "vcvars64.bat && cl.exe ..."
+      // 注意到 vcvars64.bat 路径极有可能包含空格，所以需要对引号进行处理
+      // 参考 cmd.exe /? 的解释，使用 /C 时有两种引号处理策略
+      // 其一是不删除任何引号，但是这要求整个命令行只有一对引号出现在开头
+      // vscode 会自动为文件名带空格的参数加引号，所以这时不满足“一对引号”的要求
+      // 其二是，若引号出现在最开头，则删除最开头的引号和最结尾的引号
+      // 这种删除策略总是可行的，所以我们使用这一种。
+      // 在 vcvars64.bat 的开头加两个引号，结尾加一个引号，
+      // 另外一个引号加在所有参数的结尾（参见上方 build_task）
+      // 从而 cmd.exe 把这两个引号删除，剩余的部分刚好满足需求
+      let vcvars = format!("\"\"{}\"", vcvars.to_string());
 
       options = json!({
         "shell": {
           "executable": "C:\\Windows\\System32\\cmd.exe",
           "args": [
+            "/S",
             "/C",
             vcvars,
             "&&"
