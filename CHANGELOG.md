@@ -1,5 +1,11 @@
 # 更新日志
 
+## v4.0.7
+*2023.6.6*
+- 修复了当文件名含空格时，MSVC 编译任务无法正常执行的问题（[#25](https://github.com/VSCodeConfigHelper/v4/pull/25)）
+- 试验性地重新启用了错误日志发送
+- 更新了若干依赖库
+
 ## v4.0.6
 *2023.1.31*
 - 修复了无法正确解析含非 UTF-8 输出的编译器版本信息的问题（[#23](https://github.com/VSCodeConfigHelper/v4/pull/23)）
