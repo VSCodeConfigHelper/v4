@@ -47,7 +47,10 @@ fn single_file_build_task(args: &TaskArgs) -> Result<serde_json::Value> {
   ];
   if args.setup.is_msvc() {
     c_args.push("/EHsc".to_string());
-    c_args.push("/utf-8".to_string());
+    if !args.args.iter().any(|a| a.starts_with("/execution-charset")) {
+      c_args.push("/execution-charset:utf-8".to_string());
+    }
+    c_args.push("/source-charset:utf-8".to_string());
   }
   c_args.extend(args.args.clone());
   let task_args = if args.setup.is_msvc() {
@@ -106,6 +109,7 @@ fn pause_task(args: &TaskArgs) -> Result<serde_json::Value> {
     "args": [],
     "options": {
       "env": env,
+      "cwd": "${fileDirname}"
     },
     "presentation": {
       "reveal": "never",

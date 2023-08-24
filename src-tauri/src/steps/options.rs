@@ -42,8 +42,8 @@ pub fn use_gnu_enabled(setup: &str) -> bool {
   ["gcc-mingw", "gcc"].contains(&setup)
 }
 
-pub fn pedantic_enabled(setup: &str) -> bool {
-  setup != "msvc"
+pub fn pedantic_enabled(_setup: &str) -> bool {
+  true
 }
 
 #[cfg(windows)]

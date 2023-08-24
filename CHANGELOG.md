@@ -1,5 +1,12 @@
 # 更新日志
 
+## v4.0.8
+*2023.8.24*
+- 修复了 Console Pauser 启动工作路径不正确的问题
+- 修复了 `/utf-8` 与 `/execution-charset` 共存的问题（[#29](https://github.com/VSCodeConfigHelper/v4/issues/29)）
+- 启用了 MSVC 的“严格标准”设置（`/Zc` 系列选项）
+- 更新了若干依赖库，修复了部分潜在安全问题
+
 ## v4.0.7
 *2023.6.6*
 - 修复了当文件名含空格时，MSVC 编译任务无法正常执行的问题（[#25](https://github.com/VSCodeConfigHelper/v4/pull/25)）

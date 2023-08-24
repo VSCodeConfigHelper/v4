@@ -86,61 +86,75 @@
     e.stopPropagation();
   }
   function generateArgs() {
-    const args: [string, string][] = [];
+    const args: [string[], string[]][] = [];
     args.push([
       activeStandard
         ? useGnu
-          ? `-std=gnu${activeStandard.toLowerCase().substring(1)}`
-          : `-std=${activeStandard.toLowerCase()}`
-        : "",
-      activeStandard ? `/std:${activeStandard.toLowerCase()}` : "",
+          ? [`-std=gnu${activeStandard.toLowerCase().substring(1)}`]
+          : [`-std=${activeStandard.toLowerCase()}`]
+        : [],
+      activeStandard ? [`/std:${activeStandard.toLowerCase()}`] : [],
     ]);
     if (pedantic) {
-      args.push(["-pedantic", ""]);
+      args.push([
+        ["-pedantic"],
+        [
+          "/Zc:__cplusplus",
+          "/Zc:__STDC__",
+          "/Zc:enumTypes",
+          "/Zc:externConstexpr",
+          "/Zc:lambda",
+          "/Zc:preprocessor",
+          "/Zc:referenceBinding",
+          "/Zc:rvalueCast",
+          "/Zc:strictStrings",
+          "/Zc:templateScope",
+          "/Zc:ternary",
+          "/Zc:throwingNew",
+        ],
+      ]);
     }
     switch (activeWarning) {
       case "all":
-        args.push(["-Wall", "/W4"]);
+        args.push([["-Wall"], ["/W4"]]);
         break;
       case "extra":
-        args.push(["-Wall", ""]);
-        args.push(["-Wextra", "/Wall"]);
+        args.push([["-Wall"], []]);
+        args.push([["-Wextra"], ["/Wall"]]);
         break;
     }
     args.push(
-      ((): [string, string] => {
+      ((): [string[], string[]] => {
         switch (activeOptLevel) {
           case "1":
-            return ["-O1", "/O1"];
+            return [["-O1"], ["/O1"]];
           case "2":
-            return ["-O2", "/O2"];
+            return [["-O2"], ["/O2"]];
           case "3":
-            return ["-O3", "/O2"];
+            return [["-O3"], ["/O2"]];
           case "speed":
-            return ["-Ofast", "/Ox"];
+            return [["-Ofast"], ["/Ox"]];
           case "size":
-            return ["-Oz", "/Os"];
+            return [["-Oz"], ["/Os"]];
           case "default":
           default:
-            return ["", ""];
+            return [[], []];
         }
       })()
     );
     if (werror) {
-      args.push(["-Werror", "/WX"]);
+      args.push([["-Werror"], ["/WX"]]);
     }
     if (staticStd) {
-      args.push(["-static-libgcc", "/MT"]);
+      args.push([["-static-libgcc"], ["/MT"]]);
       if (activeLanguage === "C++") {
-        args.push(["-static-libstdc++", ""]);
+        args.push([["-static-libstdc++"], []]);
       }
     }
     if (acpOutput) {
-      args.push(["-fexec-charset=GBK", "/execution-charset:gbk"]);
+      args.push([["-fexec-charset=GBK"], ["/execution-charset:gbk"]]);
     }
-    return args
-      .map((p) => p[$compiler?.setup === "msvc" ? 1 : 0])
-      .filter((s) => s);
+    return args.map((p) => p[$compiler?.setup === "msvc" ? 1 : 0]).flat();
   }
   let generatedArgs: string[];
   $: {
@@ -490,7 +504,7 @@
     </div>
     <div class="font-bold">自定义...</div>
     <div
-      class="input input-sm input-bordered cursor-text h-auto"
+      class="input input-sm input-bordered cursor-text h-auto max-h-32 overflow-auto"
       on:click={__2_handle_click}
       class:input-focus={__2_input_focused}
     >
