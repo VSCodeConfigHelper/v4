@@ -31,7 +31,7 @@
   import {
     compiler,
     options,
-    OptionsProfile,
+    type OptionsProfile,
     DEFAULT_PROFILE,
     NEWBIE_PROFILE,
   } from "./config_store";
