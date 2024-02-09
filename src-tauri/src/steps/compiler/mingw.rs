@@ -91,12 +91,12 @@ fn verify(
 }
 
 fn install_gcc() -> Result<()> {
-  open::that("https://v4.vscch.tk/api/mingw")?;
+  open::that("https://api.guyutongxue.site/vscch/mingw")?;
   Ok(())
 }
 
 fn install_clang() -> Result<()> {
-  open::that("https://v4.vscch.tk/api/llvm-mingw")?;
+  open::that("https://api.guyutongxue.site/vscch/llvm-mingw")?;
   Ok(())
 }
 

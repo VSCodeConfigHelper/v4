@@ -369,15 +369,15 @@
         downloadType = "appImage";
       }
       function withProxy(/** @type {string} */ url) {
-        const proxyUrl = new URL("https://v4.vscch.tk/proxy");
+        const proxyUrl = new URL("https://api.guyutongxue.site/proxy");
         proxyUrl.searchParams.append("target", url);
         return proxyUrl.href;
       }
       const DOWNLOAD_LINKS = {};
       Promise.all(
         [
-          `//v4.vscch.tk/api/installer`,
-          `//v4.vscch.tk/api/portable`,
+          `//api.guyutongxue.site/vscch/installer`,
+          `//api.guyutongxue.site/vscch/portable`,
         ].map((url) => fetch(url).then((r) => r.json()))
       ).then(([i, p]) => {
         DOWNLOAD_LINKS.msi = i.platforms.win64.url;

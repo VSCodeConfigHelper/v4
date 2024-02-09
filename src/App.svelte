@@ -119,13 +119,13 @@
   let checkUpdateString = "检查更新";
   async function checkUpdate() {
     checkUpdateString = "检查更新中...";
-    const result = await fetch(`https://v4.vscch.tk/api/installer`).then((r) =>
+    const result = await fetch(`https://api.guyutongxue.site/vscch/installer`).then((r) =>
       r.json()
     );
     const latestVersion: string = result.name;
     if (compareVersions(latestVersion, version) > 0) {
       if (await confirm(`新版本 ${latestVersion} 可用。是否前往下载？`)) {
-        open(`https://v4.vscch.tk`);
+        open(`https://vscch.guyutongxue.site`);
       }
     } else {
       alert(`已是最新版本（${latestVersion}）。`);

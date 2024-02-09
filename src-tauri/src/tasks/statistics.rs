@@ -74,7 +74,7 @@ pub fn send_error(e: &Error) -> Option<u64> {
     id %= 1_000_000;
     warn!("发送错误日志。标识码 {}", id);
     let res = reqwest::blocking::Client::new()
-      .post(format!("https://v4.vscch.tk/api/errorLog/{}", id))
+      .post(format!("https://api.guyutongxue.site/vscch/errorLog/{}", id))
       .header(CONTENT_TYPE, "text/plain")
       .body(fs::read_to_string(get_log_path())?)
       .send()?;

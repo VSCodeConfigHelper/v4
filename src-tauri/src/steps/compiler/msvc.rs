@@ -36,7 +36,7 @@ use windows::Win32::UI::Shell::{
 
 static POWERSHELL: &str = "C:\\Windows\\system32\\WindowsPowerShell\\v1.0\\powershell.exe";
 static VSWHERE_DOWNLOAD_LINK: &str =
-  "http://v4.vscch.tk/proxy/?target=https%3A%2F%2Fgithub.com%2Fmicrosoft%2Fvswhere%2Freleases%2Fdownload%2F3.0.3%2Fvswhere.exe";
+  "http://api.guyutongxue.site/proxy/?target=https%3A%2F%2Fgithub.com%2Fmicrosoft%2Fvswhere%2Freleases%2Fdownload%2F3.0.3%2Fvswhere.exe";
 
 fn get_vswhere() -> Option<PathBuf> {
   let choco_path = get_known_folder_path(&FOLDERID_ProgramData)

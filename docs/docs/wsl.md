@@ -6,7 +6,7 @@
 
 ## Step 1：下载程序
 
-请在[网站下载处](https://v4.vscch.tk/#download)点击 Linux 版 - 可执行文件。AppImage 不好使。
+请在[网站下载处](https://vscch.guyutongxue.site/#download)点击 Linux 版 - 可执行文件。AppImage 不好使。
 
 ## Step 2：安装中文字体
 

@@ -11,7 +11,7 @@ winget install Guyutongxue.Vscch
 
 ## 文档
 
-请看[官网](https://v4.vscch.tk/docs)。
+请看[官网](https://vscch.guyutongxue.site/docs)。
 
 ## 开发
 
