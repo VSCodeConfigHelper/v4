@@ -1,0 +1,5 @@
+<Fragment>
+  <Component Id="AddToPath" Guid="75db7be5-406d-4b45-a545-455d6467887d">
+    <Environment Id="AddToPathEnv" Name="PATH" Value="[INSTALLDIR]" Action="set" Part="last" System="yes" />
+  </Component>
+</Fragment>
