@@ -41,6 +41,8 @@
         "digestAlgorithm": "sha256",
         "timestampUrl": "",
         "wix": {
+          "fragmentPaths": ["./add_to_path.wxs"],
+          "componentRefs": ["AddToPath"],
           "language": "zh-CN",
           "license": "../LICENSE"
         }

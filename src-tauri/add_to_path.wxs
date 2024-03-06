@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
+  <Fragment>
+    <DirectoryRef Id="TARGETDIR">
+      <Component Id="AddToPath" Guid="75db7be5-406d-4b45-a545-455d6467887d">
+        <Environment Id="AddToPathEnv" Name="PATH" Value="[INSTALLDIR]" Action="set" Part="last"
+          System="yes" />
+      </Component>
+    </DirectoryRef>
+  </Fragment>
+</Wix>
