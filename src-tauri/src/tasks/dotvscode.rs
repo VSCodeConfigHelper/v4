@@ -47,7 +47,11 @@ fn single_file_build_task(args: &TaskArgs) -> Result<serde_json::Value> {
   ];
   if args.setup.is_msvc() {
     c_args.push("/EHsc".to_string());
-    if !args.args.iter().any(|a| a.starts_with("/execution-charset")) {
+    if !args
+      .args
+      .iter()
+      .any(|a| a.starts_with("/execution-charset"))
+    {
       c_args.push("/execution-charset:utf-8".to_string());
     }
     c_args.push("/source-charset:utf-8".to_string());
@@ -241,7 +245,7 @@ pub fn launch_json(args: &TaskArgs) -> Result<()> {
     ("console", serde_json::to_value("externalTerminal")?)
   };
 
-  let json = json!({
+  let mut json = json!({
     "version": "0.2.0",
     "configurations": [
       {
@@ -252,20 +256,29 @@ pub fn launch_json(args: &TaskArgs) -> Result<()> {
         "args": [],
         "stopAtEntry": false,
         "cwd": "${fileDirname}",
-        "environment": [],
-        "env": {
-          "PATH": format!("{}{}${{env:PATH}}",
-            bin_path.to_string(),
-            PATH_SEPARATOR)
-        },
+        "environment": [
+          {
+            "name": "PATH",
+            "value": format!("{}{}${{env:PATH}}", bin_path.to_string(), PATH_SEPARATOR)
+          }
+        ],
         console_settings.0: console_settings.1,
         "MIMode": debugger_name,          // Only used in cppdbg (GDB mode)
         "miDebuggerPath": debugger_path,  // ..
         "preLaunchTask": if args.ascii_check { "ascii check" } else { "single file build" },
-        "internalConsosleOptions": "neverOpen"
+        "internalConsoleOptions": "neverOpen"
       }
     ]
   });
+  if debug_type == "cppdbg" {
+    json["configurations"][0]["setupCommands"] = json!([
+      {
+        "description": "Enable pretty-printing for gdb",
+        "text": "-enable-pretty-printing",
+        "ignoreFailures": true
+      }
+    ]);
+  }
 
   debug!("launch.json: {}", json);
 
