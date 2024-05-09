@@ -47,7 +47,11 @@ fn single_file_build_task(args: &TaskArgs) -> Result<serde_json::Value> {
   ];
   if args.setup.is_msvc() {
     c_args.push("/EHsc".to_string());
-    if !args.args.iter().any(|a| a.starts_with("/execution-charset")) {
+    if !args
+      .args
+      .iter()
+      .any(|a| a.starts_with("/execution-charset"))
+    {
       c_args.push("/execution-charset:utf-8".to_string());
     }
     c_args.push("/source-charset:utf-8".to_string());
@@ -252,12 +256,12 @@ pub fn launch_json(args: &TaskArgs) -> Result<()> {
         "args": [],
         "stopAtEntry": false,
         "cwd": "${fileDirname}",
-        "environment": [],
-        "env": {
-          "PATH": format!("{}{}${{env:PATH}}",
-            bin_path.to_string(),
-            PATH_SEPARATOR)
-        },
+        "environment": [
+          {
+            "name": "PATH",
+            "value": format!("{}{}${{env:PATH}}", bin_path.to_string(), PATH_SEPARATOR)
+          }
+        ],
         console_settings.0: console_settings.1,
         "MIMode": debugger_name,          // Only used in cppdbg (GDB mode)
         "miDebuggerPath": debugger_path,  // ..
