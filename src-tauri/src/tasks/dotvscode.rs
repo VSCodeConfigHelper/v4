@@ -241,7 +241,7 @@ pub fn launch_json(args: &TaskArgs) -> Result<()> {
     ("console", serde_json::to_value("externalTerminal")?)
   };
 
-  let json = json!({
+  let mut json = json!({
     "version": "0.2.0",
     "configurations": [
       {
@@ -262,10 +262,19 @@ pub fn launch_json(args: &TaskArgs) -> Result<()> {
         "MIMode": debugger_name,          // Only used in cppdbg (GDB mode)
         "miDebuggerPath": debugger_path,  // ..
         "preLaunchTask": if args.ascii_check { "ascii check" } else { "single file build" },
-        "internalConsosleOptions": "neverOpen"
+        "internalConsoleOptions": "neverOpen"
       }
     ]
   });
+  if debug_type == "cppdbg" {
+    json["configurations"][0]["setupCommands"] = json!([
+      {
+        "description": "Enable pretty-printing for gdb",
+        "text": "-enable-pretty-printing",
+        "ignoreFailures": true
+      }
+    ]);
+  }
 
   debug!("launch.json: {}", json);
 
